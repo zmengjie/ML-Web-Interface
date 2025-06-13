@@ -60,6 +60,23 @@ llm = ChatOpenAI(
 
 memory = ConversationBufferMemory()
 
+st.markdown("""
+    <style>
+    .stMarkdown h4 {
+        margin-bottom: 0.2em;
+    }
+    .stRadio > div {
+        margin-top: 0;
+        margin-bottom: 0.5em;
+    }
+    .stSelectbox, .stTextInput, .stSlider {
+        padding-top: 0;
+        padding-bottom: 0;
+        margin-bottom: 0.3em;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # === UI Config ===
 st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
 st.title("🧠 Machine Learning & Optimization Visual Explorer")
@@ -1021,8 +1038,6 @@ if mode == "📈 Supervised Learning":
             #         ax.legend(handles=scatter.legend_elements()[0], labels=labels, title="Classes")
             #         st.pyplot(fig)
 
-
-
             else:
                 C_val = st.slider("C", 0.01, 10.0, 1.0)
                 kernel = st.selectbox("Kernel", ["linear", "rbf", "poly"])
@@ -1174,10 +1189,9 @@ elif mode == "🌋 Optimization Playground":
         col_sidebar, col_main = st.columns([1, 3])
 
         with col_sidebar:
-            # if st.button("📘 Show Guide (Sidebar)", key="show_guide_button"):
-            #     st.session_state.show_guide = True
 
-            st.markdown("## ⚙️ Configuration")
+            # st.markdown("## ⚙️ Configuration")
+            st.markdown("<h4>⚙️ Configuration</h4>", unsafe_allow_html=True)
 
             mode = st.radio("Function Source", ["Predefined", "Custom"])
             func_name = st.selectbox("Function", list(predefined_funcs.keys())) if mode == "Predefined" else None
