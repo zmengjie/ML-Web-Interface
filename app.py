@@ -6,6 +6,9 @@
 # Reuses all user-defined logic and keeps existing function structure
 
 import streamlit as st
+
+st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
+
 import pandas as pd
 import numpy as np
 
@@ -78,7 +81,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # === UI Config ===
-st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
+# st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
 st.title("🧠 Machine Learning & Optimization Visual Explorer")
 
 # === Top-level Mode Switch ===
