@@ -7,8 +7,6 @@
 
 import streamlit as st
 
-st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
-
 import pandas as pd
 import numpy as np
 
@@ -45,7 +43,6 @@ from PIL import Image
 from mpl_toolkits.mplot3d import Axes3D
 
 
-
 import os
 from langchain_community.chat_models import ChatOpenAI
 from langchain_experimental.agents import create_pandas_dataframe_agent
@@ -62,23 +59,6 @@ llm = ChatOpenAI(
 )
 
 memory = ConversationBufferMemory()
-
-st.markdown("""
-    <style>
-    .stMarkdown h4 {
-        margin-bottom: 0.2em;
-    }
-    .stRadio > div {
-        margin-top: 0;
-        margin-bottom: 0.5em;
-    }
-    .stSelectbox, .stTextInput, .stSlider {
-        padding-top: 0;
-        padding-bottom: 0;
-        margin-bottom: 0.3em;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 # === UI Config ===
 # st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
@@ -1192,9 +1172,8 @@ elif mode == "🌋 Optimization Playground":
         col_sidebar, col_main = st.columns([1, 3])
 
         with col_sidebar:
-
-            # st.markdown("## ⚙️ Configuration")
-            st.markdown("<h4>⚙️ Configuration</h4>", unsafe_allow_html=True)
+            st.markdown("## ⚙️ Configuration")
+            # st.markdown("<h4>⚙️ Configuration</h4>", unsafe_allow_html=True)
 
             mode = st.radio("Function Source", ["Predefined", "Custom"])
             func_name = st.selectbox("Function", list(predefined_funcs.keys())) if mode == "Predefined" else None
