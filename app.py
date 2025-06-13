@@ -1602,16 +1602,6 @@ elif mode == "🌋 Optimization Playground":
             else:
                 st.info("No constraints defined.")
     
-    with st.expander("🔧 Auto-Tuning (Experimental)", expanded=False):
-        st.markdown("Test different learning rates and steps for best convergence (Gradient Descent only).")
-        best = None
-        for lr_test in [0.005, 0.01, 0.02, 0.05]:
-            for s in [20, 40, 60]:
-                sim = simulate_optimizer("GradientDescent", f_expr, lr=lr_test, steps=s)
-                if best is None or sim["Final Value"] < best["Final Value"]:
-                    best = sim
-        st.success(f"Best config (GD): Final={best['Final Value']}, GradNorm={best['Gradient Norm']}, Steps={best['Steps']}")
-
 
     with st.expander("📊 Optimizer Comparison Table", expanded=True):
         st.markdown("Automatically comparing optimizers using final value, gradient norm, and step count.")
