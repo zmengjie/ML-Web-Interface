@@ -1523,24 +1523,33 @@ elif mode == "🌋 Optimization Playground":
             st.markdown("#### 📊 Optimizer Comparison")
             selected_opts = st.multiselect("Optimizers", ["GradientDescent", "Adam", "RMSProp", "Newton's Method"], default=["GradientDescent", "Adam"], key="compare")
             fig_comp, ax_comp = plt.subplots(figsize=(4, 3))
+
+            results = []
             for opt in selected_opts:
                 path_opt = optimize_path(
-                start_x,
-                start_y,
-                optimizer=opt,
-                lr=lr,
-                steps=steps,
-                f_func=f_func,
-                grad_f=grad_f,
-                hessian_f=hessian_f,
-                options=options
-            )
-
+                    start_x,
+                    start_y,
+                    optimizer=opt,
+                    lr=lr,
+                    steps=steps,
+                    f_func=f_func,
+                    grad_f=grad_f,
+                    hessian_f=hessian_f,
+                    options=options
+                )
                 zs = [f_func(xp, yp) for xp, yp in path_opt]
-                ax_comp.plot(zs, label=opt)
+                results.append((opt, zs))
+
+            # Optional: sort by final loss
+            results.sort(key=lambda x: x[1][-1])
+
+            for opt, zs in results:
+                ax_comp.plot(zs, label=f"{opt} ({len(zs)} steps)", marker="o", markersize=2)
+
             ax_comp.set_title("Convergence")
             ax_comp.set_xlabel("Step")
             ax_comp.set_ylabel("f(x, y)")
+            ax_comp.set_ylim(bottom=0)
             ax_comp.legend()
             st.pyplot(fig_comp)
 
