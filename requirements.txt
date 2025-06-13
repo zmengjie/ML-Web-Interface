@@ -10,3 +10,4 @@ sympy
 Pillow
 langchain
 openai
+langchain-community
