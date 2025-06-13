@@ -50,7 +50,14 @@ from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
 import openai
 
-llm = ChatOpenAI(temperature=0.3)
+import streamlit as st
+from langchain_community.chat_models import ChatOpenAI
+
+llm = ChatOpenAI(
+    temperature=0.3,
+    openai_api_key=st.secrets["OPENAI_API_KEY"]
+)
+
 memory = ConversationBufferMemory()
 
 # === UI Config ===
