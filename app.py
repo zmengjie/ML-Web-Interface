@@ -1514,7 +1514,7 @@ elif mode == "🌋 Optimization Playground":
             gif_buf = BytesIO()
             frames[0].save(gif_buf, format="GIF", save_all=True, append_images=frames[1:], duration=300, loop=0)
             gif_buf.seek(0)
-            st.image(gif_buf, caption="Animated Descent Path", use_column_width=True)
+            st.image(gif_buf, caption="Animated Descent Path", use_container_width=True)
 
     with st.expander("🧰 Optimizer Diagnostic Tools", expanded=True):
         col1, col2 = st.columns(2)
