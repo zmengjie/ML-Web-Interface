@@ -1822,7 +1822,7 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**Assistant:** {a}")
 
     if uploaded_image:
-        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
         image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
         if image_question:
             try:
