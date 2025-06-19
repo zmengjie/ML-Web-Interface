@@ -1798,9 +1798,9 @@ elif mode == "🤖 LLM Assistant":
 
             if "```python" in response:
                 st.markdown("### 🧠 Assistant Generated Code:")
-                code_block = response.split("```python")[1].split("```")[0]
-                st.code(code_block, language="python")
                 try:
+                    code_block = response.split("```python")[1].split("```")[0]
+                    st.code(code_block, language="python")
                     local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
                     exec(code_block, {}, local_vars)
                 except Exception as exec_error:
@@ -1822,12 +1822,13 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**Assistant:** {a}")
 
     if uploaded_image:
-        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
+        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
         image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
         if image_question:
             try:
                 try:
                     import pytesseract
+                    pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
                 except ImportError:
                     st.warning("⚠️ OCR requires `pytesseract`. Please install it with `pip install pytesseract`.")
                     pytesseract = None
@@ -1848,6 +1849,7 @@ elif mode == "🤖 LLM Assistant":
             except Exception as ocr_error:
                 st.error(f"❌ OCR Error: {ocr_error}")
 
+                
 # Footer
 st.markdown("---")
 st.info("Switch between ML tasks and optimization demos using the sidebar.")
