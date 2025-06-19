@@ -1789,7 +1789,6 @@ elif mode == "🤖 LLM Assistant":
 
 
 
-
 # Footer
 st.markdown("---")
 st.info("Switch between ML tasks and optimization demos using the sidebar.")
