@@ -1431,6 +1431,13 @@ elif mode == "🌋 Optimization Playground":
             hess_func = sp.lambdify((x, y), hess_expr, modules=["numpy"])
             return np.array(hess_func(x0, y0))
 
+        # === Pull final values from session_state
+        start_x = st.session_state.get("start_x", -3.0)
+        start_y = st.session_state.get("start_y", 3.0)
+        lr = st.session_state.get("lr", 0.01)
+        steps = st.session_state.get("steps", 50)
+
+
         path = optimize_path(
             start_x, start_y,
             optimizer=optimizer,
