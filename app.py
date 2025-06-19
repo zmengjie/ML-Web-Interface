@@ -1831,10 +1831,12 @@ elif mode == "🤖 LLM Assistant":
             try:
                 try:
                     import pytesseract
+                    from PIL import Image
                     pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
                 except ImportError:
                     st.warning("⚠️ OCR requires `pytesseract`. Please install it with `pip install pytesseract`.")
                     pytesseract = None
+
 
                 from PIL import Image
                 img = Image.open(uploaded_image)
