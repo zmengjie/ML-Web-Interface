@@ -1505,7 +1505,12 @@ elif mode == "🌋 Optimization Playground":
 
         with col1:
             st.markdown("#### 📊 Optimizer Comparison")
-            selected_opts = st.multiselect("Optimizers", ["GradientDescent", "Adam", "RMSProp", "Newton's Method"], default=["GradientDescent", "Adam"], key="compare")
+            selected_opts = st.multiselect(
+                "Optimizers",
+                ["GradientDescent", "Adam", "RMSProp", "Newton's Method"],
+                default=["GradientDescent", "Adam"],
+                key="compare"
+            )
             fig_comp, ax_comp = plt.subplots(figsize=(4, 3))
 
             results = []
@@ -1523,18 +1528,21 @@ elif mode == "🌋 Optimization Playground":
                     hessian_f=hessian_f,
                     options=options
                 )
-            zs_coords = path_opt
-            zs_vals = [f_func(xp, yp) for xp, yp in zs_coords]
-            grad_norm = float(np.linalg.norm(grad_f(*zs_coords[-1])))
 
-            results.append((opt, zs_vals))
-            summary_results.append({
-                "Optimizer": opt,
-                "Final Value": np.round(zs_vals[-1], 4),
-                "Gradient Norm": np.round(grad_norm, 4),
-                "Steps": len(zs_vals)
-            })
-            results.sort(key=lambda x: x[1][-1])  # Sort by final loss
+                zs_coords = path_opt
+                zs_vals = [f_func(xp, yp) for xp, yp in zs_coords]
+                grad_norm = float(np.linalg.norm(grad_f(*zs_coords[-1])))
+
+                results.append((opt, zs_vals))
+                summary_results.append({
+                    "Optimizer": opt,
+                    "Final Value": np.round(zs_vals[-1], 4),
+                    "Gradient Norm": np.round(grad_norm, 4),
+                    "Steps": len(zs_vals)
+                })
+
+            # Sort results by final loss
+            results.sort(key=lambda x: x[1][-1])
 
             for opt, zs in results:
                 ax_comp.plot(zs, label=f"{opt} ({len(zs)} steps)", marker="o", markersize=2)
@@ -1546,9 +1554,11 @@ elif mode == "🌋 Optimization Playground":
             ax_comp.legend()
             st.pyplot(fig_comp)
 
+            # Show summary table
             st.markdown("#### 📋 Optimizer Summary Table")
             df_summary = pd.DataFrame(summary_results)
             st.dataframe(df_summary)
+
 
 
             st.markdown("#### 🔥 Gradient Norm Heatmap")
