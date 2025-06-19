@@ -1751,9 +1751,26 @@ elif mode == "🤖 LLM Assistant":
             try:
                 response = st.session_state.agent.run(user_input)
                 st.session_state.chat_history.append((user_input, response))
-                st.success(response)
+
+                # If response contains Python code block
+                if "```python" in response:
+                    st.markdown("### 🧠 Assistant Generated Code:")
+                    code_block = response.split("```python")[1].split("```")[0]
+                    st.code(code_block, language="python")
+
+                    try:
+                        # Execute code in local scope with access to `df` and `st`
+                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd}
+                        exec(code_block, {}, local_vars)
+                    except Exception as exec_error:
+                        st.error(f"⚠️ Code execution error: {exec_error}")
+                else:
+                    # Otherwise, show text
+                    st.success(response)
+
             except Exception as e:
-                st.error(f"❌ Error: {e}")
+                st.error(f"❌ LLM Error: {e}")
+
 
         # Display chat history
         if st.session_state.chat_history:
@@ -1763,6 +1780,11 @@ elif mode == "🤖 LLM Assistant":
                 st.markdown(f"**Assistant:** {a}")
     else:
         st.info("📂 Upload a dataset to activate the LLM assistant.")
+
+
+
+
+
 
 # Footer
 st.markdown("---")
