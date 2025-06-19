@@ -1272,7 +1272,7 @@ elif mode == "🌋 Optimization Playground":
                 default_lr, default_steps = best_lr, best_steps
 
             # Set in session_state
-            if "params_set" not in st.session_state:
+            if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
                 st.session_state.lr = default_lr
                 st.session_state.steps = default_steps
                 st.session_state.start_x = default_x
@@ -1509,6 +1509,8 @@ elif mode == "🌋 Optimization Playground":
             fig_comp, ax_comp = plt.subplots(figsize=(4, 3))
 
             results = []
+            summary_results = []
+
             for opt in selected_opts:
                 path_opt = optimize_path(
                     start_x,
@@ -1521,11 +1523,18 @@ elif mode == "🌋 Optimization Playground":
                     hessian_f=hessian_f,
                     options=options
                 )
-                zs = [f_func(xp, yp) for xp, yp in path_opt]
-                results.append((opt, zs))
+            zs_coords = path_opt
+            zs_vals = [f_func(xp, yp) for xp, yp in zs_coords]
+            grad_norm = float(np.linalg.norm(grad_f(*zs_coords[-1])))
 
-            # Optional: sort by final loss
-            results.sort(key=lambda x: x[1][-1])
+            results.append((opt, zs_vals))
+            summary_results.append({
+                "Optimizer": opt,
+                "Final Value": np.round(zs_vals[-1], 4),
+                "Gradient Norm": np.round(grad_norm, 4),
+                "Steps": len(zs_vals)
+            })
+            results.sort(key=lambda x: x[1][-1])  # Sort by final loss
 
             for opt, zs in results:
                 ax_comp.plot(zs, label=f"{opt} ({len(zs)} steps)", marker="o", markersize=2)
@@ -1536,6 +1545,11 @@ elif mode == "🌋 Optimization Playground":
             ax_comp.set_ylim(bottom=0)
             ax_comp.legend()
             st.pyplot(fig_comp)
+
+            st.markdown("#### 📋 Optimizer Summary Table")
+            df_summary = pd.DataFrame(summary_results)
+            st.dataframe(df_summary)
+
 
             st.markdown("#### 🔥 Gradient Norm Heatmap")
             norm_grad = np.sqrt((np.gradient(Z, axis=0))**2 + (np.gradient(Z, axis=1))**2)
