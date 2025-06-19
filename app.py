@@ -1366,7 +1366,7 @@ elif mode == "🌋 Optimization Playground":
                         auto_tune = False
                         st.info("ℹ️ Auto-tuning not supported for heuristic optimizers.")
                     else:
-                        auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True)
+                        auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
 
                     if mode == "Predefined" and auto_tune and optimizer in gradient_optimizers:
                         symbolic_func, _, _ = predefined_funcs[func_name]
