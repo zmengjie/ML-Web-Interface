@@ -1281,15 +1281,69 @@ elif mode == "🌋 Optimization Playground":
 
             # === Apply defaults from config
             key = (func_name, optimizer)
-            if mode == "Predefined" and auto_tune and key in default_config:
-                default_lr = default_config[key]["lr"]
-                default_steps = default_config[key]["steps"]
+            # if mode == "Predefined" and auto_tune and key in default_config:
+            #     default_lr = default_config[key]["lr"]
+            #     default_steps = default_config[key]["steps"]
+            #     default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
+            #     st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
+            # else:
+            #     default_lr = 0.001
+            #     default_steps = 50
+            #     default_x, default_y = -3.0, 3.0
+
+            def run_auto_tuning_simulation(f_func, optimizer, x0, y0, lr_grid=[0.001, 0.005, 0.01, 0.02], step_grid=[20, 30, 40, 50, 60]):
+                best_score = float("inf")
+                best_lr = lr_grid[0]
+                best_steps = step_grid[0]
+
+                for lr in lr_grid:
+                    for steps in step_grid:
+                        x_t, y_t = x0, y0
+                        m, v = np.zeros(2), np.zeros(2)
+                        beta1, beta2, eps = 0.9, 0.999, 1e-8
+                        for t in range(1, steps + 1):
+                            dx = (f_func(x_t + 1e-5, y_t) - f_func(x_t - 1e-5, y_t)) / 2e-5
+                            dy = (f_func(x_t, y_t + 1e-5) - f_func(x_t, y_t - 1e-5)) / 2e-5
+                            grad = np.array([dx, dy])
+
+                            if optimizer == "Adam":
+                                m = beta1 * m + (1 - beta1) * grad
+                                v = beta2 * v + (1 - beta2) * (grad ** 2)
+                                m_hat = m / (1 - beta1 ** t)
+                                v_hat = v / (1 - beta2 ** t)
+                                update = lr * m_hat / (np.sqrt(v_hat) + eps)
+                            elif optimizer == "RMSProp":
+                                v = beta2 * v + (1 - beta2) * (grad ** 2)
+                                update = lr * grad / (np.sqrt(v) + eps)
+                            else:  # GradientDescent
+                                update = lr * grad
+
+                            x_t -= update[0]
+                            y_t -= update[1]
+
+                        score = f_func(x_t, y_t)
+                        if score < best_score:
+                            best_score = score
+                            best_lr = lr
+                            best_steps = steps
+
+                return best_lr, best_steps
+
+            if mode == "Predefined" and auto_tune:
+                symbolic_func, _, _ = predefined_funcs[func_name]
+                f_lambdified = sp.lambdify((x, y), symbolic_func, "numpy")
+                
+                if optimizer in ["GradientDescent", "Adam", "RMSProp"]:
+                    best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, *start_xy_defaults.get(func_name, (-3.0, 3.0)))
+                else:
+                    # fallback to default config
+                    best_lr = default_config.get(key, {}).get("lr", 0.001)
+                    best_steps = default_config.get(key, {}).get("steps", 50)
+
+                default_lr = best_lr
+                default_steps = best_steps
                 default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
                 st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
-            else:
-                default_lr = 0.001
-                default_steps = 50
-                default_x, default_y = -3.0, 3.0
 
             # === Reset button and session state
             if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
