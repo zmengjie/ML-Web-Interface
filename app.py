@@ -1798,7 +1798,7 @@ elif mode == "🤖 LLM Assistant":
 
             if "```python" in response:
                 st.markdown("### 🧠 Assistant Generated Code:")
-                code_block = response.split("```python")[1].split("```")[0]
+                code_block = response.split("```python")[1].split("````)[0]
                 st.code(code_block, language="python")
                 try:
                     local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
@@ -1822,22 +1822,28 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**Assistant:** {a}")
 
     if uploaded_image:
-        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
+        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
         image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
         if image_question:
-            import pytesseract
-            from PIL import Image
-
             try:
-                img = Image.open(uploaded_image)
-                ocr_text = pytesseract.image_to_string(img)
-                st.markdown("### 📝 OCR Result")
-                st.text(ocr_text.strip())
+                try:
+                    import pytesseract
+                except ImportError:
+                    st.warning("⚠️ OCR requires `pytesseract`. Please install it with `pip install pytesseract`.")
+                    pytesseract = None
 
-                if api_key:
-                    llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-                    response = llm.predict(f"Image Text: {ocr_text}\n\nUser Question: {image_question}")
-                    st.markdown(f"**Assistant Response:** {response}")
+                from PIL import Image
+                img = Image.open(uploaded_image)
+
+                if pytesseract:
+                    ocr_text = pytesseract.image_to_string(img)
+                    st.markdown("### 📝 OCR Result")
+                    st.text(ocr_text.strip())
+
+                    if api_key:
+                        llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
+                        response = llm.predict(f"Image Text: {ocr_text}\n\nUser Question: {image_question}")
+                        st.markdown(f"**Assistant Response:** {response}")
 
             except Exception as ocr_error:
                 st.error(f"❌ OCR Error: {ocr_error}")
