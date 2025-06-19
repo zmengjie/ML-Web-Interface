@@ -1281,25 +1281,10 @@ elif mode == "🌋 Optimization Playground":
                 "Beale": (-2.0, 2.0)
             }
 
-            # === Apply defaults from config
-            # key = (func_name, optimizer)
-            # if mode == "Predefined" and auto_tune and key in default_config:
-            #     default_lr = default_config[key]["lr"]
-            #     default_steps = default_config[key]["steps"]
-            #     default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
-            #     if 'tune_msg_shown' not in st.session_state:
-            #         st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
-            #         st.session_state.tune_msg_shown = True
-
-            # else:
-            #     default_lr = 0.001
-            #     default_steps = 50
-            #     default_x, default_y = -3.0, 3.0
-
 
             def run_auto_tuning_simulation(
                 f_func, optimizer, x0, y0, 
-                lr_grid=[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02], 
+                lr_grid=list(np.logspace(-4, -1, 6)), 
                 step_grid=[20, 30, 40, 50, 60, 80], 
                 convergence_tol=1e-3, 
                 penalty_weight=1e-2
@@ -1307,8 +1292,7 @@ elif mode == "🌋 Optimization Playground":
                 best_score = float("inf")
                 best_lr = lr_grid[0]
                 best_steps = step_grid[0]
-
-                logs = []  # store all trials
+                logs = []
 
                 for lr in lr_grid:
                     for steps in step_grid:
@@ -1336,7 +1320,7 @@ elif mode == "🌋 Optimization Playground":
                             elif optimizer == "RMSProp":
                                 v = beta2 * v + (1 - beta2) * (grad ** 2)
                                 update = lr * grad / (np.sqrt(v) + eps)
-                            else:  # GradientDescent
+                            else:
                                 update = lr * grad
 
                             x_t -= update[0]
@@ -1360,8 +1344,6 @@ elif mode == "🌋 Optimization Playground":
                             best_lr = lr
                             best_steps = effective_steps
 
-                # Display results as table
-                import pandas as pd
                 df_log = pd.DataFrame(logs)
                 st.markdown("### 📊 Auto-Tuning Trial Log")
                 st.dataframe(df_log.sort_values("score").reset_index(drop=True))
@@ -1369,114 +1351,86 @@ elif mode == "🌋 Optimization Playground":
                 return best_lr, best_steps
 
 
-            # def run_auto_tuning_simulation(f_func, optimizer, x0, y0, lr_grid=[0.001, 0.005, 0.01, 0.02], step_grid=[20, 30, 40, 50, 60]):
-            #     best_score = float("inf")
-            #     best_lr = lr_grid[0]
-            #     best_steps = step_grid[0]
+            col_left, col_right = st.columns([1, 1])
 
-            #     for lr in lr_grid:
-            #         for steps in step_grid:
-            #             x_t, y_t = x0, y0
-            #             m, v = np.zeros(2), np.zeros(2)
-            #             beta1, beta2, eps = 0.9, 0.999, 1e-8
-            #             for t in range(1, steps + 1):
-            #                 dx = (f_func(x_t + 1e-5, y_t) - f_func(x_t - 1e-5, y_t)) / 2e-5
-            #                 dy = (f_func(x_t, y_t + 1e-5) - f_func(x_t, y_t - 1e-5)) / 2e-5
-            #                 grad = np.array([dx, dy])
 
-            #                 if optimizer == "Adam":
-            #                     m = beta1 * m + (1 - beta1) * grad
-            #                     v = beta2 * v + (1 - beta2) * (grad ** 2)
-            #                     m_hat = m / (1 - beta1 ** t)
-            #                     v_hat = v / (1 - beta2 ** t)
-            #                     update = lr * m_hat / (np.sqrt(v_hat) + eps)
-            #                 elif optimizer == "RMSProp":
-            #                     v = beta2 * v + (1 - beta2) * (grad ** 2)
-            #                     update = lr * grad / (np.sqrt(v) + eps)
-            #                 else:  # GradientDescent
-            #                     update = lr * grad
+            with col_left:
+                if func_name is not None:
+                    key = (func_name, optimizer)
+                    default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
+                    default_lr = default_config.get(key, {}).get("lr", 0.001)
+                    default_steps = default_config.get(key, {}).get("steps", 50)
 
-            #                 x_t -= update[0]
-            #                 y_t -= update[1]
+                    gradient_optimizers = ["GradientDescent", "Adam", "RMSProp"]
+                    if optimizer in ["Simulated Annealing", "Genetic Algorithm"]:
+                        auto_tune = False
+                        st.info("ℹ️ Auto-tuning not supported for heuristic optimizers.")
+                    else:
+                        auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True)
 
-            #             score = f_func(x_t, y_t)
-            #             if score < best_score:
-            #                 best_score = score
-            #                 best_lr = lr
-            #                 best_steps = steps
+                    if mode == "Predefined" and auto_tune and optimizer in gradient_optimizers:
+                        symbolic_func, _, _ = predefined_funcs[func_name]
 
-            #     return best_lr, best_steps
+                        # === FIX: substitute w if needed
+                        if func_name == "Multi-Objective":
+                            if 'w_val' not in locals():
+                                w_val = 0.5
+                            symbolic_func = symbolic_func.subs(w, w_val)
 
-# === Apply defaults from config first
-            key = (func_name, optimizer)
-            default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
-            default_lr = default_config.get(key, {}).get("lr", 0.001)
-            default_steps = default_config.get(key, {}).get("steps", 50)
+                        f_lambdified = sp.lambdify((x, y), symbolic_func, "numpy")
+                        best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, default_x, default_y)
+                        default_lr = best_lr
+                        default_steps = best_steps
 
-            # === Run auto-tuning if enabled
-            if mode == "Predefined" and auto_tune:
-                symbolic_func, _, _ = predefined_funcs[func_name]
-                f_lambdified = sp.lambdify((x, y), symbolic_func, "numpy")
+                        if 'tune_msg_shown' not in st.session_state:
+                            st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
+                            st.session_state.tune_msg_shown = True
 
-                if optimizer in ["GradientDescent", "Adam", "RMSProp"]:
-                    best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, default_x, default_y)
+                    if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
+                        st.session_state.lr = default_lr
+                        st.session_state.steps = default_steps
+                        st.session_state.start_x = default_x
+                        st.session_state.start_y = default_y
+                        st.session_state.params_set = True
+
+                    if 'prev_key' not in st.session_state:
+                        st.session_state.prev_key = None
+
+                    current_key = (func_name, optimizer)
+                    if auto_tune and current_key != st.session_state.prev_key:
+                        st.session_state.lr = default_lr
+                        st.session_state.steps = default_steps
+                        st.session_state.start_x = default_x
+                        st.session_state.start_y = default_y
+                        st.session_state.params_set = True
+                        st.session_state.tune_msg_shown = False
+                        st.session_state.prev_key = current_key
+
+                    lr_options = list(OrderedDict.fromkeys([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr]))
+                    if st.session_state.lr in lr_options:
+                        lr_index = lr_options.index(st.session_state.lr)
+                    else:
+                        lr_index = 0
+                    lr = st.selectbox("Learning Rate", lr_options, index=lr_index, key="lr")
+
+                    steps = st.slider("Steps", 0, 100, st.session_state.steps, key="steps")
+                    start_x = st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
+                    start_y = st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
+                    show_animation = st.checkbox("🎮 Animate Descent Steps")
+
+            with col_right:
+                st.markdown("### 📊 Auto-Tuning Trial Log")
+                if "df_log" in st.session_state:
+                    st.dataframe(st.session_state.df_log.sort_values("score").reset_index(drop=True))
+                    st.markdown("""
+                    **🧠 How to Read Score:**
+
+                    - `score = final_loss + penalty × steps`
+                    - ✅ Lower score is better (fast and accurate convergence).
+                    - Use this to compare learning rate and step configs.
+                    """)
                 else:
-                    best_lr = default_lr
-                    best_steps = default_steps
-
-                default_lr = best_lr
-                default_steps = best_steps
-
-                if 'tune_msg_shown' not in st.session_state:
-                    st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
-                    st.session_state.tune_msg_shown = True
-
-
-            # === Reset button and session state
-            if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
-                st.session_state.lr = default_lr
-                st.session_state.steps = default_steps
-                st.session_state.start_x = default_x
-                st.session_state.start_y = default_y
-                st.session_state.params_set = True
-
-            # Auto-reset when changing function or optimizer
-            if 'prev_key' not in st.session_state:
-                st.session_state.prev_key = None
-
-            current_key = (func_name, optimizer)
-            if auto_tune and current_key != st.session_state.prev_key:
-                st.session_state.lr = default_lr
-                st.session_state.steps = default_steps
-                st.session_state.start_x = default_x
-                st.session_state.start_y = default_y
-                st.session_state.params_set = True
-                st.session_state.tune_msg_shown = False 
-                st.session_state.prev_key = current_key
-
-
-            # === Final widgets using session state
-            # lr_options = sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1] + [default_lr]))
-            lr_options = sorted(set(
-                [0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1] +
-                ([default_lr] if 'default_lr' in locals() else [])
-            ))
-
-            # lr = st.selectbox("Learning Rate", lr_options, index=lr_options.index(st.session_state.lr), key="lr")
-
-            if st.session_state.lr in lr_options:
-                lr_index = lr_options.index(st.session_state.lr)
-            else:
-                lr_index = 0
-            lr = st.selectbox("Learning Rate", lr_options, index=lr_index, key="lr")
-
-
-            steps = st.slider("Steps", 0, 100, st.session_state.steps, key="steps")
-            start_x = st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
-            start_y = st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
-
-            show_animation = st.checkbox("🎮 Animate Descent Steps")
-                        
+                    st.info("Run auto-tuning to see results here.")        
 
         if mode == "Predefined":
             f_expr, constraints, description = predefined_funcs[func_name]
@@ -1489,6 +1443,7 @@ elif mode == "🌋 Optimization Playground":
             except:
                 st.error("Invalid expression.")
                 st.stop()
+
 
         st.markdown(f"### 📘 Function Description:\n> {description}")
 
