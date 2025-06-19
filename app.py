@@ -1829,19 +1829,21 @@ elif mode == "🤖 LLM Assistant":
         image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
         if image_question:
             try:
+                pytesseract_available = True
                 try:
                     import pytesseract
-                    from PIL import Image
                     pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
                 except ImportError:
+                    pytesseract_available = False
+
+                if not pytesseract_available:
                     st.warning("⚠️ OCR requires `pytesseract`. Please install it with `pip install pytesseract`.")
-                    pytesseract = None
 
 
                 from PIL import Image
                 img = Image.open(uploaded_image)
 
-                if pytesseract:
+                if pytesseract_available:
                     ocr_text = pytesseract.image_to_string(img)
                     st.markdown("### 📝 OCR Result")
                     st.text(ocr_text.strip())
