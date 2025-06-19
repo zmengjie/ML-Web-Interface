@@ -1717,14 +1717,53 @@ elif mode == "🤖 LLM Assistant":
 
         # Suggested Prompts
         st.markdown("### 💡 Suggested Prompts")
-        st.markdown("- What are the most correlated features?\n"
-                    "- Show a summary of missing values\n"
-                    "- Which features influence the target most?\n"
-                    "- What kind of plot would help visualize X vs Y?")
+        st.markdown("""
+        - What are the most correlated features?
+        - Show a summary of missing values
+        - Which features influence the target most?
+        - What kind of plot would help visualize X vs Y?
+        - Can you generate a histogram of column X?
+        - Show pairwise plots for selected features
+        - Predict the target using linear regression
+        - Detect outliers or anomalies in the data
+        """)
 
-        # Setup API key
-        if "OPENAI_API_KEY" not in os.environ:
-            st.warning("⚠️ Please set your OpenAI API key using `os.environ['OPENAI_API_KEY'] = 'sk-...'`")
+        # Chart Selector
+        st.markdown("### 📈 Custom Chart Generator")
+        chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
+        x_col = st.selectbox("X-axis Column", df.columns)
+        y_col = st.selectbox("Y-axis Column", df.columns)
+        if st.button("Generate Chart"):
+            fig, ax = plt.subplots()
+            if chart_type == "Line":
+                ax.plot(df[x_col], df[y_col])
+            elif chart_type == "Bar":
+                ax.bar(df[x_col], df[y_col])
+            elif chart_type == "Scatter":
+                ax.scatter(df[x_col], df[y_col])
+            elif chart_type == "Histogram":
+                ax.hist(df[x_col], bins=20)
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+            st.pyplot(fig)
+
+        # Data Export
+        st.markdown("### 💾 Export Data")
+        file_name = st.text_input("Output file name (without extension)", "my_data")
+        if st.button("Download as CSV"):
+            tmp_csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="📥 Download Processed CSV",
+                data=tmp_csv,
+                file_name=f"{file_name}.csv",
+                mime="text/csv"
+            )
+
+        # Setup API key from environment
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
+            st.stop()
 
         # Initialize chat history
         if "chat_history" not in st.session_state:
@@ -1733,7 +1772,11 @@ elif mode == "🤖 LLM Assistant":
         # Load LLM and agent only once
         if "agent_ready" not in st.session_state:
             try:
-                llm = ChatOpenAI(temperature=0)
+                llm = ChatOpenAI(
+                    temperature=0,
+                    openai_api_key=api_key,
+                    model="gpt-4"
+                )
                 st.session_state.agent = create_pandas_dataframe_agent(
                     llm,
                     df,
@@ -1761,13 +1804,16 @@ elif mode == "🤖 LLM Assistant":
                     st.code(code_block, language="python")
 
                     try:
-                        # Execute code with access to `df`, `st`, and plotting
-                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np}
+                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
                         exec(code_block, {}, local_vars)
                     except Exception as exec_error:
                         st.error(f"⚠️ Code execution error: {exec_error}")
                 else:
-                    st.success(response)
+                    st.markdown(f"""
+                    <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+                        {response}
+                    </div>
+                    """, unsafe_allow_html=True)
 
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
@@ -1779,14 +1825,30 @@ elif mode == "🤖 LLM Assistant":
                 st.markdown(f"**You:** {q}")
                 st.markdown(f"**Assistant:** {a}")
 
-        # Optional image handler (future extension)
+        # Optional image handler with OCR (Tesseract-based)
         if uploaded_image:
             st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
-            st.info("🧪 In future, image understanding (OCR / captioning) will be enabled here.")
+            image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
+            if image_question:
+                import pytesseract
+                from PIL import Image
+
+                try:
+                    img = Image.open(uploaded_image)
+                    ocr_text = pytesseract.image_to_string(img)
+                    st.markdown("### 📝 OCR Result")
+                    st.text(ocr_text.strip())
+
+                    if api_key:
+                        llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
+                        response = llm.predict(f"Image Text: {ocr_text}\n\nUser Question: {image_question}")
+                        st.markdown(f"**Assistant Response:** {response}")
+
+                except Exception as ocr_error:
+                    st.error(f"❌ OCR Error: {ocr_error}")
 
     else:
         st.info("📂 Upload a dataset to activate the LLM assistant.")
-
 
 
 # Footer
