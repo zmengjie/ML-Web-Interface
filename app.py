@@ -1181,12 +1181,38 @@ elif mode == "🌋 Optimization Playground":
 
 
     # 🧠 Optimizer Category Info Block (Outside main expander)
-    with st.expander("🧠 Optimizer Category Info", expanded=False):
-        st.markdown("**Gradient-based Optimizers:** Use derivatives to guide updates.\n\n"
-                    "- GradientDescent\n- Adam\n- RMSProp\n- Newton's Method")
-        st.markdown("**Heuristic Optimizers:** Use probabilistic or population-based strategies.\n\n"
-                    "- Simulated Annealing\n- Genetic Algorithm")
-        
+    with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
+        st.markdown("""
+        ### 🤖 Optimizer Categories
+
+        **Gradient-based Optimizers** use derivatives (gradients) to guide updates:
+
+        - **GradientDescent**: Basic steepest descent using learning rate.
+        - **Adam**: Adaptive learning rates with momentum (recommended for noisy or sparse gradients).
+        - **RMSProp**: Like Adam but simpler; adjusts step size based on recent gradient magnitudes.
+        - **Newton's Method**: Uses second-order derivatives (Hessian) for faster convergence, but may be unstable near saddle points.
+
+        **Heuristic Optimizers** use stochastic or evolutionary strategies:
+
+        - **Simulated Annealing**: Explores search space with temperature-based random steps. Good for escaping local minima.
+        - **Genetic Algorithm**: Population-based method inspired by natural evolution. Effective for complex, non-differentiable functions.
+
+        ---
+        ### 🎮 How to Use the Playground
+
+        - **1. Choose a function** from the dropdown.
+        - **2. Select an optimizer** and tune parameters like learning rate or mutation strength.
+        - **3. Try enabling _Auto-Tune_** to automatically pick good learning rate + steps.
+        - **4. Adjust initial x/y** starting positions to see how descent paths change.
+        - **5. Toggle _"Animate Descent"_** to visualize how the optimizer moves step-by-step.
+        - **6. Compare optimizers** in the **"Diagnostic Tools"** section using convergence plots and summary tables.
+
+        > 🧪 Try Newton's Method on **Quadratic Bowl** for fast convergence, or test **Genetic Algorithm** on **Rastrigin** to explore multimodal search.
+
+        ---
+        ⚠️ *Note:* Gradient-based methods require a smooth function. Use heuristic optimizers for discontinuous or non-differentiable objectives.
+        """)
+
         
     with st.expander("🚀 Optimizer Visual Playground", expanded=True):
         col_left, col_right = st.columns([1, 1])
