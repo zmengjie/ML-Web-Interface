@@ -1285,6 +1285,8 @@ elif mode == "🌋 Optimization Playground":
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
             st.checkbox("🎮 Animate Descent Steps")
+            show_animation = st.checkbox("🎮 Animate Descent Steps", key="show_animation")
+
 
         with col_right:
             st.markdown("### 📊 Auto-Tuning Trial Log")
@@ -1608,59 +1610,6 @@ elif mode == "🌋 Optimization Playground":
             else:
                 st.info("No constraints defined.")
     
-
-    # with st.expander("📊 Optimizer Comparison Table", expanded=True):
-    #     st.markdown("Automatically comparing optimizers using final value, gradient norm, and step count.")
-
-    #     selected_opts = st.multiselect(
-    #         "Optimizers", 
-    #         ["GradientDescent", "Adam", "RMSProp", "Newton's Method"],
-    #         default=["GradientDescent", "Adam"],
-    #         key="compare"
-    #     )
-
-    #     fig_comp, ax_comp = plt.subplots(figsize=(4, 3))
-    #     all_results = []
-
-    #     for opt in selected_opts:
-    #         path_opt = optimize_path(
-    #             start_x,
-    #             start_y,
-    #             optimizer=opt,
-    #             lr=lr,
-    #             steps=steps,
-    #             f_func=f_func,
-    #             grad_f=grad_f,
-    #             hessian_f=hessian_f,
-    #             options=options
-    #         )
-    #         zs = [f_func(xp, yp) for xp, yp in path_opt]
-    #         final_val = zs[-1]
-    #         grad_norm = float(np.linalg.norm(grad_f(*path_opt[-1])))
-
-    #         # Save for table
-    #         all_results.append({
-    #             "Optimizer": opt,
-    #             "Final Value": np.round(final_val, 4),
-    #             "Gradient Norm": np.round(grad_norm, 4),
-    #             "Steps": len(zs)
-    #         })
-
-    #         # Plot
-    #         ax_comp.plot(zs, label=f"{opt} ({len(zs)} steps)", marker="o", markersize=2)
-
-    #     ax_comp.set_title("Convergence")
-    #     ax_comp.set_xlabel("Step")
-    #     ax_comp.set_ylabel("f(x, y)")
-    #     ax_comp.set_ylim(bottom=0)
-    #     ax_comp.legend()
-    #     st.pyplot(fig_comp)
-
-    #     # Table
-    #     df_results = pd.DataFrame(all_results)
-    #     st.dataframe(df_results)
-
-
 
     # === Symbolic Analysis: KKT, Gradient & Hessian ===
     with st.expander("📐 Symbolic Analysis: KKT, Gradient & Hessian", expanded=False):
