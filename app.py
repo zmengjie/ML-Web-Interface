@@ -1798,7 +1798,7 @@ elif mode == "🤖 LLM Assistant":
 
             if "```python" in response:
                 st.markdown("### 🧠 Assistant Generated Code:")
-                code_block = response.split("```python")[1].split("````)[0]
+                code_block = response.split("```python")[1].split("```")[0]
                 st.code(code_block, language="python")
                 try:
                     local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
