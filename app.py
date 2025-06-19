@@ -1368,7 +1368,12 @@ elif mode == "🌋 Optimization Playground":
 
 
             # === Final widgets using session state
-            lr_options = sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1] + [default_lr]))
+            # lr_options = sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1] + [default_lr]))
+            lr_options = sorted(set(
+                [0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1] +
+                ([default_lr] if 'default_lr' in locals() else [])
+            ))
+
             lr = st.selectbox("Learning Rate", lr_options, index=lr_options.index(st.session_state.lr), key="lr")
 
             steps = st.slider("Steps", 0, 100, st.session_state.steps, key="steps")
