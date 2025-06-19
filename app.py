@@ -1743,7 +1743,7 @@ elif mode == "🤖 LLM Assistant":
                 ax.hist(df[x_col], bins=20)
             ax.set_xlabel(x_col)
             ax.set_ylabel(y_col)
-            st.pyplot(fig)
+            st.pyplot(fig, use_container_width=True)
 
         st.markdown("### 💾 Export Data")
         file_name = st.text_input("Output file name (without extension)", "my_data")
@@ -1799,10 +1799,13 @@ elif mode == "🤖 LLM Assistant":
             if "```python" in response:
                 st.markdown("### 🧠 Assistant Generated Code:")
                 try:
-                    code_block = response.split("```python")[1].split("```")[0]
-                    st.code(code_block, language="python")
-                    local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
-                    exec(code_block, {}, local_vars)
+                    import re
+                    code_blocks = re.findall(r"```python(.*?)```", response, re.DOTALL)
+                    if code_blocks:
+                        code_block = code_blocks[0].strip()
+                        st.code(code_block, language="python")
+                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
+                        exec(code_block, {}, local_vars)
                 except Exception as exec_error:
                     st.error(f"⚠️ Code execution error: {exec_error}")
             else:
@@ -1822,7 +1825,7 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**Assistant:** {a}")
 
     if uploaded_image:
-        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
         image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
         if image_question:
             try:
@@ -1849,7 +1852,6 @@ elif mode == "🤖 LLM Assistant":
             except Exception as ocr_error:
                 st.error(f"❌ OCR Error: {ocr_error}")
 
-                
 # Footer
 st.markdown("---")
 st.info("Switch between ML tasks and optimization demos using the sidebar.")
