@@ -1297,13 +1297,18 @@ elif mode == "🌋 Optimization Playground":
             #     default_x, default_y = -3.0, 3.0
 
 
-            def run_auto_tuning_simulation(f_func, optimizer, x0, y0, 
-                                            lr_grid=[0.001, 0.005, 0.01, 0.02], 
-                                            step_grid=[20, 30, 40, 50, 60], 
-                                            convergence_tol=1e-3, penalty_weight=1e-2):
+            def run_auto_tuning_simulation(
+                f_func, optimizer, x0, y0, 
+                lr_grid=[0.0001, 0.0005, 0.001, 0.005, 0.01, 0.02], 
+                step_grid=[20, 30, 40, 50, 60, 80], 
+                convergence_tol=1e-3, 
+                penalty_weight=1e-2
+            ):
                 best_score = float("inf")
                 best_lr = lr_grid[0]
                 best_steps = step_grid[0]
+
+                logs = []  # store all trials
 
                 for lr in lr_grid:
                     for steps in step_grid:
@@ -1341,12 +1346,28 @@ elif mode == "🌋 Optimization Playground":
                         effective_steps = t if converged else steps
                         score = final_loss + penalty_weight * effective_steps
 
+                        logs.append({
+                            "lr": lr,
+                            "steps": steps,
+                            "effective_steps": effective_steps,
+                            "final_loss": final_loss,
+                            "score": score,
+                            "converged": converged
+                        })
+
                         if score < best_score:
                             best_score = score
                             best_lr = lr
                             best_steps = effective_steps
 
+                # Display results as table
+                import pandas as pd
+                df_log = pd.DataFrame(logs)
+                st.markdown("### 📊 Auto-Tuning Trial Log")
+                st.dataframe(df_log.sort_values("score").reset_index(drop=True))
+
                 return best_lr, best_steps
+
 
             # def run_auto_tuning_simulation(f_func, optimizer, x0, y0, lr_grid=[0.001, 0.005, 0.01, 0.02], step_grid=[20, 30, 40, 50, 60]):
             #     best_score = float("inf")
@@ -1430,6 +1451,7 @@ elif mode == "🌋 Optimization Playground":
                 st.session_state.start_x = default_x
                 st.session_state.start_y = default_y
                 st.session_state.params_set = True
+                st.session_state.tune_msg_shown = False 
                 st.session_state.prev_key = current_key
 
 
