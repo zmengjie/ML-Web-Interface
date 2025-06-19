@@ -1190,6 +1190,8 @@ elif mode == "🌋 Optimization Playground":
     with st.expander("🚀 Optimizer Visual Playground", expanded=True):
         col_sidebar, col_main = st.columns([1, 3])
 
+
+
         with col_sidebar:
             # st.markdown("## ⚙️ Configuration")
             st.markdown("<h4>⚙️ Configuration</h4>", unsafe_allow_html=True)
@@ -1281,15 +1283,15 @@ elif mode == "🌋 Optimization Playground":
 
             # === Apply defaults from config
             key = (func_name, optimizer)
-            # if mode == "Predefined" and auto_tune and key in default_config:
-            #     default_lr = default_config[key]["lr"]
-            #     default_steps = default_config[key]["steps"]
-            #     default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
-            #     st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
-            # else:
-            #     default_lr = 0.001
-            #     default_steps = 50
-            #     default_x, default_y = -3.0, 3.0
+            if mode == "Predefined" and auto_tune and key in default_config:
+                default_lr = default_config[key]["lr"]
+                default_steps = default_config[key]["steps"]
+                default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
+                st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
+            else:
+                default_lr = 0.001
+                default_steps = 50
+                default_x, default_y = -3.0, 3.0
 
             def run_auto_tuning_simulation(f_func, optimizer, x0, y0, lr_grid=[0.001, 0.005, 0.01, 0.02], step_grid=[20, 30, 40, 50, 60]):
                 best_score = float("inf")
@@ -1374,7 +1376,14 @@ elif mode == "🌋 Optimization Playground":
                 ([default_lr] if 'default_lr' in locals() else [])
             ))
 
-            lr = st.selectbox("Learning Rate", lr_options, index=lr_options.index(st.session_state.lr), key="lr")
+            # lr = st.selectbox("Learning Rate", lr_options, index=lr_options.index(st.session_state.lr), key="lr")
+            
+            if st.session_state.lr in lr_options:
+                lr_index = lr_options.index(st.session_state.lr)
+            else:
+                lr_index = 0
+            lr = st.selectbox("Learning Rate", lr_options, index=lr_index, key="lr")
+
 
             steps = st.slider("Steps", 0, 100, st.session_state.steps, key="steps")
             start_x = st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
