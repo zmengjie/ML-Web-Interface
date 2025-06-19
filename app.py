@@ -1703,7 +1703,9 @@ elif mode == "🌋 Optimization Playground":
 # === LLM Assistant ===
 elif mode == "🤖 LLM Assistant":
     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
+
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
+    uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
 
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
@@ -1736,9 +1738,9 @@ elif mode == "🤖 LLM Assistant":
                     llm,
                     df,
                     verbose=True,
-                    agent_type="openai-tools",  # optional
+                    agent_type="openai-tools",
                     handle_parsing_errors=True,
-                    allow_dangerous_code=True   # ⚠️ Needed to allow python code execution
+                    allow_dangerous_code=True
                 )
                 st.session_state.agent_ready = True
             except Exception as e:
@@ -1759,18 +1761,16 @@ elif mode == "🤖 LLM Assistant":
                     st.code(code_block, language="python")
 
                     try:
-                        # Execute code in local scope with access to `df` and `st`
-                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd}
+                        # Execute code with access to `df`, `st`, and plotting
+                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np}
                         exec(code_block, {}, local_vars)
                     except Exception as exec_error:
                         st.error(f"⚠️ Code execution error: {exec_error}")
                 else:
-                    # Otherwise, show text
                     st.success(response)
 
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
-
 
         # Display chat history
         if st.session_state.chat_history:
@@ -1778,10 +1778,14 @@ elif mode == "🤖 LLM Assistant":
             for q, a in st.session_state.chat_history[::-1]:
                 st.markdown(f"**You:** {q}")
                 st.markdown(f"**Assistant:** {a}")
+
+        # Optional image handler (future extension)
+        if uploaded_image:
+            st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+            st.info("🧪 In future, image understanding (OCR / captioning) will be enabled here.")
+
     else:
         st.info("📂 Upload a dataset to activate the LLM assistant.")
-
-
 
 
 
