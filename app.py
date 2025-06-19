@@ -1284,7 +1284,7 @@ elif mode == "🌋 Optimization Playground":
             steps = st.slider("Steps", 10, 100, st.session_state.steps, key="steps")
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
-            st.checkbox("🎮 Animate Descent Steps")
+            # st.checkbox("🎮 Animate Descent Steps")
             show_animation = st.checkbox("🎮 Animate Descent Steps", key="show_animation")
 
 
