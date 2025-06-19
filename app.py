@@ -1707,15 +1707,14 @@ elif mode == "🤖 LLM Assistant":
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
 
+    df = None
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
         st.write("### 📄 Data Preview", df.head())
 
-        # Auto EDA Summary
         st.write("### 📊 Summary Statistics")
         st.dataframe(df.describe(include='all'))
 
-        # Suggested Prompts
         st.markdown("### 💡 Suggested Prompts")
         st.markdown("""
         - What are the most correlated features?
@@ -1728,7 +1727,6 @@ elif mode == "🤖 LLM Assistant":
         - Detect outliers or anomalies in the data
         """)
 
-        # Chart Selector
         st.markdown("### 📈 Custom Chart Generator")
         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
         x_col = st.selectbox("X-axis Column", df.columns)
@@ -1747,7 +1745,6 @@ elif mode == "🤖 LLM Assistant":
             ax.set_ylabel(y_col)
             st.pyplot(fig)
 
-        # Data Export
         st.markdown("### 💾 Export Data")
         file_name = st.text_input("Output file name (without extension)", "my_data")
         if st.button("Download as CSV"):
@@ -1759,24 +1756,22 @@ elif mode == "🤖 LLM Assistant":
                 mime="text/csv"
             )
 
-        # Setup API key from environment
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
-            st.stop()
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
+        st.stop()
 
-        # Initialize chat history
-        if "chat_history" not in st.session_state:
-            st.session_state.chat_history = []
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
 
-        # Load LLM and agent only once
-        if "agent_ready" not in st.session_state:
-            try:
-                llm = ChatOpenAI(
-                    temperature=0,
-                    openai_api_key=api_key,
-                    model="gpt-4"
-                )
+    if "agent_ready" not in st.session_state:
+        try:
+            llm = ChatOpenAI(
+                temperature=0,
+                openai_api_key=api_key,
+                model="gpt-4"
+            )
+            if df is not None:
                 st.session_state.agent = create_pandas_dataframe_agent(
                     llm,
                     df,
@@ -1785,71 +1780,67 @@ elif mode == "🤖 LLM Assistant":
                     handle_parsing_errors=True,
                     allow_dangerous_code=True
                 )
-                st.session_state.agent_ready = True
-            except Exception as e:
-                st.error(f"Agent failed to load: {e}")
-                st.stop()
+            else:
+                st.session_state.agent = llm
+            st.session_state.agent_ready = True
+        except Exception as e:
+            st.error(f"Agent failed to load: {e}")
+            st.stop()
 
-        # Ask a question
-        user_input = st.text_input("💬 Ask something about your dataset:")
-        if user_input:
-            try:
+    user_input = st.text_input("💬 Ask something (about your data or image):")
+    if user_input:
+        try:
+            if df is not None:
                 response = st.session_state.agent.run(user_input)
-                st.session_state.chat_history.append((user_input, response))
+            else:
+                response = st.session_state.agent.predict(user_input)
+            st.session_state.chat_history.append((user_input, response))
 
-                # If response contains Python code block
-                if "```python" in response:
-                    st.markdown("### 🧠 Assistant Generated Code:")
-                    code_block = response.split("```python")[1].split("```")[0]
-                    st.code(code_block, language="python")
-
-                    try:
-                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
-                        exec(code_block, {}, local_vars)
-                    except Exception as exec_error:
-                        st.error(f"⚠️ Code execution error: {exec_error}")
-                else:
-                    st.markdown(f"""
-                    <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-                        {response}
-                    </div>
-                    """, unsafe_allow_html=True)
-
-            except Exception as e:
-                st.error(f"❌ LLM Error: {e}")
-
-        # Display chat history
-        if st.session_state.chat_history:
-            st.markdown("### 📜 Chat History")
-            for q, a in st.session_state.chat_history[::-1]:
-                st.markdown(f"**You:** {q}")
-                st.markdown(f"**Assistant:** {a}")
-
-        # Optional image handler with OCR (Tesseract-based)
-        if uploaded_image:
-            st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
-            image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
-            if image_question:
-                import pytesseract
-                from PIL import Image
-
+            if "```python" in response:
+                st.markdown("### 🧠 Assistant Generated Code:")
+                code_block = response.split("```python")[1].split("```")[0]
+                st.code(code_block, language="python")
                 try:
-                    img = Image.open(uploaded_image)
-                    ocr_text = pytesseract.image_to_string(img)
-                    st.markdown("### 📝 OCR Result")
-                    st.text(ocr_text.strip())
+                    local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
+                    exec(code_block, {}, local_vars)
+                except Exception as exec_error:
+                    st.error(f"⚠️ Code execution error: {exec_error}")
+            else:
+                st.markdown(f"""
+                <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+                    {response}
+                </div>
+                """, unsafe_allow_html=True)
 
-                    if api_key:
-                        llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-                        response = llm.predict(f"Image Text: {ocr_text}\n\nUser Question: {image_question}")
-                        st.markdown(f"**Assistant Response:** {response}")
+        except Exception as e:
+            st.error(f"❌ LLM Error: {e}")
 
-                except Exception as ocr_error:
-                    st.error(f"❌ OCR Error: {ocr_error}")
+    if st.session_state.chat_history:
+        st.markdown("### 📜 Chat History")
+        for q, a in st.session_state.chat_history[::-1]:
+            st.markdown(f"**You:** {q}")
+            st.markdown(f"**Assistant:** {a}")
 
-    else:
-        st.info("📂 Upload a dataset to activate the LLM assistant.")
+    if uploaded_image:
+        st.image(uploaded_image, caption="Uploaded Image", use_column_width=True)
+        image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
+        if image_question:
+            import pytesseract
+            from PIL import Image
 
+            try:
+                img = Image.open(uploaded_image)
+                ocr_text = pytesseract.image_to_string(img)
+                st.markdown("### 📝 OCR Result")
+                st.text(ocr_text.strip())
+
+                if api_key:
+                    llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
+                    response = llm.predict(f"Image Text: {ocr_text}\n\nUser Question: {image_question}")
+                    st.markdown(f"**Assistant Response:** {response}")
+
+            except Exception as ocr_error:
+                st.error(f"❌ OCR Error: {ocr_error}")
 
 # Footer
 st.markdown("---")
