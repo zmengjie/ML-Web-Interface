@@ -1851,35 +1851,6 @@ elif mode == "🤖 LLM Assistant":
         - Detect outliers or anomalies in the data
         """)
 
-        st.markdown("### 📈 Custom Chart Generator")
-        chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
-        x_col = st.selectbox("X-axis Column", df.columns)
-        y_col = st.selectbox("Y-axis Column", df.columns)
-        if st.button("Generate Chart"):
-            fig, ax = plt.subplots()
-            if chart_type == "Line":
-                ax.plot(df[x_col], df[y_col])
-            elif chart_type == "Bar":
-                ax.bar(df[x_col], df[y_col])
-            elif chart_type == "Scatter":
-                ax.scatter(df[x_col], df[y_col])
-            elif chart_type == "Histogram":
-                ax.hist(df[x_col], bins=20)
-            ax.set_xlabel(x_col)
-            ax.set_ylabel(y_col)
-            st.pyplot(fig, use_container_width=True)
-
-        st.markdown("### 💾 Export Data")
-        file_name = st.text_input("Output file name (without extension)", "my_data")
-        if st.button("Download as CSV"):
-            tmp_csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button(
-                label="📥 Download Processed CSV",
-                data=tmp_csv,
-                file_name=f"{file_name}.csv",
-                mime="text/csv"
-            )
-
     # === LLM Chat ===
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
@@ -1919,6 +1890,37 @@ elif mode == "🤖 LLM Assistant":
                 """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
+                
+        st.markdown("### 📈 Custom Chart Generator")
+        chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
+        x_col = st.selectbox("X-axis Column", df.columns)
+        y_col = st.selectbox("Y-axis Column", df.columns)
+        if st.button("Generate Chart"):
+            fig, ax = plt.subplots()
+            if chart_type == "Line":
+                ax.plot(df[x_col], df[y_col])
+            elif chart_type == "Bar":
+                ax.bar(df[x_col], df[y_col])
+            elif chart_type == "Scatter":
+                ax.scatter(df[x_col], df[y_col])
+            elif chart_type == "Histogram":
+                ax.hist(df[x_col], bins=20)
+            ax.set_xlabel(x_col)
+            ax.set_ylabel(y_col)
+            st.pyplot(fig, use_container_width=True)
+
+        st.markdown("### 💾 Export Data")
+        file_name = st.text_input("Output file name (without extension)", "my_data")
+        if st.button("Download as CSV"):
+            tmp_csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button(
+                label="📥 Download Processed CSV",
+                data=tmp_csv,
+                file_name=f"{file_name}.csv",
+                mime="text/csv"
+            )
+
+
 
     if st.session_state.chat_history:
         st.markdown("### 📜 Chat History")
