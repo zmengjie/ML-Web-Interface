@@ -1701,177 +1701,15 @@ elif mode == "🌋 Optimization Playground":
     # === Newton Method Info ===
 
 # === LLM Assistant ===
-# elif mode == "🤖 LLM Assistant":
-#     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
-
-#     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
-#     uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
-
-#     df = None
-#     if uploaded_file:
-#         df = pd.read_csv(uploaded_file)
-#         st.write("### 📄 Data Preview", df.head())
-
-#         st.write("### 📊 Summary Statistics")
-#         st.dataframe(df.describe(include='all'))
-
-#         st.markdown("### 💡 Suggested Prompts")
-#         st.markdown("""
-#         - What are the most correlated features?
-#         - Show a summary of missing values
-#         - Which features influence the target most?
-#         - What kind of plot would help visualize X vs Y?
-#         - Can you generate a histogram of column X?
-#         - Show pairwise plots for selected features
-#         - Predict the target using linear regression
-#         - Detect outliers or anomalies in the data
-#         """)
-
-#         st.markdown("### 📈 Custom Chart Generator")
-#         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
-#         x_col = st.selectbox("X-axis Column", df.columns)
-#         y_col = st.selectbox("Y-axis Column", df.columns)
-#         if st.button("Generate Chart"):
-#             fig, ax = plt.subplots()
-#             if chart_type == "Line":
-#                 ax.plot(df[x_col], df[y_col])
-#             elif chart_type == "Bar":
-#                 ax.bar(df[x_col], df[y_col])
-#             elif chart_type == "Scatter":
-#                 ax.scatter(df[x_col], df[y_col])
-#             elif chart_type == "Histogram":
-#                 ax.hist(df[x_col], bins=20)
-#             ax.set_xlabel(x_col)
-#             ax.set_ylabel(y_col)
-#             st.pyplot(fig, use_container_width=True)
-
-#         st.markdown("### 💾 Export Data")
-#         file_name = st.text_input("Output file name (without extension)", "my_data")
-#         if st.button("Download as CSV"):
-#             tmp_csv = df.to_csv(index=False).encode("utf-8")
-#             st.download_button(
-#                 label="📥 Download Processed CSV",
-#                 data=tmp_csv,
-#                 file_name=f"{file_name}.csv",
-#                 mime="text/csv"
-#             )
-
-#     api_key = os.getenv("OPENAI_API_KEY")
-#     if not api_key:
-#         st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
-#         st.stop()
-
-#     if "chat_history" not in st.session_state:
-#         st.session_state.chat_history = []
-
-#     if "agent_ready" not in st.session_state:
-#         try:
-#             llm = ChatOpenAI(
-#                 temperature=0,
-#                 openai_api_key=api_key,
-#                 model="gpt-4"
-#             )
-#             if df is not None:
-#                 st.session_state.agent = create_pandas_dataframe_agent(
-#                     llm,
-#                     df,
-#                     verbose=True,
-#                     agent_type="openai-tools",
-#                     handle_parsing_errors=True,
-#                     allow_dangerous_code=True
-#                 )
-#             else:
-#                 st.session_state.agent = llm
-#             st.session_state.agent_ready = True
-#         except Exception as e:
-#             st.error(f"Agent failed to load: {e}")
-#             st.stop()
-
-#     user_input = st.text_input("💬 Ask something (about your data or image):")
-#     if user_input:
-#         try:
-#             if hasattr(st.session_state.agent, "run"):
-#                 response = st.session_state.agent.run(user_input)
-#             else:
-#                 response = st.session_state.agent.predict(user_input)
-
-#             st.session_state.chat_history.append((user_input, response))
-
-#             if "```python" in response:
-#                 st.markdown("### 🧠 Assistant Generated Code:")
-#                 try:
-#                     import re
-#                     code_blocks = re.findall(r"```python(.*?)```", response, re.DOTALL)
-#                     if code_blocks:
-#                         code_block = code_blocks[0].strip()
-#                         st.code(code_block, language="python")
-#                         local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
-#                         exec(code_block, {}, local_vars)
-#                 except Exception as exec_error:
-#                     st.error(f"⚠️ Code execution error: {exec_error}")
-#             else:
-#                 st.markdown(f"""
-#                 <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-#                     {response}
-#                 </div>
-#                 """, unsafe_allow_html=True)
-
-#         except Exception as e:
-#             st.error(f"❌ LLM Error: {e}")
-
-#     if st.session_state.chat_history:
-#         st.markdown("### 📜 Chat History")
-#         for q, a in st.session_state.chat_history[::-1]:
-#             st.markdown(f"**You:** {q}")
-#             st.markdown(f"**Assistant:** {a}")
-
-#     if uploaded_image:
-#         from PIL import Image
-#         from transformers import BlipProcessor, BlipForConditionalGeneration
-
-#         st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
-#         image_question = st.text_input("🧠 Ask a question about the image:")
-
-#         try:
-#             # Load BLIP model
-#             processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-#             model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-
-#             # Caption generation
-#             img = Image.open(uploaded_image).convert("RGB")
-#             inputs = processor(img, return_tensors="pt")
-#             out = model.generate(**inputs)
-#             caption = processor.decode(out[0], skip_special_tokens=True)
-
-#             st.markdown("### 🖼️ Image Caption")
-#             st.success(caption)
-
-#             if image_question:
-#                 # Ask GPT about the caption
-#                 if api_key:
-#                     llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-#                     response = llm.predict(f"Image Description: {caption}\n\nUser Question: {image_question}")
-#                     st.markdown(f"**Assistant Response:** {response}")
-#                 else:
-#                     st.warning("OpenAI API key missing. Cannot process your question.")
-#         except Exception as e:
-#             st.error(f"⚠️ BLIP image analysis failed: {e}")
-
-elif mode == "🧐 LLM Assistant":
-    st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
+elif mode == "🤖 LLM Assistant":
+    st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
 
-    # Persist uploads
-    if uploaded_file:
-        st.session_state.uploaded_file = uploaded_file
-    if uploaded_image:
-        st.session_state.uploaded_image = uploaded_image
-
     df = None
-    if "uploaded_file" in st.session_state:
-        df = pd.read_csv(st.session_state.uploaded_file)
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
         st.write("### 📄 Data Preview", df.head())
 
         st.write("### 📊 Summary Statistics")
@@ -1952,7 +1790,7 @@ elif mode == "🧐 LLM Assistant":
     user_input = st.text_input("💬 Ask something (about your data or image):")
     if user_input:
         try:
-            if df is not None and hasattr(st.session_state.agent, "run"):
+            if hasattr(st.session_state.agent, "run"):
                 response = st.session_state.agent.run(user_input)
             else:
                 response = st.session_state.agent.predict(user_input)
@@ -1987,17 +1825,20 @@ elif mode == "🧐 LLM Assistant":
             st.markdown(f"**You:** {q}")
             st.markdown(f"**Assistant:** {a}")
 
-    if "uploaded_image" in st.session_state:
+    if uploaded_image:
         from PIL import Image
         from transformers import BlipProcessor, BlipForConditionalGeneration
 
-        st.image(st.session_state.uploaded_image, caption="Uploaded Image", use_container_width=True)
+        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
         image_question = st.text_input("🧠 Ask a question about the image:")
 
         try:
+            # Load BLIP model
             processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
             model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-            img = Image.open(st.session_state.uploaded_image).convert("RGB")
+
+            # Caption generation
+            img = Image.open(uploaded_image).convert("RGB")
             inputs = processor(img, return_tensors="pt")
             out = model.generate(**inputs)
             caption = processor.decode(out[0], skip_special_tokens=True)
@@ -2006,14 +1847,16 @@ elif mode == "🧐 LLM Assistant":
             st.success(caption)
 
             if image_question:
-                llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-                response = llm.predict(f"Image Description: {caption}\n\nUser Question: {image_question}")
-                st.markdown(f"**Assistant Response:** {response}")
+                # Ask GPT about the caption
+                if api_key:
+                    llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
+                    response = llm.predict(f"Image Description: {caption}\n\nUser Question: {image_question}")
+                    st.markdown(f"**Assistant Response:** {response}")
+                else:
+                    st.warning("OpenAI API key missing. Cannot process your question.")
         except Exception as e:
             st.error(f"⚠️ BLIP image analysis failed: {e}")
 
-    if "uploaded_file" not in st.session_state and "uploaded_image" not in st.session_state:
-        st.info("📂 Upload a dataset or image to explore insights with the assistant.")
 
 
 # Footer
