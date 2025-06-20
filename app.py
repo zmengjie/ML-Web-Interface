@@ -1790,10 +1790,11 @@ elif mode == "🤖 LLM Assistant":
     user_input = st.text_input("💬 Ask something (about your data or image):")
     if user_input:
         try:
-            if df is not None:
+            if hasattr(st.session_state.agent, "run"):
                 response = st.session_state.agent.run(user_input)
             else:
                 response = st.session_state.agent.predict(user_input)
+
             st.session_state.chat_history.append((user_input, response))
 
             if "```python" in response:
