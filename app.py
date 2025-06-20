@@ -1832,27 +1832,42 @@ elif mode == "🤖 LLM Assistant":
                 import subprocess
                 try:
                     import pytesseract
+                    from PIL import Image
+
+                    # Set tesseract command path explicitly
                     pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
-                    subprocess.run([pytesseract.pytesseract.tesseract_cmd, "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                except (ImportError, FileNotFoundError, subprocess.CalledProcessError):
-                    st.warning("⚠️ OCR requires `pytesseract` **and** the `tesseract` binary. Make sure both are installed and accessible.\n\nIf installed, verify path with `which tesseract`.")
-                    pytesseract = None
 
-                from PIL import Image
-                img = Image.open(uploaded_image)
+                    # Confirm binary works
+                    result = subprocess.run(
+                        [pytesseract.pytesseract.tesseract_cmd, "--version"],
+                        check=True,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                    )
 
-                if pytesseract:
+                    # Perform OCR
+                    img = Image.open(uploaded_image)
                     ocr_text = pytesseract.image_to_string(img)
                     st.markdown("### 📝 OCR Result")
                     st.text(ocr_text.strip())
 
                     if api_key:
                         llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-                        response = llm.predict(f"Image Text: {ocr_text}\n\nUser Question: {image_question}")
-                        st.markdown(f"**Assistant Response:** {response}")
+                        prompt = f"Image Text:\n{ocr_text}\n\nUser Question: {image_question}"
+                        response = llm.predict(prompt)
+                        st.markdown("### 🤖 Assistant Response")
+                        st.markdown(f"<div style='background-color:#f4f8fb;padding:10px;border-radius:8px'>{response}</div>", unsafe_allow_html=True)
+
+                except ImportError:
+                    st.warning("⚠️ `pytesseract` not installed. Please install it via `pip install pytesseract`.")
+                except FileNotFoundError:
+                    st.warning("⚠️ `tesseract` binary not found. Please install it and verify with `which tesseract`.")
+                except subprocess.CalledProcessError:
+                    st.warning("⚠️ Unable to run `tesseract`. Ensure it’s installed and accessible.")
 
             except Exception as ocr_error:
                 st.error(f"❌ OCR Error: {ocr_error}")
+
 
 # Footer
 st.markdown("---")
