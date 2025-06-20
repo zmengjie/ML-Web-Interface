@@ -1803,10 +1803,13 @@ elif mode == "🌋 Optimization Playground":
 #     if "uploaded_file" not in st.session_state:
 #         st.info("📂 Upload a dataset to explore insights with the assistant.")
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
-if not openai.api_key:
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+if not client.api_key:
     st.warning("⚠️ Please set your OpenAI API key using os.environ or a .env file.")
     st.stop()
+
 
 # === Mode: LLM Assistant ===
 elif mode == "🤖 LLM Assistant":
@@ -1879,7 +1882,7 @@ elif mode == "🤖 LLM Assistant":
                 else:
                     full_prompt = user_input
 
-                response = openai.ChatCompletion.create(
+                response = client.chat.completions.create(
                     model="gpt-4o",  # or "gpt-3.5-turbo"
                     messages=[
                         {"role": "system", "content": "You are a data analysis assistant."},
@@ -1887,6 +1890,7 @@ elif mode == "🤖 LLM Assistant":
                     ]
                 )
                 answer = response.choices[0].message.content.strip()
+                
                 st.session_state.chat_history.append((user_input, answer))
 
                 st.markdown(f"""
