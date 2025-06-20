@@ -1766,24 +1766,11 @@ elif mode == "🧐 LLM Assistant":
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
+    from langchain.llms import OpenAI
     if "agent_ready" not in st.session_state:
         try:
-            llm = ChatOpenAI(
-                temperature=0,
-                openai_api_key=api_key,
-                model="gpt-4"
-            )
-            if df is not None:
-                st.session_state.agent = create_pandas_dataframe_agent(
-                    llm,
-                    df,
-                    verbose=True,
-                    agent_type="openai-tools",
-                    handle_parsing_errors=True,
-                    allow_dangerous_code=True
-                )
-            else:
-                st.session_state.agent = llm
+            llm = OpenAI(openai_api_key=api_key)
+            st.session_state.llm = llm
             st.session_state.agent_ready = True
         except Exception as e:
             st.error(f"Agent failed to load: {e}")
@@ -1792,32 +1779,18 @@ elif mode == "🧐 LLM Assistant":
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
         try:
-            if df is not None and hasattr(st.session_state.agent, "run"):
-                response = st.session_state.agent.run(user_input)
+            if df is not None:
+                context = df.describe(include='all').to_string()
+                full_prompt = f"Data Summary:\n{context}\n\nQuestion: {user_input}"
             else:
-                response = st.session_state.agent.predict(user_input)
-
+                full_prompt = user_input
+            response = st.session_state.llm(full_prompt)
             st.session_state.chat_history.append((user_input, response))
-
-            if "```python" in response:
-                st.markdown("### 🧠 Assistant Generated Code:")
-                try:
-                    import re
-                    code_blocks = re.findall(r"```python(.*?)```", response, re.DOTALL)
-                    if code_blocks:
-                        code_block = code_blocks[0].strip()
-                        st.code(code_block, language="python")
-                        local_vars = {"df": df, "st": st, "plt": plt, "pd": pd, "np": np, "sns": sns}
-                        exec(code_block, {}, local_vars)
-                except Exception as exec_error:
-                    st.error(f"⚠️ Code execution error: {exec_error}")
-            else:
-                st.markdown(f"""
-                <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-                    {response}
-                </div>
-                """, unsafe_allow_html=True)
-
+            st.markdown(f"""
+            <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+                {response}
+            </div>
+            """, unsafe_allow_html=True)
         except Exception as e:
             st.error(f"❌ LLM Error: {e}")
 
@@ -1829,7 +1802,6 @@ elif mode == "🧐 LLM Assistant":
 
     if "uploaded_file" not in st.session_state:
         st.info("📂 Upload a dataset to explore insights with the assistant.")
-
 
 
 # Footer
