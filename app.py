@@ -1820,9 +1820,22 @@ elif mode == "🤖 LLM Assistant":
 
     df = None
     if "uploaded_file" in st.session_state:
-        df = pd.read_csv(st.session_state.uploaded_file)
-        st.write("### 📄 Data Preview", df.head())
+        try:
+            if st.session_state.uploaded_file is not None:
+                content = st.session_state.uploaded_file.read()
+                if content.strip() == b"":
+                    raise ValueError("Uploaded file is empty.")
+                st.session_state.uploaded_file.seek(0)
+                df = pd.read_csv(st.session_state.uploaded_file)
+            else:
+                raise ValueError("No file uploaded.")
+        except Exception as e:
+            st.error(f"❌ Failed to read uploaded CSV: {e}")
+            st.session_state.uploaded_file = None
+            df = None
 
+    if df is not None:
+        st.write("### 📄 Data Preview", df.head())
         st.write("### 📊 Summary Statistics")
         st.dataframe(df.describe(include='all'))
 
@@ -1889,8 +1902,12 @@ elif mode == "🤖 LLM Assistant":
                     ]
                 )
                 answer = response.choices[0].message.content.strip()
-                st.write(answer)
-
+                st.session_state.chat_history.append((user_input, answer))
+                st.markdown(f"""
+                <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+                    {answer}
+                </div>
+                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
 
@@ -1900,7 +1917,7 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**You:** {q}")
             st.markdown(f"**Assistant:** {a}")
 
-    if "uploaded_file" not in st.session_state:
+    if "uploaded_file" not in st.session_state or df is None:
         st.info("📂 Upload a dataset to explore insights with the assistant.")
 
 
