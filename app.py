@@ -1790,7 +1790,7 @@ elif mode == "🤖 LLM Assistant":
     user_input = st.text_input("💬 Ask something (about your data or image):")
     if user_input:
         try:
-            if hasattr(st.session_state.agent, "run"):
+            if df is not None and hasattr(st.session_state.agent, "run"):
                 response = st.session_state.agent.run(user_input)
             else:
                 response = st.session_state.agent.predict(user_input)
