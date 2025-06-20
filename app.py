@@ -1701,11 +1701,118 @@ elif mode == "🌋 Optimization Playground":
     # === Newton Method Info ===
 
 # === LLM Assistant ===
+# elif mode == "🧐 LLM Assistant":
+#     st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
+
+#     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
+
+#     if uploaded_file:
+#         st.session_state.uploaded_file = uploaded_file
+
+#     df = None
+#     if "uploaded_file" in st.session_state:
+#         df = pd.read_csv(st.session_state.uploaded_file)
+#         st.write("### 📄 Data Preview", df.head())
+
+#         st.write("### 📊 Summary Statistics")
+#         st.dataframe(df.describe(include='all'))
+
+#         st.markdown("### 💡 Suggested Prompts")
+#         st.markdown("""
+#         - What are the most correlated features?
+#         - Show a summary of missing values
+#         - Which features influence the target most?
+#         - What kind of plot would help visualize X vs Y?
+#         - Can you generate a histogram of column X?
+#         - Show pairwise plots for selected features
+#         - Predict the target using linear regression
+#         - Detect outliers or anomalies in the data
+#         """)
+
+#         st.markdown("### 📈 Custom Chart Generator")
+#         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
+#         x_col = st.selectbox("X-axis Column", df.columns)
+#         y_col = st.selectbox("Y-axis Column", df.columns)
+#         if st.button("Generate Chart"):
+#             fig, ax = plt.subplots()
+#             if chart_type == "Line":
+#                 ax.plot(df[x_col], df[y_col])
+#             elif chart_type == "Bar":
+#                 ax.bar(df[x_col], df[y_col])
+#             elif chart_type == "Scatter":
+#                 ax.scatter(df[x_col], df[y_col])
+#             elif chart_type == "Histogram":
+#                 ax.hist(df[x_col], bins=20)
+#             ax.set_xlabel(x_col)
+#             ax.set_ylabel(y_col)
+#             st.pyplot(fig, use_container_width=True)
+
+#         st.markdown("### 💾 Export Data")
+#         file_name = st.text_input("Output file name (without extension)", "my_data")
+#         if st.button("Download as CSV"):
+#             tmp_csv = df.to_csv(index=False).encode("utf-8")
+#             st.download_button(
+#                 label="📥 Download Processed CSV",
+#                 data=tmp_csv,
+#                 file_name=f"{file_name}.csv",
+#                 mime="text/csv"
+#             )
+
+#     api_key = os.getenv("OPENAI_API_KEY")
+#     if not api_key:
+#         st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
+#         st.stop()
+
+#     if "chat_history" not in st.session_state:
+#         st.session_state.chat_history = []
+
+#     from langchain.llms import OpenAI
+#     if "agent_ready" not in st.session_state:
+#         try:
+#             llm = OpenAI(openai_api_key=api_key)
+#             st.session_state.llm = llm
+#             st.session_state.agent_ready = True
+#         except Exception as e:
+#             st.error(f"Agent failed to load: {e}")
+#             st.stop()
+
+#     user_input = st.text_input("💬 Ask something (about your data):")
+#     if user_input:
+#         try:
+#             if df is not None:
+#                 context = df.describe(include='all').to_string()
+#                 full_prompt = f"Data Summary:\n{context}\n\nQuestion: {user_input}"
+#             else:
+#                 full_prompt = user_input
+#             response = st.session_state.llm(full_prompt)
+#             st.session_state.chat_history.append((user_input, response))
+#             st.markdown(f"""
+#             <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+#                 {response}
+#             </div>
+#             """, unsafe_allow_html=True)
+#         except Exception as e:
+#             st.error(f"❌ LLM Error: {e}")
+
+#     if st.session_state.chat_history:
+#         st.markdown("### 📜 Chat History")
+#         for q, a in st.session_state.chat_history[::-1]:
+#             st.markdown(f"**You:** {q}")
+#             st.markdown(f"**Assistant:** {a}")
+
+#     if "uploaded_file" not in st.session_state:
+#         st.info("📂 Upload a dataset to explore insights with the assistant.")
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+if not openai.api_key:
+    st.warning("⚠️ Please set your OpenAI API key using os.environ or a .env file.")
+    st.stop()
+
+# === Mode: LLM Assistant ===
 elif mode == "🧐 LLM Assistant":
     st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
-
     if uploaded_file:
         st.session_state.uploaded_file = uploaded_file
 
@@ -1758,41 +1865,37 @@ elif mode == "🧐 LLM Assistant":
                 mime="text/csv"
             )
 
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
-        st.stop()
-
+    # === LLM Chat ===
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
-    from langchain.llms import OpenAI
-    if "agent_ready" not in st.session_state:
-        try:
-            llm = OpenAI(openai_api_key=api_key)
-            st.session_state.llm = llm
-            st.session_state.agent_ready = True
-        except Exception as e:
-            st.error(f"Agent failed to load: {e}")
-            st.stop()
-
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
-        try:
-            if df is not None:
-                context = df.describe(include='all').to_string()
-                full_prompt = f"Data Summary:\n{context}\n\nQuestion: {user_input}"
-            else:
-                full_prompt = user_input
-            response = st.session_state.llm(full_prompt)
-            st.session_state.chat_history.append((user_input, response))
-            st.markdown(f"""
-            <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-                {response}
-            </div>
-            """, unsafe_allow_html=True)
-        except Exception as e:
-            st.error(f"❌ LLM Error: {e}")
+        with st.spinner("🤖 Thinking..."):
+            try:
+                if df is not None:
+                    context = df.describe(include='all').to_string()
+                    full_prompt = f"Here's a dataset summary:\n{context}\n\nNow answer this question:\n{user_input}"
+                else:
+                    full_prompt = user_input
+
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o",  # or "gpt-3.5-turbo"
+                    messages=[
+                        {"role": "system", "content": "You are a data analysis assistant."},
+                        {"role": "user", "content": full_prompt}
+                    ]
+                )
+                answer = response.choices[0].message.content.strip()
+                st.session_state.chat_history.append((user_input, answer))
+
+                st.markdown(f"""
+                <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
+                    {answer}
+                </div>
+                """, unsafe_allow_html=True)
+            except Exception as e:
+                st.error(f"❌ LLM Error: {e}")
 
     if st.session_state.chat_history:
         st.markdown("### 📜 Chat History")
