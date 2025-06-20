@@ -1701,8 +1701,8 @@ elif mode == "🌋 Optimization Playground":
     # === Newton Method Info ===
 
 # === LLM Assistant ===
-elif mode == "🧐 LLM Assistant":
-    st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
+elif mode == "🤖 LLM Assistant":
+    st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
@@ -1745,12 +1745,12 @@ elif mode == "🧐 LLM Assistant":
             ax.set_ylabel(y_col)
             st.pyplot(fig, use_container_width=True)
 
-        st.markdown("### 📅 Export Data")
+        st.markdown("### 💾 Export Data")
         file_name = st.text_input("Output file name (without extension)", "my_data")
         if st.button("Download as CSV"):
             tmp_csv = df.to_csv(index=False).encode("utf-8")
             st.download_button(
-                label="📅 Download Processed CSV",
+                label="📥 Download Processed CSV",
                 data=tmp_csv,
                 file_name=f"{file_name}.csv",
                 mime="text/csv"
@@ -1766,9 +1766,12 @@ elif mode == "🧐 LLM Assistant":
 
     if "agent_ready" not in st.session_state:
         try:
-            llm = ChatOpenAI(temperature=0, openai_api_key=api_key, model="gpt-4")
+            llm = ChatOpenAI(
+                temperature=0,
+                openai_api_key=api_key,
+                model="gpt-4"
+            )
             if df is not None:
-                from langchain.agents import create_pandas_dataframe_agent
                 st.session_state.agent = create_pandas_dataframe_agent(
                     llm,
                     df,
@@ -1791,6 +1794,7 @@ elif mode == "🧐 LLM Assistant":
                 response = st.session_state.agent.run(user_input)
             else:
                 response = st.session_state.agent.predict(user_input)
+
             st.session_state.chat_history.append((user_input, response))
 
             if "```python" in response:
@@ -1828,26 +1832,31 @@ elif mode == "🧐 LLM Assistant":
         st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
         image_question = st.text_input("🧠 Ask a question about the image:")
 
-        if image_question:
-            try:
-                processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-                model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+        try:
+            # Load BLIP model
+            processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+            model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
 
-                img = Image.open(uploaded_image).convert("RGB")
-                inputs = processor(img, return_tensors="pt")
-                out = model.generate(**inputs)
-                caption = processor.decode(out[0], skip_special_tokens=True)
+            # Caption generation
+            img = Image.open(uploaded_image).convert("RGB")
+            inputs = processor(img, return_tensors="pt")
+            out = model.generate(**inputs)
+            caption = processor.decode(out[0], skip_special_tokens=True)
 
-                st.markdown("### 🖼️ Image Caption")
-                st.success(caption)
+            st.markdown("### 🖼️ Image Caption")
+            st.success(caption)
 
+            if image_question:
+                # Ask GPT about the caption
                 if api_key:
                     llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
                     response = llm.predict(f"Image Description: {caption}\n\nUser Question: {image_question}")
                     st.markdown(f"**Assistant Response:** {response}")
+                else:
+                    st.warning("OpenAI API key missing. Cannot process your question.")
+        except Exception as e:
+            st.error(f"⚠️ BLIP image analysis failed: {e}")
 
-            except Exception as ocr_error:
-                st.error(f"❌ Image Analysis Error: {ocr_error}")
 
 
 # Footer
