@@ -1701,15 +1701,17 @@ elif mode == "🌋 Optimization Playground":
     # === Newton Method Info ===
 
 # === LLM Assistant ===
-elif mode == "🤖 LLM Assistant":
-    st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
+elif mode == "🧐 LLM Assistant":
+    st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
-    uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
+
+    if uploaded_file:
+        st.session_state.uploaded_file = uploaded_file
 
     df = None
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
+    if "uploaded_file" in st.session_state:
+        df = pd.read_csv(st.session_state.uploaded_file)
         st.write("### 📄 Data Preview", df.head())
 
         st.write("### 📊 Summary Statistics")
@@ -1787,10 +1789,10 @@ elif mode == "🤖 LLM Assistant":
             st.error(f"Agent failed to load: {e}")
             st.stop()
 
-    user_input = st.text_input("💬 Ask something (about your data or image):")
+    user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
         try:
-            if hasattr(st.session_state.agent, "run"):
+            if df is not None and hasattr(st.session_state.agent, "run"):
                 response = st.session_state.agent.run(user_input)
             else:
                 response = st.session_state.agent.predict(user_input)
@@ -1825,37 +1827,8 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**You:** {q}")
             st.markdown(f"**Assistant:** {a}")
 
-    if uploaded_image:
-        from PIL import Image
-        from transformers import BlipProcessor, BlipForConditionalGeneration
-
-        st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
-        image_question = st.text_input("🧠 Ask a question about the image:")
-
-        try:
-            # Load BLIP model
-            processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
-            model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
-
-            # Caption generation
-            img = Image.open(uploaded_image).convert("RGB")
-            inputs = processor(img, return_tensors="pt")
-            out = model.generate(**inputs)
-            caption = processor.decode(out[0], skip_special_tokens=True)
-
-            st.markdown("### 🖼️ Image Caption")
-            st.success(caption)
-
-            if image_question:
-                # Ask GPT about the caption
-                if api_key:
-                    llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-                    response = llm.predict(f"Image Description: {caption}\n\nUser Question: {image_question}")
-                    st.markdown(f"**Assistant Response:** {response}")
-                else:
-                    st.warning("OpenAI API key missing. Cannot process your question.")
-        except Exception as e:
-            st.error(f"⚠️ BLIP image analysis failed: {e}")
+    if "uploaded_file" not in st.session_state:
+        st.info("📂 Upload a dataset to explore insights with the assistant.")
 
 
 
