@@ -1825,48 +1825,33 @@ elif mode == "🤖 LLM Assistant":
             st.markdown(f"**Assistant:** {a}")
 
     if uploaded_image:
+        from PIL import Image
+        from transformers import BlipProcessor, BlipForConditionalGeneration
+
         st.image(uploaded_image, caption="Uploaded Image", use_container_width=True)
-        image_question = st.text_input("🧠 Ask a question about the image (OCR-enabled):")
+        image_question = st.text_input("🧠 Ask a question about the image:")
+
         if image_question:
             try:
-                import subprocess
-                try:
-                    import pytesseract
-                    from PIL import Image
+                processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+                model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
 
-                    # Set tesseract command path explicitly
-                    pytesseract.pytesseract.tesseract_cmd = "/usr/local/bin/tesseract"
+                img = Image.open(uploaded_image).convert("RGB")
+                inputs = processor(img, return_tensors="pt")
+                out = model.generate(**inputs)
+                caption = processor.decode(out[0], skip_special_tokens=True)
 
-                    # Confirm binary works
-                    result = subprocess.run(
-                        [pytesseract.pytesseract.tesseract_cmd, "--version"],
-                        check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE
-                    )
+                st.markdown("### 🖼️ Image Caption")
+                st.success(caption)
 
-                    # Perform OCR
-                    img = Image.open(uploaded_image)
-                    ocr_text = pytesseract.image_to_string(img)
-                    st.markdown("### 📝 OCR Result")
-                    st.text(ocr_text.strip())
-
-                    if api_key:
-                        llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
-                        prompt = f"Image Text:\n{ocr_text}\n\nUser Question: {image_question}"
-                        response = llm.predict(prompt)
-                        st.markdown("### 🤖 Assistant Response")
-                        st.markdown(f"<div style='background-color:#f4f8fb;padding:10px;border-radius:8px'>{response}</div>", unsafe_allow_html=True)
-
-                except ImportError:
-                    st.warning("⚠️ `pytesseract` not installed. Please install it via `pip install pytesseract`.")
-                except FileNotFoundError:
-                    st.warning("⚠️ `tesseract` binary not found. Please install it and verify with `which tesseract`.")
-                except subprocess.CalledProcessError:
-                    st.warning("⚠️ Unable to run `tesseract`. Ensure it’s installed and accessible.")
+                if api_key:
+                    llm = ChatOpenAI(temperature=0, openai_api_key=api_key)
+                    response = llm.predict(f"Image Description: {caption}\n\nUser Question: {image_question}")
+                    st.markdown(f"**Assistant Response:** {response}")
 
             except Exception as ocr_error:
-                st.error(f"❌ OCR Error: {ocr_error}")
+                st.error(f"❌ Image Analysis Error: {ocr_error}")
+
 
 
 # Footer
