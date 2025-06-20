@@ -1804,10 +1804,9 @@ elif mode == "🌋 Optimization Playground":
 #         st.info("📂 Upload a dataset to explore insights with the assistant.")
 
 from openai import OpenAI
-
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 if not client.api_key:
-    st.warning("⚠️ Please set your OpenAI API key using os.environ or a .env file.")
+    st.warning("⚠️ Please set your OpenAI API key.")
     st.stop()
 
 
@@ -1878,26 +1877,20 @@ elif mode == "🤖 LLM Assistant":
             try:
                 if df is not None:
                     context = df.describe(include='all').to_string()
-                    full_prompt = f"Here's a dataset summary:\n{context}\n\nNow answer this question:\n{user_input}"
+                    full_prompt = f"Here's a dataset summary:\n{context}\n\nNow answer this:\n{user_input}"
                 else:
                     full_prompt = user_input
 
                 response = client.chat.completions.create(
-                    model="gpt-4o",  # or "gpt-3.5-turbo"
+                    model="gpt-4o",
                     messages=[
                         {"role": "system", "content": "You are a data analysis assistant."},
                         {"role": "user", "content": full_prompt}
                     ]
                 )
                 answer = response.choices[0].message.content.strip()
-                
-                st.session_state.chat_history.append((user_input, answer))
+                st.write(answer)
 
-                st.markdown(f"""
-                <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-                    {answer}
-                </div>
-                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
 
