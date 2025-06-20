@@ -1307,7 +1307,7 @@ elif mode == "🌋 Optimization Playground":
 
             # Final user inputs
             lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
-            steps = st.slider("Steps", 10, 100, st.session_state.steps, key="steps")
+            steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
             # st.checkbox("🎮 Animate Descent Steps")

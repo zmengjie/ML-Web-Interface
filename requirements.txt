@@ -8,13 +8,14 @@ matplotlib
 seaborn
 sympy
 Pillow
-langchain
+# langchain
 openai
-langchain-community
-langchain-experimental
+# langchain-community
+# langchain-experimental
 tabulate
 
 
 tqdm
 requests
 python-dotenv
+pytesseract
