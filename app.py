@@ -1809,8 +1809,8 @@ if not openai.api_key:
     st.stop()
 
 # === Mode: LLM Assistant ===
-elif mode == "🧐 LLM Assistant":
-    st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
+elif mode == "🤖 LLM Assistant":
+    st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     if uploaded_file:
