@@ -1889,8 +1889,17 @@ elif mode == "🤖 LLM Assistant":
         with st.spinner("🤖 Thinking..."):
             try:
                 if df is not None:
-                    context = df.describe(include='all').to_string()
-                    full_prompt = f"Here's a dataset summary:\n{context}\n\nNow answer this:\n{user_input}"
+                    summary = df.describe(include='all').to_string()
+                    correlation = df.corr(numeric_only=True).round(3).to_string()
+
+                    full_prompt = f"""You are a data analysis assistant.
+                    Here's the dataset summary:\n{summary}
+
+                    And here is the correlation matrix:\n{correlation}
+
+                    Now answer this question:\n{user_input}
+                    """
+
                 else:
                     full_prompt = user_input
 
