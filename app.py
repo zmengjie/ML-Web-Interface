@@ -1701,8 +1701,8 @@ elif mode == "🌋 Optimization Playground":
     # === Newton Method Info ===
 
 # === LLM Assistant ===
-elif mode == "🧐 LLM Assistant":
-    st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
+elif mode == "🤖 LLM Assistant":
+    st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     uploaded_image = st.file_uploader("🖼️ (Optional) Upload an image (PNG/JPG)", type=["png", "jpg", "jpeg"])
@@ -1790,7 +1790,7 @@ elif mode == "🧐 LLM Assistant":
     user_input = st.text_input("💬 Ask something (about your data or image):")
     if user_input:
         try:
-            if df is not None and hasattr(st.session_state.agent, "run"):
+            if hasattr(st.session_state.agent, "run"):
                 response = st.session_state.agent.run(user_input)
             else:
                 response = st.session_state.agent.predict(user_input)
@@ -1857,8 +1857,6 @@ elif mode == "🧐 LLM Assistant":
         except Exception as e:
             st.error(f"⚠️ BLIP image analysis failed: {e}")
 
-    if not uploaded_file and not uploaded_image:
-        st.info("📂 Upload a dataset or image to explore insights with the assistant.")
 
 
 # Footer
