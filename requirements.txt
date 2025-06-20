@@ -13,3 +13,6 @@ openai
 langchain-community
 langchain-experimental
 tabulate
+transformers>=4.38.0
+torch>=2.0
+torchvision>=0.15
