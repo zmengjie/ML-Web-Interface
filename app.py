@@ -1523,11 +1523,11 @@ elif mode == "🌋 Optimization Playground":
                     path = [tuple(best)]
 
                 return path
-
+            
         if optimizer == "Newton's Method":
             with st.expander("🧠 Newton Method Variants Explained", expanded=False):
-                st.markdown("### 📘 Classic Newton vs. Numerical Newton")
-                st.markdown("Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.")
+                st.markdown("### 📘 Classic Newton vs. Numerical vs. Quasi-Newton")
+                st.markdown("Newton's Method is a powerful optimization technique that uses **second-order derivatives** or their approximations to accelerate convergence.")
 
                 st.markdown("#### 🧮 Classic Newton (Symbolic)")
                 st.markdown("- Uses the **symbolic Hessian matrix** from calculus:")
@@ -1541,12 +1541,18 @@ elif mode == "🌋 Optimization Playground":
                 st.markdown("- ✅ More robust for complex or unknown functions.")
                 st.markdown("- 🐢 Slightly slower due to extra evaluations.")
 
-
                 st.markdown("#### 🔁 BFGS / L-BFGS (Quasi-Newton)")
-                st.markdown("- ✅ No need to compute Hessian.")
-                st.markdown("- Builds a curvature approximation from gradients.")
-                st.markdown("- 🧠 BFGS: high-precision but stores full matrix.")
-                st.markdown("- 🪶 L-BFGS: lightweight for high-dimensional optimization.")
+                st.markdown("- ✅ Avoids computing the full Hessian.")
+                st.markdown("- Builds curvature estimate using gradients:")
+                st.latex(r"""
+                H_{k+1} = H_k + \frac{y_k y_k^T}{y_k^T s_k} - \frac{H_k s_k s_k^T H_k}{s_k^T H_k s_k}
+                """)
+                st.markdown("Where:")
+                st.latex(r"s_k = x_{k+1} - x_k")
+                st.latex(r"y_k = \nabla f(x_{k+1}) - \nabla f(x_k)")
+                st.markdown("- 🧠 **BFGS**: High accuracy, stores full matrix.")
+                st.markdown("- 🪶 **L-BFGS**: Stores only a few recent updates — ideal for high-dimensional problems.")
+                st.markdown("💡 Quasi-Newton methods **approximate** curvature and still converge fast — especially useful for functions like Rosenbrock!")
 
                 st.markdown("---")
                 st.markdown("### ✏️ Why No Learning Rate?")
