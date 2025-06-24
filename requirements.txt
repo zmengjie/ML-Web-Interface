@@ -1,24 +1,41 @@
-streamlit
+# streamlit
+# pandas
+# numpy
+# scikit-learn
+# xgboost
+# # statsmodels
+# matplotlib
+# seaborn
+# sympy
+# Pillow
+# # langchain
+# openai
+# # langchain-community
+# # langchain-experimental
+# tabulate
+
+
+# tqdm
+# requests
+# python-dotenv
+# pytesseract
+
+# statsmodels==0.13.5
+# scipy==1.10.1
+
 pandas
 numpy
 scikit-learn
 xgboost
-# statsmodels
+statsmodels==0.13.5
+scipy==1.10.1
 matplotlib
 seaborn
 sympy
 Pillow
-# langchain
 openai
-# langchain-community
-# langchain-experimental
 tabulate
-
-
 tqdm
 requests
 python-dotenv
 pytesseract
-
-statsmodels==0.13.5
-scipy==1.10.1
