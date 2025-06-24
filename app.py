@@ -1238,6 +1238,10 @@ elif mode == "🌋 Optimization Playground":
             if optimizer in ["GradientDescent", "Adam", "RMSProp"]:
                 auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
 
+                if optimizer == "GradientDescent":
+                    use_backtracking = st.checkbox("🔍 Use Backtracking Line Search", value=False)
+                    options["use_backtracking"] = use_backtracking
+
             start_xy_defaults = {
                 "Quadratic Bowl": (-3.0, 3.0), "Saddle": (-2.0, 2.0), "Rosenbrock": (-1.5, 1.5),
                 "Constrained Circle": (0.5, 0.5), "Double Constraint": (-1.5, 1.5),
@@ -1306,8 +1310,17 @@ elif mode == "🌋 Optimization Playground":
                 st.session_state.params_set = True
 
             # Final user inputs
-            lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
-            steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
+            # lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
+            # steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
+            
+            if not (optimizer == "GradientDescent" and options.get("use_backtracking", False)):
+                lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
+                steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
+            else:
+                lr = None
+                steps = None
+                st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
+            
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
             # st.checkbox("🎮 Animate Descent Steps")
@@ -1345,6 +1358,34 @@ elif mode == "🌋 Optimization Playground":
         grad_L = [sp.diff(L_expr, v) for v in (x, y)]
         kkt_conditions = grad_L + constraints
         
+        def backtracking_line_search_sym(f_sym, grad_f_sym, x0, y0, alpha0=1.0, beta=0.5, c=1e-4, max_iters=100):
+            x, y = sp.symbols('x y')
+            f_lambd = sp.lambdify((x, y), f_sym, modules='numpy')
+            grad_f_lambd = [sp.lambdify((x, y), g, modules='numpy') for g in grad_f_sym]
+
+            xk, yk = x0, y0
+            path = [(xk, yk)]
+            for _ in range(max_iters):
+                gx, gy = grad_f_lambd[0](xk, yk), grad_f_lambd[1](xk, yk)
+                grad_norm = gx**2 + gy**2
+
+                if grad_norm < 1e-10:
+                    break
+
+                alpha = alpha0
+                while True:
+                    x_new = xk - alpha * gx
+                    y_new = yk - alpha * gy
+                    lhs = f_lambd(x_new, y_new)
+                    rhs = f_lambd(xk, yk) - c * alpha * grad_norm
+                    if lhs <= rhs or alpha < 1e-8:
+                        break
+                    alpha *= beta
+
+                xk, yk = xk - alpha * gx, yk - alpha * gy
+                path.append((xk, yk))
+
+            return path
 
         def optimize_path(x0, y0, optimizer, lr, steps, f_func, grad_f=None, hessian_f=None, options=None):
             path = [(x0, y0)]
@@ -1373,6 +1414,9 @@ elif mode == "🌋 Optimization Playground":
                             update = H_inv @ grad
                         except:
                             update = grad
+                    elif optimizer == "GradientDescent" and options.get("use_backtracking", False):
+                        grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
+                        return backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
                     else:  # GradientDescent
                         update = lr * grad
                     path.append((x_t - update[0], y_t - update[1]))
@@ -1700,116 +1744,6 @@ elif mode == "🌋 Optimization Playground":
 
     # === Newton Method Info ===
 
-# === LLM Assistant ===
-# elif mode == "🧐 LLM Assistant":
-#     st.subheader("🧐 LLM Assistant: Explore Your Data Intelligently")
-
-#     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
-
-#     if uploaded_file:
-#         st.session_state.uploaded_file = uploaded_file
-
-#     df = None
-#     if "uploaded_file" in st.session_state:
-#         df = pd.read_csv(st.session_state.uploaded_file)
-#         st.write("### 📄 Data Preview", df.head())
-
-#         st.write("### 📊 Summary Statistics")
-#         st.dataframe(df.describe(include='all'))
-
-#         st.markdown("### 💡 Suggested Prompts")
-#         st.markdown("""
-#         - What are the most correlated features?
-#         - Show a summary of missing values
-#         - Which features influence the target most?
-#         - What kind of plot would help visualize X vs Y?
-#         - Can you generate a histogram of column X?
-#         - Show pairwise plots for selected features
-#         - Predict the target using linear regression
-#         - Detect outliers or anomalies in the data
-#         """)
-
-#         st.markdown("### 📈 Custom Chart Generator")
-#         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
-#         x_col = st.selectbox("X-axis Column", df.columns)
-#         y_col = st.selectbox("Y-axis Column", df.columns)
-#         if st.button("Generate Chart"):
-#             fig, ax = plt.subplots()
-#             if chart_type == "Line":
-#                 ax.plot(df[x_col], df[y_col])
-#             elif chart_type == "Bar":
-#                 ax.bar(df[x_col], df[y_col])
-#             elif chart_type == "Scatter":
-#                 ax.scatter(df[x_col], df[y_col])
-#             elif chart_type == "Histogram":
-#                 ax.hist(df[x_col], bins=20)
-#             ax.set_xlabel(x_col)
-#             ax.set_ylabel(y_col)
-#             st.pyplot(fig, use_container_width=True)
-
-#         st.markdown("### 💾 Export Data")
-#         file_name = st.text_input("Output file name (without extension)", "my_data")
-#         if st.button("Download as CSV"):
-#             tmp_csv = df.to_csv(index=False).encode("utf-8")
-#             st.download_button(
-#                 label="📥 Download Processed CSV",
-#                 data=tmp_csv,
-#                 file_name=f"{file_name}.csv",
-#                 mime="text/csv"
-#             )
-
-#     api_key = os.getenv("OPENAI_API_KEY")
-#     if not api_key:
-#         st.warning("⚠️ Please set your OpenAI API key using os.environ['OPENAI_API_KEY'] = 'sk-...' or .env file")
-#         st.stop()
-
-#     if "chat_history" not in st.session_state:
-#         st.session_state.chat_history = []
-
-#     from langchain.llms import OpenAI
-#     if "agent_ready" not in st.session_state:
-#         try:
-#             llm = OpenAI(openai_api_key=api_key)
-#             st.session_state.llm = llm
-#             st.session_state.agent_ready = True
-#         except Exception as e:
-#             st.error(f"Agent failed to load: {e}")
-#             st.stop()
-
-#     user_input = st.text_input("💬 Ask something (about your data):")
-#     if user_input:
-#         try:
-#             if df is not None:
-#                 context = df.describe(include='all').to_string()
-#                 full_prompt = f"Data Summary:\n{context}\n\nQuestion: {user_input}"
-#             else:
-#                 full_prompt = user_input
-#             response = st.session_state.llm(full_prompt)
-#             st.session_state.chat_history.append((user_input, response))
-#             st.markdown(f"""
-#             <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-#                 {response}
-#             </div>
-#             """, unsafe_allow_html=True)
-#         except Exception as e:
-#             st.error(f"❌ LLM Error: {e}")
-
-#     if st.session_state.chat_history:
-#         st.markdown("### 📜 Chat History")
-#         for q, a in st.session_state.chat_history[::-1]:
-#             st.markdown(f"**You:** {q}")
-#             st.markdown(f"**Assistant:** {a}")
-
-#     if "uploaded_file" not in st.session_state:
-#         st.info("📂 Upload a dataset to explore insights with the assistant.")
-
-from openai import OpenAI
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-if not client.api_key:
-    st.warning("⚠️ Please set your OpenAI API key.")
-    st.stop()
-
-
 # === Mode: LLM Assistant ===
 elif mode == "🤖 LLM Assistant":
     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
@@ -1890,7 +1824,7 @@ elif mode == "🤖 LLM Assistant":
                 """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
-                
+
     if df is not None:             
         st.markdown("### 📈 Custom Chart Generator")
         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
