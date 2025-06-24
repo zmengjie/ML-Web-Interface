@@ -1227,7 +1227,11 @@ elif mode == "🌋 Optimization Playground":
             optimizer = st.selectbox("Optimizer", optimizers)
 
             options = {}
-            if optimizer == "Simulated Annealing":
+
+            if optimizer == "Newton's Method":
+                newton_variant = st.selectbox("Newton Variant", ["Classic Newton", "Numerical Newton", "BFGS", "L-BFGS"])
+                options["newton_variant"] = newton_variant
+            elif optimizer == "Simulated Annealing":
                 options["T"] = st.slider("Initial Temperature (T)", 0.1, 10.0, 2.0)
                 options["cooling"] = st.slider("Cooling Rate", 0.80, 0.99, 0.95)
             elif optimizer == "Genetic Algorithm":
@@ -1418,12 +1422,42 @@ elif mode == "🌋 Optimization Playground":
                         v = beta2 * v + (1 - beta2) * (grad ** 2)
                         update = lr * grad / (np.sqrt(v) + eps)
                     elif optimizer == "Newton's Method":
-                        try:
-                            H = hessian_f(x_t, y_t)
-                            H_inv = np.linalg.inv(H)
-                            update = H_inv @ grad
-                        except:
-                            update = grad
+                        variant = options.get("newton_variant", "Classic Newton")
+
+                        if variant == "Classic Newton":
+                            try:
+                                H = hessian_f(x_t, y_t)
+                                H_inv = np.linalg.inv(H)
+                                update = H_inv @ grad
+                            except:
+                                update = grad
+
+                        elif variant == "Numerical Newton":
+                            eps = 1e-4
+                            fx = lambda x_, y_: f_func(x_, y_)
+                            def second_partial(f, x, y, i, j):
+                                h = eps
+                                if i == 0 and j == 0:
+                                    return (f(x + h, y) - 2 * f(x, y) + f(x - h, y)) / h**2
+                                elif i == 1 and j == 1:
+                                    return (f(x, y + h) - 2 * f(x, y) + f(x, y - h)) / h**2
+                                else:
+                                    return (f(x + h, y + h) - f(x + h, y - h) - f(x - h, y + h) + f(x - h, y - h)) / (4 * h**2)
+
+                            H = np.array([
+                                [second_partial(fx, x_t, y_t, 0, 0), second_partial(fx, x_t, y_t, 0, 1)],
+                                [second_partial(fx, x_t, y_t, 1, 0), second_partial(fx, x_t, y_t, 1, 1)]
+                            ])
+                            try:
+                                update = np.linalg.inv(H) @ grad
+                            except:
+                                update = grad
+
+                        elif variant in ["BFGS", "L-BFGS"]:
+                            # Placeholder: can later use scipy.optimize for real BFGS
+                            st.warning(f"⚠️ {variant} not yet implemented. Using Gradient Descent as fallback.")
+                            update = lr * grad
+
                     elif optimizer == "GradientDescent" and options.get("use_backtracking", False):
                         grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
                         return backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
