@@ -1468,9 +1468,22 @@ elif mode == "🌋 Optimization Playground":
                                 update = grad
 
                         elif variant in ["BFGS", "L-BFGS"]:
-                            # Placeholder: can later use scipy.optimize for real BFGS
-                            st.warning(f"⚠️ {variant} not yet implemented. Using Gradient Descent as fallback.")
-                            update = lr * grad
+                            from scipy.optimize import minimize
+
+                            def loss_vec(v): return f_func(v[0], v[1])
+                            x0_vec = np.array([x0, y0])
+                            method = "L-BFGS-B" if variant == "L-BFGS" else "BFGS"
+                            path_coords = []
+
+                            def callback(vk):  # collect path
+                                path_coords.append((vk[0], vk[1]))
+
+                            minimize(loss_vec, x0_vec, method=method, callback=callback, options={"maxiter": steps})
+
+                            if not path_coords:
+                                path_coords = [tuple(x0_vec)]
+                            path = path_coords
+
 
                     elif optimizer == "GradientDescent" and options.get("use_backtracking", False):
                         grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
@@ -1528,6 +1541,12 @@ elif mode == "🌋 Optimization Playground":
                 st.markdown("Newton’s Method computes:")
                 st.latex(r"x_{t+1} = x_t - H^{-1} \nabla f(x_t)")
                 st.markdown("So it **naturally determines the best step direction and size** — no need for manual tuning like in gradient descent.")
+
+                st.markdown("#### 🔁 BFGS / L-BFGS (Quasi-Newton)")
+                st.markdown("- ✅ No need to compute Hessian.")
+                st.markdown("- Builds a curvature approximation from gradients.")
+                st.markdown("- 🧠 BFGS: high-precision but stores full matrix.")
+                st.markdown("- 🪶 L-BFGS: lightweight for high-dimensional optimization.")
 
         # === Shared simulation function ===
         def simulate_optimizer(opt_name, f_expr, lr=0.01, steps=50):
