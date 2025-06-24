@@ -1763,37 +1763,35 @@ elif mode == "🌋 Optimization Playground":
                 st.info("No constraints defined.")
     
     with st.expander("🧠 Newton Method Variants Explained", expanded=False):
-        st.markdown("""
-        ### 📘 Classic Newton vs. Numerical Newton
+        st.markdown(r"""
+    ### 📘 Classic Newton vs. Numerical Newton
 
-        Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.
+    Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.
 
-        #### 🧮 Classic Newton (Symbolic)
-        - Uses the **symbolic Hessian matrix** from calculus:  
-        \nabla^2 f(x, y) = exact curvature
-        - Very efficient and accurate for simple analytic functions (e.g. quadratic, convex).
-        - ⚠️ Can fail or be unstable if the Hessian is singular or badly conditioned.
+    #### 🧮 Classic Newton (Symbolic)
+    - Uses the **symbolic Hessian matrix** from calculus:
+    \[
+    \nabla^2 f(x, y)
+    \]
+    - ✅ Very efficient and accurate for simple analytic functions (e.g., quadratic, convex).
+    - ⚠️ Can fail or be unstable if the Hessian is singular or badly conditioned.
 
-        #### 🔢 Numerical Newton
-        - Uses **finite differences** to approximate the Hessian.
-        - No need for symbolic derivatives.
-        - More robust for complex or unknown functions.
-        - Slightly slower due to extra evaluations.
+    #### 🔢 Numerical Newton
+    - Uses **finite differences** to approximate the Hessian.
+    - No need for symbolic derivatives.
+    - ✅ More robust for complex or unknown functions.
+    - 🐢 Slightly slower due to extra evaluations.
 
-        ---
+    ---
 
-        ### 🧪 Why No Learning Rate?
-        Newton’s Method computes:
-        \[
-        x_{t+1} = x_t - H^{-1} \nabla f(x_t)
-        \]
-        So it **naturally determines the best step direction and size** — no need for manual tuning.
+    ### ✏️ Why No Learning Rate?
+    Newton’s Method computes:
+    \[
+    x_{t+1} = x_t - H^{-1} \nabla f(x_t)
+    \]
 
-        ---
-
-        ### 🧠 Coming Soon?
-        - BFGS / L-BFGS: Quasi-Newton methods that approximate Hessian with less memory.
-            """)
+    So it **naturally determines the best step direction and size** — no need for manual tuning like in gradient descent.
+    """)
 
 
     # === Symbolic Analysis: KKT, Gradient & Hessian ===
