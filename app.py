@@ -1506,6 +1506,28 @@ elif mode == "🌋 Optimization Playground":
 
             return path
 
+        if optimizer == "Newton's Method":
+            with st.expander("🧠 Newton Method Variants Explained", expanded=False):
+                st.markdown("### 📘 Classic Newton vs. Numerical Newton")
+                st.markdown("Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.")
+
+                st.markdown("#### 🧮 Classic Newton (Symbolic)")
+                st.markdown("- Uses the **symbolic Hessian matrix** from calculus:")
+                st.latex(r"\nabla^2 f(x, y)")
+                st.markdown("- ✅ Very efficient and accurate for simple analytic functions (e.g., quadratic, convex).")
+                st.markdown("- ⚠️ Can fail or be unstable if the Hessian is singular or badly conditioned.")
+
+                st.markdown("#### 🔢 Numerical Newton")
+                st.markdown("- Uses **finite differences** to approximate the Hessian.")
+                st.markdown("- No need for symbolic derivatives.")
+                st.markdown("- ✅ More robust for complex or unknown functions.")
+                st.markdown("- 🐢 Slightly slower due to extra evaluations.")
+
+                st.markdown("---")
+                st.markdown("### ✏️ Why No Learning Rate?")
+                st.markdown("Newton’s Method computes:")
+                st.latex(r"x_{t+1} = x_t - H^{-1} \nabla f(x_t)")
+                st.markdown("So it **naturally determines the best step direction and size** — no need for manual tuning like in gradient descent.")
 
         # === Shared simulation function ===
         def simulate_optimizer(opt_name, f_expr, lr=0.01, steps=50):
@@ -1762,33 +1784,6 @@ elif mode == "🌋 Optimization Playground":
             else:
                 st.info("No constraints defined.")
     
-    with st.expander("🧠 Newton Method Variants Explained", expanded=False):
-        st.markdown(r"""
-    ### 📘 Classic Newton vs. Numerical Newton
-
-    Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.
-
-    #### 🧮 Classic Newton (Symbolic)
-    st.markdown("- Uses the **symbolic Hessian matrix** from calculus:")
-    st.latex(r"\nabla^2 f(x, y)")
-
-    - ✅ Very efficient and accurate for simple analytic functions (e.g., quadratic, convex).
-    - ⚠️ Can fail or be unstable if the Hessian is singular or badly conditioned.
-
-    #### 🔢 Numerical Newton
-    - Uses **finite differences** to approximate the Hessian.
-    - No need for symbolic derivatives.
-    - ✅ More robust for complex or unknown functions.
-    - 🐢 Slightly slower due to extra evaluations.
-
-    ---
-
-    ### ✏️ Why No Learning Rate?
-    Newton’s Method computes:
-    st.latex(r"x_{t+1} = x_t - H^{-1} \nabla f(x_t)")
-
-    So it **naturally determines the best step direction and size** — no need for manual tuning like in gradient descent.
-    """)
 
 
     # === Symbolic Analysis: KKT, Gradient & Hessian ===
