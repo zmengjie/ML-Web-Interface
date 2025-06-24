@@ -1769,10 +1769,9 @@ elif mode == "🌋 Optimization Playground":
     Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.
 
     #### 🧮 Classic Newton (Symbolic)
-    - Uses the **symbolic Hessian matrix** from calculus:
-    \[
-    \nabla^2 f(x, y)
-    \]
+    st.markdown("- Uses the **symbolic Hessian matrix** from calculus:")
+    st.latex(r"\nabla^2 f(x, y)")
+
     - ✅ Very efficient and accurate for simple analytic functions (e.g., quadratic, convex).
     - ⚠️ Can fail or be unstable if the Hessian is singular or badly conditioned.
 
@@ -1786,9 +1785,7 @@ elif mode == "🌋 Optimization Playground":
 
     ### ✏️ Why No Learning Rate?
     Newton’s Method computes:
-    \[
-    x_{t+1} = x_t - H^{-1} \nabla f(x_t)
-    \]
+    st.latex(r"x_{t+1} = x_t - H^{-1} \nabla f(x_t)")
 
     So it **naturally determines the best step direction and size** — no need for manual tuning like in gradient descent.
     """)
