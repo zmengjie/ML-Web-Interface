@@ -1256,6 +1256,13 @@ elif mode == "🌋 Optimization Playground":
                 else:
                     auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
 
+            elif optimizer == "Newton's Method":
+                st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=False, disabled=True, key="auto_tune_disabled")
+                auto_tune = False
+                if "auto_tune_checkbox" in st.session_state:
+                    st.session_state["auto_tune_checkbox"] = False
+                st.caption("ℹ️ Auto-tune is not applicable to Newton’s Method.")
+                
             start_xy_defaults = {
                 "Quadratic Bowl": (-3.0, 3.0), "Saddle": (-2.0, 2.0), "Rosenbrock": (-1.5, 1.5),
                 "Constrained Circle": (0.5, 0.5), "Double Constraint": (-1.5, 1.5),
@@ -1327,14 +1334,21 @@ elif mode == "🌋 Optimization Playground":
             # lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
             # steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
             
-            if not (optimizer == "GradientDescent" and options.get("use_backtracking", False)):
+            if not (
+                (optimizer == "GradientDescent" and options.get("use_backtracking", False)) or
+                (optimizer == "Newton's Method")
+            ):
                 lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
                 steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
             else:
                 lr = None
-                steps = None
-                st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
-            
+                steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
+                
+                if optimizer == "Newton's Method":
+                    st.info("📌 Newton’s Method computes its own step size using the Hessian inverse — learning rate is not needed.")
+                else:
+                    st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
+
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
             # st.checkbox("🎮 Animate Descent Steps")
@@ -1748,6 +1762,39 @@ elif mode == "🌋 Optimization Playground":
             else:
                 st.info("No constraints defined.")
     
+    with st.expander("🧠 Newton Method Variants Explained", expanded=False):
+        st.markdown("""
+        ### 📘 Classic Newton vs. Numerical Newton
+
+        Newton's Method is a powerful optimization technique that uses **second-order derivatives** to accelerate convergence.
+
+        #### 🧮 Classic Newton (Symbolic)
+        - Uses the **symbolic Hessian matrix** from calculus:  
+        \nabla^2 f(x, y) = exact curvature
+        - Very efficient and accurate for simple analytic functions (e.g. quadratic, convex).
+        - ⚠️ Can fail or be unstable if the Hessian is singular or badly conditioned.
+
+        #### 🔢 Numerical Newton
+        - Uses **finite differences** to approximate the Hessian.
+        - No need for symbolic derivatives.
+        - More robust for complex or unknown functions.
+        - Slightly slower due to extra evaluations.
+
+        ---
+
+        ### 🧪 Why No Learning Rate?
+        Newton’s Method computes:
+        \[
+        x_{t+1} = x_t - H^{-1} \nabla f(x_t)
+        \]
+        So it **naturally determines the best step direction and size** — no need for manual tuning.
+
+        ---
+
+        ### 🧠 Coming Soon?
+        - BFGS / L-BFGS: Quasi-Newton methods that approximate Hessian with less memory.
+            """)
+
 
     # === Symbolic Analysis: KKT, Gradient & Hessian ===
     with st.expander("📐 Symbolic Analysis: KKT, Gradient & Hessian", expanded=False):
