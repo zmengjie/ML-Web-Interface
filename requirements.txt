@@ -39,3 +39,5 @@ tqdm
 requests
 python-dotenv
 pytesseract
+langchain-community
+langchain-experimental
