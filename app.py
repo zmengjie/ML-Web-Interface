@@ -1235,7 +1235,7 @@ elif mode == "🌋 Optimization Playground":
                 options["mutation_std"] = st.slider("Mutation Std Dev", 0.1, 1.0, 0.3)
 
             auto_tune = False
-            
+
             if optimizer in ["GradientDescent", "Adam", "RMSProp"]:
                 if optimizer == "GradientDescent":
                     use_backtracking = st.checkbox("🔍 Use Backtracking Line Search", value=False)
@@ -1244,6 +1244,8 @@ elif mode == "🌋 Optimization Playground":
                     if use_backtracking:
                         st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=False, disabled=True, key="auto_tune_disabled")
                         auto_tune = False
+                        if "auto_tune_checkbox" in st.session_state:
+                            st.session_state["auto_tune_checkbox"] = False
                         st.caption("ℹ️ Disabled because backtracking search dynamically adjusts step size.")
                     else:
                         auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
