@@ -1235,12 +1235,20 @@ elif mode == "🌋 Optimization Playground":
                 options["mutation_std"] = st.slider("Mutation Std Dev", 0.1, 1.0, 0.3)
 
             auto_tune = False
+            
             if optimizer in ["GradientDescent", "Adam", "RMSProp"]:
-                auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
-
                 if optimizer == "GradientDescent":
                     use_backtracking = st.checkbox("🔍 Use Backtracking Line Search", value=False)
                     options["use_backtracking"] = use_backtracking
+
+                    if use_backtracking:
+                        st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=False, disabled=True, key="auto_tune_disabled")
+                        auto_tune = False
+                        st.caption("ℹ️ Disabled because backtracking search dynamically adjusts step size.")
+                    else:
+                        auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
+                else:
+                    auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
 
             start_xy_defaults = {
                 "Quadratic Bowl": (-3.0, 3.0), "Saddle": (-2.0, 2.0), "Rosenbrock": (-1.5, 1.5),
