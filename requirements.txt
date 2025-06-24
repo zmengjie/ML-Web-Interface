@@ -3,7 +3,7 @@ pandas
 numpy
 scikit-learn
 xgboost
-statsmodels
+# statsmodels
 matplotlib
 seaborn
 sympy
@@ -19,3 +19,6 @@ tqdm
 requests
 python-dotenv
 pytesseract
+
+statsmodels==0.13.5
+scipy==1.10.1
