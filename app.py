@@ -1331,41 +1331,40 @@ elif mode == "🌋 Optimization Playground":
                 st.session_state.params_set = True
 
             # Final user inputs
-            # lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
-            # steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
-            
+
+            # ✅ Only show lr and steps when not using backtracking or Newton
             if not (
-                (optimizer == "GradientDescent" and options.get("use_backtracking", False)) or
-                (optimizer == "Newton's Method")
-            ):
+                optimizer == "GradientDescent" and options.get("use_backtracking", False)
+            ) and optimizer != "Newton's Method":
                 lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
                 steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
-            else:
+            elif optimizer == "Newton's Method":
                 lr = None
-                steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
-                
-                if optimizer == "Newton's Method":
-                    st.info("📌 Newton’s Method computes its own step size using the Hessian inverse — learning rate is not needed.")
-                else:
-                    st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
+                steps = None
+                st.info("📌 Newton’s Method computes its own step size using the Hessian inverse — learning rate is not needed.")
+            elif optimizer == "GradientDescent" and options.get("use_backtracking", False):
+                lr = None
+                steps = None
+                st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
+
 
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
             # st.checkbox("🎮 Animate Descent Steps")
             show_animation = st.checkbox("🎮 Animate Descent Steps", key="show_animation")
 
-
-        with col_right:
-            st.markdown("### 📊 Auto-Tuning Trial Log")
-            if "df_log" in st.session_state:
-                st.dataframe(st.session_state.df_log.sort_values("score").reset_index(drop=True))
-                st.markdown("""
-                **🧠 How to Read Score:**
-                - `score = final_loss + penalty × steps`
-                - ✅ Lower score is better (fast and accurate convergence).
-                """)
-            else:
-                st.info("Auto-tuning not yet triggered.")
+        if not (optimizer == "GradientDescent" and options.get("use_backtracking", False)):
+            with col_right:
+                st.markdown("### 📊 Auto-Tuning Trial Log")
+                if "df_log" in st.session_state:
+                    st.dataframe(st.session_state.df_log.sort_values("score").reset_index(drop=True))
+                    st.markdown("""
+                    **🧠 How to Read Score:**
+                    - `score = final_loss + penalty × steps`
+                    - ✅ Lower score is better (fast and accurate convergence).
+                    """)
+                else:
+                    st.info("Auto-tuning not yet triggered.")
                 
         if mode == "Predefined":
             f_expr, constraints, description = predefined_funcs[func_name]
@@ -1394,6 +1393,7 @@ elif mode == "🌋 Optimization Playground":
 
             xk, yk = x0, y0
             path = [(xk, yk)]
+            alphas = []
 
             for _ in range(max_iters):
                 gx, gy = grad_f_lambd[0](xk, yk), grad_f_lambd[1](xk, yk)
@@ -1414,8 +1414,9 @@ elif mode == "🌋 Optimization Playground":
 
                 xk, yk = xk - alpha * gx, yk - alpha * gy
                 path.append((xk, yk))
+                alphas.append(alpha)
 
-            return path
+            return path, alphas
 
 
         def optimize_path(x0, y0, optimizer, lr, steps, f_func, grad_f=None, hessian_f=None, options=None):
@@ -1425,7 +1426,8 @@ elif mode == "🌋 Optimization Playground":
             # --- Special Cases: Return early ---
             if optimizer == "GradientDescent" and options.get("use_backtracking", False):
                 grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
-                return backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
+                path, alphas = backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
+                return path, alphas
 
             if optimizer == "Newton's Method" and options.get("newton_variant") in ["BFGS", "L-BFGS"]:
                 from scipy.optimize import minimize
@@ -1522,151 +1524,8 @@ elif mode == "🌋 Optimization Playground":
                 new_x, new_y = x_t - update[0], y_t - update[1]
                 path.append((new_x, new_y))
 
-            return path
+            return path, None
 
-        # st.markdown(f"### 📘 Function Description:\n> {description}")
-
-        # L_expr = f_expr + sum(sp.Symbol(f"lambda{i+1}") * g for i, g in enumerate(constraints))
-        # grad_L = [sp.diff(L_expr, v) for v in (x, y)]
-        # kkt_conditions = grad_L + constraints
-        
-        # def backtracking_line_search_sym(f_sym, grad_f_sym, x0, y0, alpha0=1.0, beta=0.5, c=1e-4, max_iters=100):
-        #     x, y = sp.symbols('x y')
-        #     f_lambd = sp.lambdify((x, y), f_sym, modules='numpy')
-        #     grad_f_lambd = [sp.lambdify((x, y), g, modules='numpy') for g in grad_f_sym]
-
-        #     xk, yk = x0, y0
-        #     path = [(xk, yk)]
-        #     for _ in range(max_iters):
-        #         gx, gy = grad_f_lambd[0](xk, yk), grad_f_lambd[1](xk, yk)
-        #         grad_norm = gx**2 + gy**2
-
-        #         if grad_norm < 1e-10:
-        #             break
-
-        #         alpha = alpha0
-        #         while True:
-        #             x_new = xk - alpha * gx
-        #             y_new = yk - alpha * gy
-        #             lhs = f_lambd(x_new, y_new)
-        #             rhs = f_lambd(xk, yk) - c * alpha * grad_norm
-        #             if lhs <= rhs or alpha < 1e-8:
-        #                 break
-        #             alpha *= beta
-
-        #         xk, yk = xk - alpha * gx, yk - alpha * gy
-        #         path.append((xk, yk))
-
-        #     return path
-
-        # def optimize_path(x0, y0, optimizer, lr, steps, f_func, grad_f=None, hessian_f=None, options=None):
-        #     path = [(x0, y0)]
-        #     if options is None:
-        #         options = {}
-
-        #     if optimizer == "Newton's Method":
-        #         variant = options.get("newton_variant", "Classic Newton")
-
-        #         if variant in ["BFGS", "L-BFGS"]:
-        #             from scipy.optimize import minimize
-
-        #             def loss_vec(v): return f_func(v[0], v[1])
-        #             x0_vec = np.array([x0, y0])
-        #             method = "L-BFGS-B" if variant == "L-BFGS" else "BFGS"
-        #             path_coords = []
-
-        #             def callback(vk):  # collect each iter step
-        #                 path_coords.append((vk[0], vk[1]))
-
-        #             res = minimize(loss_vec, x0_vec, method=method, callback=callback, options={"maxiter": steps})
-
-        #             if not path_coords:
-        #                 path_coords = [tuple(res.x)]
-
-        #             return path_coords  # ✅ Early return to avoid UnboundLocalError
-
-        #     # Now continue the standard optimizer loop
-        #     m, v = np.zeros(2), np.zeros(2)
-        #     beta1, beta2, eps = 0.9, 0.999, 1e-8
-
-        #     for t in range(1, steps + 1):
-        #         x_t, y_t = path[-1]
-        #         grad = grad_f(x_t, y_t)
-
-        #         if optimizer == "Adam":
-        #             m = beta1 * m + (1 - beta1) * grad
-        #             v = beta2 * v + (1 - beta2) * (grad ** 2)
-        #             m_hat = m / (1 - beta1 ** t)
-        #             v_hat = v / (1 - beta2 ** t)
-        #             update = lr * m_hat / (np.sqrt(v_hat) + eps)
-
-        #         elif optimizer == "RMSProp":
-        #             v = beta2 * v + (1 - beta2) * (grad ** 2)
-        #             update = lr * grad / (np.sqrt(v) + eps)
-
-        #         elif optimizer == "Newton's Method":
-        #             if variant == "Classic Newton":
-        #                 try:
-        #                     H = hessian_f(x_t, y_t)
-        #                     H_inv = np.linalg.inv(H)
-        #                     update = H_inv @ grad
-        #                 except:
-        #                     update = grad
-
-        #             elif variant == "Numerical Newton":
-        #                 eps = 1e-4
-        #                 fx = lambda x_, y_: f_func(x_, y_)
-        #                 def second_partial(f, x, y, i, j):
-        #                     h = eps
-        #                     if i == 0 and j == 0:
-        #                         return (f(x + h, y) - 2 * f(x, y) + f(x - h, y)) / h**2
-        #                     elif i == 1 and j == 1:
-        #                         return (f(x, y + h) - 2 * f(x, y) + f(x, y - h)) / h**2
-        #                     else:
-        #                         return (f(x + h, y + h) - f(x + h, y - h) - f(x - h, y + h) + f(x - h, y - h)) / (4 * h**2)
-
-        #                 H = np.array([
-        #                     [second_partial(fx, x_t, y_t, 0, 0), second_partial(fx, x_t, y_t, 0, 1)],
-        #                     [second_partial(fx, x_t, y_t, 1, 0), second_partial(fx, x_t, y_t, 1, 1)]
-        #                 ])
-        #                 try:
-        #                     update = np.linalg.inv(H) @ grad
-        #                 except:
-        #                     update = grad
-
-        #         elif optimizer == "GradientDescent":
-        #             update = lr * grad
-        #         elif optimizer == "GradientDescent" and options.get("use_backtracking", False):
-        #             grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
-        #             return backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
-
-        #         elif optimizer == "Simulated Annealing":
-        #             T, cooling = options.get("T", 2.0), options.get("cooling", 0.95)
-        #             current = f_func(x0, y0)
-        #             for _ in range(steps):
-        #                 xn, yn = x0 + np.random.randn(), y0 + np.random.randn()
-        #                 candidate = f_func(xn, yn)
-        #                 if candidate < current or np.random.rand() < np.exp(-(candidate - current)/T):
-        #                     x0, y0 = xn, yn
-        #                     current = candidate
-        #                     path.append((x0, y0))
-        #                 T *= cooling
-
-        #         elif optimizer == "Genetic Algorithm":
-        #             pop_size = options.get("pop_size", 20)
-        #             mutation_std = options.get("mutation_std", 0.3)
-        #             pop = [np.random.uniform(-5, 5, 2) for _ in range(pop_size)]
-        #             for _ in range(steps // 2):
-        #                 scores = [f_func(p[0], p[1]) for p in pop]
-        #                 pop = sorted(pop, key=lambda p: f_func(p[0], p[1]))[:pop_size // 2]
-        #                 children = [np.mean([pop[i], pop[j]], axis=0) + np.random.normal(0, mutation_std, 2)
-        #                             for i in range(len(pop)) for j in range(i+1, len(pop))][:pop_size // 2]
-        #                 pop += children
-        #             best = sorted(pop, key=lambda p: f_func(p[0], p[1]))[0]
-        #             path = [tuple(best)]
-
-        #         path.append((x_t - update[0], y_t - update[1]))
-        #         return path
 
         if optimizer == "Newton's Method":
             with st.expander("🧠 Newton Method Variants Explained", expanded=False):
@@ -1765,7 +1624,7 @@ elif mode == "🌋 Optimization Playground":
         steps = st.session_state.get("steps", 50)
 
 
-        path = optimize_path(
+        path, alpha_log = optimize_path(
             start_x, start_y,
             optimizer=optimizer,
             lr=lr,
@@ -1804,6 +1663,18 @@ elif mode == "🌋 Optimization Playground":
             ax2.legend()
             ax2.set_title("2D Contour + Constraints")
             st.pyplot(fig2)
+
+        # ✅ Show alpha values if using backtracking
+        if optimizer == "GradientDescent" and options.get("use_backtracking", False) and alpha_log:
+            st.markdown("### 📉 Backtracking Step Sizes (α values)")
+            fig_alpha, ax_alpha = plt.subplots(figsize=(5, 3))
+            ax_alpha.plot(alpha_log, marker='o', linestyle='-')
+            ax_alpha.set_title("Backtracking Step Sizes (α)")
+            ax_alpha.set_xlabel("Step")
+            ax_alpha.set_ylabel("Alpha")
+            ax_alpha.grid(True)
+            st.pyplot(fig_alpha)
+
 
         if show_animation:
             frames = []
