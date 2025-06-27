@@ -1185,14 +1185,14 @@ elif mode == "🌋 Optimization Playground":
 
         st.markdown("Optimization algorithms like Gradient Descent and Newton's Method are based on Taylor Series — a powerful way to approximate functions locally:")
 
-        st.latex(r"""
-        \text{1st-order: } f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
-        """)
+        st.latex(r"\text{1st-order: } f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x")
+        st.markdown("")
         st.markdown("- This gives a **linear tangent approximation** to the function, forming the basis of **Gradient Descent**.")
 
-        st.latex(r"""
-        \text{2nd-order: } f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
-        """)
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        st.latex(r"\text{2nd-order: } f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x")
+        st.markdown("")
         st.markdown("- This adds **curvature** via the Hessian, which is the basis of **Newton's Method**.")
 
         st.markdown("---")
@@ -1206,7 +1206,9 @@ elif mode == "🌋 Optimization Playground":
         This helps students connect abstract equations with **optimizer logic**.
         """)
 
-        st.image("/Users/zhangmengjie/Documents/Capstone Project/taylor_approx_diagram.png", caption="Linear (1st-order) vs. Parabolic (2nd-order) Approximation", use_column_width=True)
+        st.image("/Users/zhangmengjie/Documents/Capstone Project/taylor_approx_diagram.png", 
+                caption="Linear (1st-order) vs. Parabolic (2nd-order) Approximation", 
+                use_column_width=True)
 
 
     # 🧠 Optimizer Category Info Block (Outside main expander)
