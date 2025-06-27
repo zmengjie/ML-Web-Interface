@@ -1183,26 +1183,31 @@ elif mode == "🌋 Optimization Playground":
     with st.expander("🧠 Taylor Series & Optimizer Foundations", expanded=True):
         st.markdown("### 📚 How Taylor Series Explains Optimizers")
 
-        st.markdown("Many optimization methods are based on the **Taylor series expansion** of a function. This helps us approximate the function locally using its derivatives:")
-
-
-        st.markdown("- This is the **1st-order Taylor expansion**, which is the basis of **Gradient Descent**. It only uses the slope (gradient) to decide the direction to move.")
+        st.markdown("Optimization algorithms like Gradient Descent and Newton's Method are based on Taylor Series — a powerful way to approximate functions locally:")
 
         st.latex(r"""
-        f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
+        \text{1st-order: } f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
         """)
-        st.markdown("- This is the **2nd-order Taylor expansion**, used in **Newton's Method**. It adds the **Hessian** (curvature) to adjust the step size and improve convergence.")
+        st.markdown("- This gives a **linear tangent approximation** to the function, forming the basis of **Gradient Descent**.")
 
         st.latex(r"""
-        f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
+        \text{2nd-order: } f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
         """)
-        st.markdown("### ✍️ Summary")
+        st.markdown("- This adds **curvature** via the Hessian, which is the basis of **Newton's Method**.")
+
+        st.markdown("---")
+        st.markdown("### 🖼️ Intuition via Visuals")
 
         st.markdown("""
-        - **Gradient Descent** is a 1st-order method → uses slope only.
-        - **Newton's Method** is a 2nd-order method → uses slope and curvature.
-        - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
+        You can imagine it like this:
+        - ✅ **1st-order**: Approximates with a **tangent line** (local slope).
+        - ✅ **2nd-order**: Approximates with a **parabola** (slope + curvature).
+
+        This helps students connect abstract equations with **optimizer logic**.
         """)
+
+        st.image("/Users/zhangmengjie/Documents/Capstone Project/taylor_approx_diagram.png", caption="Linear (1st-order) vs. Parabolic (2nd-order) Approximation", use_column_width=True)
+
 
     # 🧠 Optimizer Category Info Block (Outside main expander)
     with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
