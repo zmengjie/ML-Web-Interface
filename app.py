@@ -1364,7 +1364,7 @@ elif mode == "🌋 Optimization Playground":
         #             - ✅ Lower score is better (fast and accurate convergence).
         #             """)
         #         else:
-        
+
         if auto_tune and optimizer in ["GradientDescent", "Adam", "RMSProp"]:
             with col_right:
                 st.markdown("### 📊 Auto-Tuning Trial Log")
@@ -1456,7 +1456,7 @@ elif mode == "🌋 Optimization Playground":
                 res = minimize(loss_vec, x0_vec, method=method, callback=callback, options={"maxiter": steps})
                 if not path_coords:
                     path_coords = [tuple(res.x)]
-                return path_coords
+                return path_coords, None
 
             if optimizer == "Simulated Annealing":
                 T, cooling = options.get("T", 2.0), options.get("cooling", 0.95)
