@@ -1887,7 +1887,7 @@ elif mode == "🌋 Optimization Playground":
             st.markdown("#### ✅ Constraint Checker")
 
             # ⛳ Ensure path is updated
-            path, _ = optimize_path(
+            path, losses, meta = optimize_path(
                 start_x,
                 start_y,
                 optimizer=selected_opts[0],  # or st.session_state.get("optimizer", "GradientDescent")
