@@ -1441,7 +1441,9 @@ elif mode == "🌋 Optimization Playground":
             if optimizer == "GradientDescent" and options.get("use_backtracking", False):
                 grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
                 path, alphas = backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
-                return path, alphas
+                meta["callback_steps"] = len(path)
+                return path, alphas, meta
+
 
             if optimizer == "Newton's Method" and options.get("newton_variant") in ["BFGS", "L-BFGS"]:
                 from scipy.optimize import minimize
@@ -1469,10 +1471,9 @@ elif mode == "🌋 Optimization Playground":
                     path_coords = [tuple(res.x)]
                     losses = [f_func(*res.x)]
 
-                return path_coords, losses, {
-                    "res_nit": res.nit,
-                    "callback_steps": len(path_coords),
-                }
+                meta["res_nit"] = res.nit
+                meta["callback_steps"] = len(path_coords)
+                return path_coords, losses, meta
 
 
             if optimizer == "Simulated Annealing":
@@ -1486,8 +1487,9 @@ elif mode == "🌋 Optimization Playground":
                         current = candidate
                         path.append((x0, y0))
                     T *= cooling
-                return path
-
+                meta["callback_steps"] = len(path)
+                return path, None, meta
+            
             if optimizer == "Genetic Algorithm":
                 pop_size = options.get("pop_size", 20)
                 mutation_std = options.get("mutation_std", 0.3)
@@ -1498,7 +1500,8 @@ elif mode == "🌋 Optimization Playground":
                                 for i in range(len(pop)) for j in range(i+1, len(pop))][:pop_size // 2]
                     pop += children
                 best = sorted(pop, key=lambda p: f_func(p[0], p[1]))[0]
-                return [tuple(best)]
+                meta["callback_steps"] = 1
+                return [tuple(best)], None, meta
 
             # --- Standard Optimizer Loop ---
             m, v = np.zeros(2), np.zeros(2)
@@ -1555,7 +1558,8 @@ elif mode == "🌋 Optimization Playground":
                 new_x, new_y = x_t - update[0], y_t - update[1]
                 path.append((new_x, new_y))
 
-            return path, None
+            meta["callback_steps"] = len(path)
+            return path, None, meta
 
 
         if optimizer == "Newton's Method":
