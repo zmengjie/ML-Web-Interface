@@ -1211,7 +1211,7 @@ elif mode == "🌋 Optimization Playground":
 
         st.image("taylor_approx_diagram.png", 
                 caption="Linear (1st-order) vs. Parabolic (2nd-order) Approximation", 
-                use_column_width=True)
+                use_container_width =True)
 
 
     # 🧠 Optimizer Category Info Block (Outside main expander)
