@@ -1436,6 +1436,7 @@ elif mode == "🌋 Optimization Playground":
         def optimize_path(x0, y0, optimizer, lr, steps, f_func, grad_f=None, hessian_f=None, options=None):
             path = [(x0, y0)]
             options = options or {}
+            meta = {} 
 
             # --- Special Cases: Return early ---
             if optimizer == "GradientDescent" and options.get("use_backtracking", False):
@@ -1500,8 +1501,9 @@ elif mode == "🌋 Optimization Playground":
                                 for i in range(len(pop)) for j in range(i+1, len(pop))][:pop_size // 2]
                     pop += children
                 best = sorted(pop, key=lambda p: f_func(p[0], p[1]))[0]
-                meta["callback_steps"] = 1
-                return [tuple(best)], None, meta
+                path = [tuple(best)]
+                meta["callback_steps"] = len(path)
+                return path, None, meta
 
             # --- Standard Optimizer Loop ---
             m, v = np.zeros(2), np.zeros(2)
