@@ -1453,7 +1453,7 @@ elif mode == "🌋 Optimization Playground":
                     return f_func(v[0], v[1])
 
                 def grad_vec(v):
-                    return np.array(grad_func(v[0], v[1]))
+                    return np.atleast_1d(grad_func(v[0], v[1]))
 
                 def callback(vk):
                     path_coords.append((vk[0], vk[1]))
