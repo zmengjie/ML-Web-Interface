@@ -1659,7 +1659,7 @@ elif mode == "🌋 Optimization Playground":
         steps = st.session_state.get("steps", 50)
 
 
-        path, alpha_log = optimize_path(
+        path, alpha_log, meta = optimize_path(
             start_x, start_y,
             optimizer=optimizer,
             lr=lr,
