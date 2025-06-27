@@ -1757,7 +1757,7 @@ elif mode == "🌋 Optimization Playground":
             selected_opts = st.multiselect(
                 "Optimizers",
                 ["GradientDescent", "Adam", "RMSProp", "Newton's Method"],
-                default=["GradientDescent", "Adam"],
+                default=["GradientDescent"],
                 key="compare"
             )
             fig_comp, ax_comp = plt.subplots(figsize=(4, 3))
@@ -1766,7 +1766,7 @@ elif mode == "🌋 Optimization Playground":
             summary_results = []
 
             for opt in selected_opts:
-                path_opt, _ = optimize_path(  # ✅ unpack both outputs
+                path_opt, losses = optimize_path(  # ✅ unpack both outputs
                     start_x,
                     start_y,
                     optimizer=opt,
@@ -1779,7 +1779,7 @@ elif mode == "🌋 Optimization Playground":
                 )
 
                 zs_coords = path_opt
-                zs_vals = [f_func(xp, yp) for xp, yp in zs_coords]
+                zs_vals = losses if losses is not None and len(losses) > 0 else [f_func(xp, yp) for xp, yp in zs_coords]
                 grad_norm = float(np.linalg.norm(grad_f(*zs_coords[-1])))
 
                 results.append((opt, zs_vals))
@@ -1794,7 +1794,10 @@ elif mode == "🌋 Optimization Playground":
             results.sort(key=lambda x: x[1][-1])
 
             for opt, zs in results:
-                ax_comp.plot(zs, label=f"{opt} ({len(zs)} steps)", marker="o", markersize=2)
+                if zs is not None and len(zs) > 0:
+                    ax_comp.plot(zs, label=f"{opt} ({len(zs)} steps)", marker="o", markersize=2)
+                else:
+                    st.warning(f"⚠️ No convergence data for {opt}")
 
             ax_comp.set_title("Convergence")
             ax_comp.set_xlabel("Step")
