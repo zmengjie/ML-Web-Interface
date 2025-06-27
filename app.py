@@ -1445,18 +1445,32 @@ elif mode == "🌋 Optimization Playground":
 
             if optimizer == "Newton's Method" and options.get("newton_variant") in ["BFGS", "L-BFGS"]:
                 from scipy.optimize import minimize
-                path_coords = []
 
-                def loss_vec(v): return f_func(v[0], v[1])
-                def callback(vk): path_coords.append((vk[0], vk[1]))
+                path_coords = []
+                losses = []
+
+                def loss_vec(v):
+                    return f_func(v[0], v[1])
+
+                def grad_vec(v):
+                    return np.array(grad_func(v[0], v[1]))
+
+                def callback(vk):
+                    path_coords.append((vk[0], vk[1]))
+                    losses.append(f_func(vk[0], vk[1]))
 
                 x0_vec = np.array([x0, y0])
                 method = "L-BFGS-B" if options["newton_variant"] == "L-BFGS" else "BFGS"
 
-                res = minimize(loss_vec, x0_vec, method=method, callback=callback, options={"maxiter": steps})
+                res = minimize(loss_vec, x0_vec, method=method, jac=grad_vec, callback=callback, options={"maxiter": steps})
+
+                # Fallback if callback was never triggered (e.g., early convergence)
                 if not path_coords:
                     path_coords = [tuple(res.x)]
-                return path_coords, None
+                    losses = [f_func(*res.x)]
+
+                return path_coords, losses
+
 
             if optimizer == "Simulated Annealing":
                 T, cooling = options.get("T", 2.0), options.get("cooling", 0.95)
