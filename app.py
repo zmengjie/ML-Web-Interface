@@ -1209,7 +1209,7 @@ elif mode == "🌋 Optimization Playground":
         - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
         """)
 
-        st.image("/Users/zhangmengjie/Documents/Capstone Project/taylor_approx_diagram.png", 
+        st.image("taylor_approx_diagram.png", 
                 caption="Linear (1st-order) vs. Parabolic (2nd-order) Approximation", 
                 use_column_width=True)
 
