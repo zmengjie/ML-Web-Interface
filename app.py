@@ -1160,6 +1160,41 @@ elif mode == "🌋 Optimization Playground":
 
     st.title("🧪 Optimizer Visual Playground")
 
+    with st.expander("⚙️ Optimizer Settings", expanded=True):
+        optimizer = st.selectbox("Optimizer", ["GradientDescent", "Adam", "RMSProp", "Newton's Method", "Simulated Annealing", "Genetic Algorithm"])
+
+        # Track change
+        if "last_optimizer" not in st.session_state:
+            st.session_state.last_optimizer = optimizer
+
+        if optimizer != st.session_state.last_optimizer:
+            st.session_state.params_set = False  # trigger auto-reset
+            st.session_state.last_optimizer = optimizer
+
+        def default_lr_for(opt):
+            return 0.005 if opt == "GradientDescent" else 0.001
+
+        default_lr = default_lr_for(optimizer)
+        default_steps = 50
+
+        if not (
+            optimizer == "GradientDescent" and st.session_state.get("use_backtracking", False)
+        ) and optimizer != "Newton's Method":
+            lr = st.selectbox("Learning Rate", sorted(set([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr])), index=0, key="lr")
+            steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
+        else:
+            lr = None
+            steps = st.slider("Steps", 10, 100, value=st.session_state.get("steps", 50), key="steps")
+            if optimizer == "Newton's Method":
+                st.info("📌 Newton’s Method computes its own step size using the Hessian inverse — learning rate is not needed.")
+            else:
+                st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
+
+        st.slider("Initial x", -5.0, 5.0, st.session_state.get("start_x", -3.0), key="start_x")
+        st.slider("Initial y", -5.0, 5.0, st.session_state.get("start_y", 3.0), key="start_y")
+        show_animation = st.checkbox("🎮 Animate Descent Steps", key="show_animation")
+
+
     x, y, w = sp.symbols("x y w")
 
     predefined_funcs = {
