@@ -1675,26 +1675,51 @@ elif mode == "🌋 Optimization Playground":
             ax_alpha.grid(True)
             st.pyplot(fig_alpha)
 
-
         if show_animation:
             frames = []
             fig_anim, ax_anim = plt.subplots(figsize=(5, 4))
-            ax_anim.contour(X, Y, Z, levels=30, cmap="viridis")
+
             for i in range(1, len(path) + 1):
                 ax_anim.clear()
                 ax_anim.contour(X, Y, Z, levels=30, cmap="viridis")
                 ax_anim.plot(*zip(*path[:i]), 'r*-')
+                ax_anim.set_xlim([-5, 5])
+                ax_anim.set_ylim([-5, 5])
                 ax_anim.set_title(f"Step {i}/{len(path)-1}")
+
                 buf = BytesIO()
-                fig_anim.savefig(buf, format='png')
+                fig_anim.savefig(buf, format='png', dpi=100)  # optional: set dpi
                 buf.seek(0)
-                img = Image.open(buf)
-                frames.append(img.copy())
+                frames.append(Image.open(buf).convert("P"))  # convert to palette for GIF efficiency
                 buf.close()
+
             gif_buf = BytesIO()
-            frames[0].save(gif_buf, format="GIF", save_all=True, append_images=frames[1:], duration=300, loop=0)
+            frames[0].save(
+                gif_buf, format="GIF", save_all=True,
+                append_images=frames[1:], duration=300, loop=0
+            )
             gif_buf.seek(0)
-            st.image(gif_buf, caption="Animated Descent Path", use_container_width=True)
+            st.image(gif_buf, caption="📽️ Animated Descent Path", use_container_width=True)
+
+        # if show_animation:
+        #     frames = []
+        #     fig_anim, ax_anim = plt.subplots(figsize=(5, 4))
+        #     ax_anim.contour(X, Y, Z, levels=30, cmap="viridis")
+        #     for i in range(1, len(path) + 1):
+        #         ax_anim.clear()
+        #         ax_anim.contour(X, Y, Z, levels=30, cmap="viridis")
+        #         ax_anim.plot(*zip(*path[:i]), 'r*-')
+        #         ax_anim.set_title(f"Step {i}/{len(path)-1}")
+        #         buf = BytesIO()
+        #         fig_anim.savefig(buf, format='png')
+        #         buf.seek(0)
+        #         img = Image.open(buf)
+        #         frames.append(img.copy())
+        #         buf.close()
+        #     gif_buf = BytesIO()
+        #     frames[0].save(gif_buf, format="GIF", save_all=True, append_images=frames[1:], duration=300, loop=0)
+        #     gif_buf.seek(0)
+        #     st.image(gif_buf, caption="Animated Descent Path", use_container_width=True)
 
     with st.expander("🧰 Optimizer Diagnostic Tools", expanded=True):
         col1, col2 = st.columns(2)
@@ -1713,7 +1738,7 @@ elif mode == "🌋 Optimization Playground":
             summary_results = []
 
             for opt in selected_opts:
-                path_opt = optimize_path(
+                path_opt, _ = optimize_path(  # ✅ unpack both outputs
                     start_x,
                     start_y,
                     optimizer=opt,
@@ -1817,6 +1842,19 @@ elif mode == "🌋 Optimization Playground":
                 st.pyplot(fig2d)
 
             st.markdown("#### ✅ Constraint Checker")
+
+            # ⛳ Ensure path is updated
+            path, _ = optimize_path(
+                start_x,
+                start_y,
+                optimizer=selected_opts[0],  # or st.session_state.get("optimizer", "GradientDescent")
+                lr=lr,
+                steps=steps,
+                f_func=f_func,
+                grad_f=grad_f,
+                hessian_f=hessian_f,
+                options=options
+            )
             if constraints:
                 fig_con, ax_con = plt.subplots(figsize=(4, 3))
                 for i, g_func in enumerate(g_funcs):
