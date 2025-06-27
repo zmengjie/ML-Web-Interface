@@ -1769,7 +1769,7 @@ elif mode == "🌋 Optimization Playground":
             summary_results = []
 
             for opt in selected_opts:
-                path_opt, losses = optimize_path(  # ✅ unpack both outputs
+                path_opt, losses, meta= optimize_path(  # ✅ unpack both outputs
                     start_x,
                     start_y,
                     optimizer=opt,
@@ -1786,16 +1786,14 @@ elif mode == "🌋 Optimization Playground":
                 grad_norm = float(np.linalg.norm(grad_f(*zs_coords[-1])))
 
                 results.append((opt, zs_vals))
-                # summary_results.append({
-                #     "Optimizer": opt,
-                #     "Final Value": np.round(zs_vals[-1], 4),
-                #     "Gradient Norm": np.round(grad_norm, 4),
-                #     "Steps": len(zs_vals)
-                # })
+
                 summary_results.append({
                     "Optimizer": opt,
-                    "Reported Steps": len(zs_vals),
-                    "Actual Steps": res.nit,  # Include this if available
+                    "Final Value": np.round(zs_vals[-1], 4),
+                    "Gradient Norm": np.round(grad_norm, 4),
+                    "Steps": len(zs_vals),
+                    "Actual Steps": meta.get("res_nit", "N/A"),   # ✅ 使用 meta.get()
+                    "Logged Steps": meta.get("callback_steps", "N/A")
                 })
 
             # Sort results by final loss
