@@ -1469,7 +1469,10 @@ elif mode == "🌋 Optimization Playground":
                     path_coords = [tuple(res.x)]
                     losses = [f_func(*res.x)]
 
-                return path_coords, losses
+                return path_coords, losses, {
+                    "res_nit": res.nit,
+                    "callback_steps": len(path_coords),
+                }
 
 
             if optimizer == "Simulated Annealing":
@@ -1783,11 +1786,16 @@ elif mode == "🌋 Optimization Playground":
                 grad_norm = float(np.linalg.norm(grad_f(*zs_coords[-1])))
 
                 results.append((opt, zs_vals))
+                # summary_results.append({
+                #     "Optimizer": opt,
+                #     "Final Value": np.round(zs_vals[-1], 4),
+                #     "Gradient Norm": np.round(grad_norm, 4),
+                #     "Steps": len(zs_vals)
+                # })
                 summary_results.append({
                     "Optimizer": opt,
-                    "Final Value": np.round(zs_vals[-1], 4),
-                    "Gradient Norm": np.round(grad_norm, 4),
-                    "Steps": len(zs_vals)
+                    "Reported Steps": len(zs_vals),
+                    "Actual Steps": res.nit,  # Include this if available
                 })
 
             # Sort results by final loss
