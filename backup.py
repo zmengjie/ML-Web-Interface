@@ -844,3 +844,262 @@ if uploaded_file:
 else:
     st.info("👈 Upload a CSV file to begin.")
 
+
+
+
+
+
+#################
+
+   with st.expander("🚀 Optimizer Visual Playground", expanded=True):
+        col_sidebar, col_main = st.columns([1, 3])
+
+
+
+        with col_sidebar:
+            # st.markdown("## ⚙️ Configuration")
+            st.markdown("<h4>⚙️ Configuration</h4>", unsafe_allow_html=True)
+
+            mode = st.radio("Function Source", ["Predefined", "Custom"])
+            func_name = st.selectbox("Function", list(predefined_funcs.keys())) if mode == "Predefined" else None
+            expr_str = st.text_input("Enter function f(x,y):", "x**2 + y**2") if mode == "Custom" else ""
+            w_val = st.slider("Weight w (Multi-Objective)", 0.0, 1.0, 0.5) if func_name == "Multi-Objective" else None
+
+            all_optimizers = {
+            "Gradient-based 🧮": ["GradientDescent", "Adam", "Newton's Method", "RMSProp"],
+            "Heuristic 🔮": ["Simulated Annealing", "Genetic Algorithm"]
+        }
+
+            flat_optimizers = sum(all_optimizers.values(), [])
+            optimizer = st.selectbox("Optimizer", flat_optimizers, index=flat_optimizers.index("GradientDescent"))
+
+
+            st.markdown("### 🧪 Optimizer Settings")
+
+            options = {}
+
+            if optimizer == "Simulated Annealing":
+                options["T"] = st.slider("Initial Temperature (T)", 0.1, 10.0, 2.0)
+                options["cooling"] = st.slider("Cooling Rate", 0.80, 0.99, 0.95)
+
+            elif optimizer == "Genetic Algorithm":
+                options["pop_size"] = st.slider("Population Size", 10, 100, 20)
+                options["mutation_std"] = st.slider("Mutation Std Dev", 0.1, 1.0, 0.3)
+
+            # auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True)
+
+            # === Full default_config: each function × optimizer
+            default_config = {
+                (name, opt): {
+                    "lr": {
+                        "GradientDescent": {
+                            "Quadratic Bowl": 0.01, "Saddle": 0.01, "Rosenbrock": 0.0005, "Constrained Circle": 0.01,
+                            "Double Constraint": 0.005, "Multi-Objective": 0.005, "Ackley": 0.005, "Rastrigin": 0.005,
+                            "Styblinski-Tang": 0.005, "Sphere": 0.01, "Himmelblau": 0.005, "Booth": 0.01, "Beale": 0.005
+                        }.get(name, 0.001),
+                        "Adam": 0.005,
+                        "RMSProp": 0.005,
+                        "Newton's Method": 0.01,
+                        "Simulated Annealing": 1.0,   # Use as T (temperature)
+                        "Genetic Algorithm": 0.1      # Treated as mutation std (not actual LR)
+                    }[opt],
+                    "steps": {
+                        "GradientDescent": {
+                            "Quadratic Bowl": 50, "Saddle": 50, "Rosenbrock": 80, "Constrained Circle": 60,
+                            "Double Constraint": 60, "Multi-Objective": 60, "Ackley": 70, "Rastrigin": 70,
+                            "Styblinski-Tang": 60, "Sphere": 50, "Himmelblau": 70, "Booth": 50, "Beale": 70
+                        }.get(name, 50),
+                        "Adam": 40,
+                        "RMSProp": 40,
+                        "Newton's Method": 30,
+                        "Simulated Annealing": 80,
+                        "Genetic Algorithm": 50
+                    }[opt]
+                }
+                for name in [
+                    "Quadratic Bowl", "Saddle", "Rosenbrock", "Constrained Circle", "Double Constraint",
+                    "Multi-Objective", "Ackley", "Rastrigin", "Styblinski-Tang", "Sphere",
+                    "Himmelblau", "Booth", "Beale"
+                ]
+                for opt in [
+                    "GradientDescent", "Adam", "RMSProp", "Newton's Method",
+                    "Simulated Annealing", "Genetic Algorithm"
+                ]
+            }
+
+
+            # === Default start positions
+            start_xy_defaults = {
+                "Quadratic Bowl": (-3.0, 3.0),
+                "Saddle": (-2.0, 2.0),
+                "Rosenbrock": (-1.5, 1.5),
+                "Constrained Circle": (0.5, 0.5),
+                "Double Constraint": (-1.5, 1.5),
+                "Multi-Objective": (0.0, 0.0),
+                "Ackley": (2.0, -2.0),
+                "Rastrigin": (3.0, 3.0),
+                "Styblinski-Tang": (-2.5, -2.5),
+                "Sphere": (-3.0, 3.0),
+                "Himmelblau": (0.0, 0.0),
+                "Booth": (1.0, 1.0),
+                "Beale": (-2.0, 2.0)
+            }
+
+
+            def run_auto_tuning_simulation(
+                f_func, optimizer, x0, y0, 
+                lr_grid=list(np.logspace(-4, -1, 6)), 
+                step_grid=[20, 30, 40, 50, 60, 80], 
+                convergence_tol=1e-3, 
+                penalty_weight=1e-2
+            ):
+                best_score = float("inf")
+                best_lr = lr_grid[0]
+                best_steps = step_grid[0]
+                logs = []
+
+                for lr in lr_grid:
+                    for steps in step_grid:
+                        x_t, y_t = x0, y0
+                        m, v = np.zeros(2), np.zeros(2)
+                        beta1, beta2, eps = 0.9, 0.999, 1e-8
+                        converged = False
+
+                        for t in range(1, steps + 1):
+                            dx = (f_func(x_t + 1e-5, y_t) - f_func(x_t - 1e-5, y_t)) / 2e-5
+                            dy = (f_func(x_t, y_t + 1e-5) - f_func(x_t, y_t - 1e-5)) / 2e-5
+                            grad = np.array([dx, dy])
+                            grad_norm = np.linalg.norm(grad)
+
+                            if grad_norm < convergence_tol:
+                                converged = True
+                                break
+
+                            if optimizer == "Adam":
+                                m = beta1 * m + (1 - beta1) * grad
+                                v = beta2 * v + (1 - beta2) * (grad ** 2)
+                                m_hat = m / (1 - beta1 ** t)
+                                v_hat = v / (1 - beta2 ** t)
+                                update = lr * m_hat / (np.sqrt(v_hat) + eps)
+                            elif optimizer == "RMSProp":
+                                v = beta2 * v + (1 - beta2) * (grad ** 2)
+                                update = lr * grad / (np.sqrt(v) + eps)
+                            else:
+                                update = lr * grad
+
+                            x_t -= update[0]
+                            y_t -= update[1]
+
+                        final_loss = f_func(x_t, y_t)
+                        effective_steps = t if converged else steps
+                        score = final_loss + penalty_weight * effective_steps
+
+                        logs.append({
+                            "lr": lr,
+                            "steps": steps,
+                            "effective_steps": effective_steps,
+                            "final_loss": final_loss,
+                            "score": score,
+                            "converged": converged
+                        })
+
+                        if score < best_score:
+                            best_score = score
+                            best_lr = lr
+                            best_steps = effective_steps
+
+                df_log = pd.DataFrame(logs)
+                st.session_state.df_log = df_log
+                return best_lr, best_steps
+
+
+            col_left, col_right = st.columns([1, 1])
+            with col_left:
+                if func_name is not None:
+                    key = (func_name, optimizer)
+                    default_x, default_y = start_xy_defaults.get(func_name, (-3.0, 3.0))
+                    default_lr = default_config.get(key, {}).get("lr", 0.001)
+                    default_steps = default_config.get(key, {}).get("steps", 50)
+
+                    gradient_optimizers = ["GradientDescent", "Adam", "RMSProp"]
+                    if optimizer in ["Simulated Annealing", "Genetic Algorithm"]:
+                        auto_tune = False
+                        st.info("ℹ️ Auto-tuning not supported for heuristic optimizers.")
+                    else:
+                        auto_tune = st.checkbox("⚙️ Auto-Tune Learning Rate & Steps", value=True, key="auto_tune_checkbox")
+
+                    if mode == "Predefined" and auto_tune and optimizer in gradient_optimizers:
+                        symbolic_func, _, _ = predefined_funcs[func_name]
+
+                        # === FIX: substitute w if needed
+                        if func_name == "Multi-Objective":
+                            if 'w_val' not in locals():
+                                w_val = 0.5
+                            symbolic_func = symbolic_func.subs(w, w_val)
+
+                        f_lambdified = sp.lambdify((x, y), symbolic_func, "numpy")
+                        best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, default_x, default_y)
+                        default_lr = best_lr
+                        default_steps = best_steps
+
+                        if 'tune_msg_shown' not in st.session_state:
+                            st.success(f"✅ Auto-tuned: lr = {default_lr}, steps = {default_steps}, start=({default_x}, {default_y})")
+                            st.session_state.tune_msg_shown = True
+
+                    if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
+                        st.session_state.lr = default_lr
+                        st.session_state.steps = default_steps
+                        st.session_state.start_x = default_x
+                        st.session_state.start_y = default_y
+                        st.session_state.params_set = True
+
+                    if 'prev_key' not in st.session_state:
+                        st.session_state.prev_key = None
+
+                    current_key = (func_name, optimizer)
+                    if auto_tune and current_key != st.session_state.prev_key:
+                        st.session_state.lr = default_lr
+                        st.session_state.steps = default_steps
+                        st.session_state.start_x = default_x
+                        st.session_state.start_y = default_y
+                        st.session_state.params_set = True
+                        st.session_state.tune_msg_shown = False
+                        st.session_state.prev_key = current_key
+
+                    lr_options = list(OrderedDict.fromkeys([0.0001, 0.001, 0.005, 0.01, 0.02, 0.05, 0.1, default_lr]))
+                    if st.session_state.lr in lr_options:
+                        lr_index = lr_options.index(st.session_state.lr)
+                    else:
+                        lr_index = 0
+                    lr = st.selectbox("Learning Rate", lr_options, index=lr_index, key="lr")
+
+                    steps = st.slider("Steps", 0, 100, st.session_state.steps, key="steps")
+                    start_x = st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
+                    start_y = st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
+                    show_animation = st.checkbox("🎮 Animate Descent Steps")
+
+            with col_right:
+                st.markdown("### 📊 Auto-Tuning Trial Log")
+                if "df_log" in st.session_state:
+                    st.dataframe(st.session_state.df_log.sort_values("score").reset_index(drop=True))
+                    st.markdown("""
+                    **🧠 How to Read Score:**
+
+                    - `score = final_loss + penalty × steps`
+                    - ✅ Lower score is better (fast and accurate convergence).
+                    - Use this to compare learning rate and step configs.
+                    """)
+                else:
+                    st.info("Run auto-tuning to see results here.")        
+
+        if mode == "Predefined":
+            f_expr, constraints, description = predefined_funcs[func_name]
+            f_expr = f_expr.subs(w, w_val) if func_name == "Multi-Objective" else f_expr
+        else:
+            try:
+                f_expr = sp.sympify(expr_str)
+                constraints = []
+                description = "Custom function."
+            except:
+                st.error("Invalid expression.")
+                st.stop()
