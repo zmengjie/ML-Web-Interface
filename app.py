@@ -1209,9 +1209,28 @@ elif mode == "🌋 Optimization Playground":
         - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
         """)
 
-        st.image("taylor_approx_diagram.png", 
-                caption="Linear (1st-order) vs. Parabolic (2nd-order) Approximation", 
-                use_container_width =True)
+        # Add live plot of cos(x) with 1st and 2nd order Taylor approximations
+        x = np.linspace(-3, 3, 500)
+        f = np.cos(x)
+        taylor_1 = np.ones_like(x)              # 1st-order (constant)
+        taylor_2 = 1 - x**2 / 2                 # 2nd-order (parabola)
+
+        fig, ax = plt.subplots(figsize=(8, 5))
+        ax.plot(x, f, label=r'$f(x) = \cos x$', linewidth=2, color='blue')
+        ax.plot(x, taylor_1, label='1st-order (constant)', linestyle='--', color='red')
+        ax.plot(x, taylor_2, label='2nd-order', linestyle='--', color='orange')
+        ax.scatter(0, 1, color='black', zorder=5)
+        ax.axhline(0, color='black', linewidth=0.8)
+        ax.axvline(0, color='gray', linestyle=':')
+        ax.set_title('Corrected Taylor Approximations of $\\cos x$ at $x = 0$')
+        ax.set_xlabel('x')
+        ax.set_ylabel('f(x)')
+        ax.legend()
+        ax.grid(True)
+        ax.set_ylim(-2, 2)
+
+        st.pyplot(fig)
+
 
 
     # 🧠 Optimizer Category Info Block (Outside main expander)
