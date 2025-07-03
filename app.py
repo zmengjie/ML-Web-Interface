@@ -1671,7 +1671,8 @@ elif mode == "🌋 Optimization Playground":
 
         # === Shared simulation function ===
         def simulate_optimizer(opt_name, f_expr, lr=0.01, steps=50):
-            f_func = sp.lambdify((x, y), f_expr, modules="numpy")
+            f_func = sp.lambdify((x_sym, y_sym), f_expr, modules=["numpy"])
+            # f_func = sp.lambdify((x, y), f_expr, modules="numpy")
             x0, y0 = -3, 3
             path = [(x0, y0)]
             m, v = 0, 0
@@ -1712,7 +1713,8 @@ elif mode == "🌋 Optimization Playground":
             }
 
         g_funcs = [sp.lambdify((x, y), g, modules=["numpy"]) for g in constraints]
-        f_func = sp.lambdify((x, y), f_expr, modules=["numpy"])
+        f_func = sp.lambdify((x_sym, y_sym), f_expr, modules=["numpy"])
+        # f_func = sp.lambdify((x, y), f_expr, modules=["numpy"])
         grad_f = lambda x0, y0: np.array([
             (f_func(x0 + 1e-5, y0) - f_func(x0 - 1e-5, y0)) / 2e-5,
             (f_func(x0, y0 + 1e-5) - f_func(x0, y0 - 1e-5)) / 2e-5
