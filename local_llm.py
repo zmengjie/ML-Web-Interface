@@ -2,21 +2,23 @@
 import torch
 from transformers import pipeline
 
-# this will download + cache GPT-2 (≈500 MB) the first time;
-# feel free to pick any other 🤗 model you like
-generator = pipeline("text-generation", model="gpt2")
+# instantiate the generator once at import time
+generator = pipeline(
+    "text-generation",
+    model="gpt2",
+    # explicitly tell it which torch dtype to use:
+    torch_dtype=torch.float32,
+)
 
 def query_local_llm(prompt: str) -> str:
-    """
-    A very simple local LLM: feeds `prompt` into GPT-2
-    and returns the generated text (up to 200 tokens).
-    """
     out = generator(
         prompt,
-        max_length=len(prompt.split()) + 100,
+        max_length=len(prompt.split()) + 50,
         do_sample=True,
         temperature=0.7,
         top_p=0.9,
+        pad_token_id=generator.tokenizer.eos_token_id,
     )
-    # strip away the prompt itself
-    return out[0]["generated_text"][len(prompt) :].strip()
+    # remove the prompt prefix
+    generated = out[0]["generated_text"]
+    return generated[len(prompt):].strip()
