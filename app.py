@@ -1371,13 +1371,31 @@ elif mode == "🌋 Optimization Playground":
                 return best_lr, best_steps
 
             if auto_tune:
-                symbolic_expr = predefined_funcs[func_name][0]
-                if func_name == "Multi-Objective":
-                    symbolic_expr = symbolic_expr.subs(w, w_val)
-                f_lambdified = sp.lambdify((x, y), symbolic_expr, "numpy")
-                best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, default_x, default_y)
-                st.success(f"✅ Auto-tuned: lr={best_lr}, steps={best_steps}, start=({default_x},{default_y})")
-                default_lr, default_steps = best_lr, best_steps
+                try:
+                    if not func_name:
+                        raise ValueError("No function selected.")
+
+                    symbolic_expr = predefined_funcs[func_name][0]
+
+                    if func_name == "Multi-Objective":
+                        if w_val is None:
+                            raise ValueError("Missing weight value for multi-objective.")
+                        symbolic_expr = symbolic_expr.subs(w, w_val)
+
+                    if not isinstance(symbolic_expr, sp.Expr):
+                        raise TypeError("Function is not a valid sympy expression.")
+
+                    # Try converting to a numerical function
+                    f_lambdified = sp.lambdify((x, y), symbolic_expr, "numpy")
+
+                    best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, default_x, default_y)
+                    st.success(f"✅ Auto-tuned: lr={best_lr}, steps={best_steps}, start=({default_x},{default_y})")
+                    default_lr, default_steps = best_lr, best_steps
+
+                except Exception as e:
+                    st.error(f"❌ Auto-tuning failed: {e}")
+                    st.stop()
+
 
             # Set in session_state
             if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
