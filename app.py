@@ -56,6 +56,9 @@ import openai
 import streamlit as st
 from langchain_community.chat_models import ChatOpenAI
 
+from local_llm import query_local_llm
+
+
 llm = ChatOpenAI(
     temperature=0.3,
     openai_api_key=st.secrets["OPENAI_API_KEY"]
@@ -2111,9 +2114,8 @@ elif mode == "🤖 LLM Assistant":
 
     elif llm_choice == "Local LLM":
         def query_llm(prompt):
-            # Replace this with your actual local LLM inference logic
-            response_text = run_local_llm_inference(prompt)
-            return response_text
+            # Use your actual local LLM function here
+            return query_local_llm(prompt)
 
 
     user_input = st.text_input("💬 Ask something (about your data):")
@@ -2135,14 +2137,14 @@ elif mode == "🤖 LLM Assistant":
                 else:
                     full_prompt = user_input
 
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": "You are a data analysis assistant."},
-                        {"role": "user", "content": full_prompt}
-                    ]
-                )
-                answer = response.choices[0].message.content.strip()
+                # response = client.chat.completions.create(
+                #     model="gpt-4o",
+                #     messages=[
+                #         {"role": "system", "content": "You are a data analysis assistant."},
+                #         {"role": "user", "content": full_prompt}
+                #     ]
+                # )
+                answer = query_llm(full_prompt)
                 st.session_state.chat_history.append((user_input, answer))
                 st.markdown(f"""
                 <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
