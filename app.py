@@ -2051,6 +2051,11 @@ elif mode == "🌋 Optimization Playground":
 elif mode == "🤖 LLM Assistant":
     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+    if "llm_choice" not in st.session_state:
+        st.session_state.llm_choice = "OpenAI"
+
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     if uploaded_file:
         st.session_state.uploaded_file = uploaded_file
@@ -2089,8 +2094,27 @@ elif mode == "🤖 LLM Assistant":
         """)
 
     # === LLM Chat ===
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+
+    llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"], index=0)
+
+
+    if llm_choice == "OpenAI":
+        def query_llm(prompt):
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": "You are a data analysis assistant."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+            return response.choices[0].message.content.strip()
+
+    elif llm_choice == "Local LLM":
+        def query_llm(prompt):
+            # Replace this with your actual local LLM inference logic
+            response_text = run_local_llm_inference(prompt)
+            return response_text
+
 
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
