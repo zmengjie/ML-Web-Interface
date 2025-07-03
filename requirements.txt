@@ -42,5 +42,9 @@ pytesseract
 langchain-community
 langchain-experimental
 
-torch
-transformers>=4.30.0
+
+
+torch>=2.0.0        # for Linux/Windows/Mac, see https://pytorch.org/get-started/locally/
+# — or —
+tensorflow>=2.0.0   # if you prefer TF
+transformers>=4.0.0
