@@ -1375,7 +1375,7 @@ elif mode == "🌋 Optimization Playground":
             #     if func_name == "Multi-Objective":
             #         symbolic_expr = symbolic_expr.subs(w, w_val)
                         #     f_lambdified = sp.lambdify((x, y), symbolic_expr, "numpy")
-                        
+
             if auto_tune:
                 # Use fresh sympy symbols to avoid conflict with Taylor's x
                 x_sym, y_sym, w_sym = sp.symbols("x y w")
@@ -1465,7 +1465,8 @@ elif mode == "🌋 Optimization Playground":
 
         # Setup for symbolic Lagrangian and KKT (if needed)
         L_expr = f_expr + sum(sp.Symbol(f"lambda{i+1}") * g for i, g in enumerate(constraints))
-        grad_L = [sp.diff(L_expr, v) for v in (x, y)]
+        # grad_L = [sp.diff(L_expr, v) for v in (x, y)]
+        grad_L = [sp.diff(L_expr, v) for v in (x_sym, y_sym)]
         kkt_conditions = grad_L + constraints
 
 
