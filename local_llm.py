@@ -10,15 +10,19 @@ generator = pipeline(
     torch_dtype=torch.float32,
 )
 
+# local_llm.py
+
 def query_local_llm(prompt: str) -> str:
-    out = generator(
-        prompt,
-        max_length=len(prompt.split()) + 50,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9,
-        pad_token_id=generator.tokenizer.eos_token_id,
-    )
-    # remove the prompt prefix
-    generated = out[0]["generated_text"]
-    return generated[len(prompt):].strip()
+    try:
+        from transformers import pipeline
+        # Only load the model when this function is called:
+        generator = pipeline(
+            "text-generation",
+            model="gpt2",
+            # force CPU, no dtype inference
+            device=-1,  
+        )
+        out = generator(prompt, max_length=100, do_sample=False)
+        return out[0]["generated_text"]
+    except Exception as e:
+        return f"[Local LLM failed to load: {e}]"
