@@ -1370,11 +1370,22 @@ elif mode == "🌋 Optimization Playground":
                 st.session_state.df_log = pd.DataFrame(logs)
                 return best_lr, best_steps
 
+            # if auto_tune:
+            #     symbolic_expr = predefined_funcs[func_name][0]
+            #     if func_name == "Multi-Objective":
+            #         symbolic_expr = symbolic_expr.subs(w, w_val)
+                        #     f_lambdified = sp.lambdify((x, y), symbolic_expr, "numpy")
+                        
             if auto_tune:
+                # Use fresh sympy symbols to avoid conflict with Taylor's x
+                x_sym, y_sym, w_sym = sp.symbols("x y w")
                 symbolic_expr = predefined_funcs[func_name][0]
+
                 if func_name == "Multi-Objective":
-                    symbolic_expr = symbolic_expr.subs(w, w_val)
-                f_lambdified = sp.lambdify((x, y), symbolic_expr, "numpy")
+                    symbolic_expr = symbolic_expr.subs(w_sym, w_val)
+
+                f_lambdified = sp.lambdify((x_sym, y_sym), symbolic_expr, "numpy")
+
                 best_lr, best_steps = run_auto_tuning_simulation(f_lambdified, optimizer, default_x, default_y)
                 st.success(f"✅ Auto-tuned: lr={best_lr}, steps={best_steps}, start=({default_x},{default_y})")
                 default_lr, default_steps = best_lr, best_steps
