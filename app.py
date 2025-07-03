@@ -1376,7 +1376,7 @@ elif mode == "🌋 Optimization Playground":
                 x_sym, y_sym, w_sym = sp.symbols("x y w")
                 symbolic_expr = predefined_funcs[func_name][0]
 
-                if func_name == "Multi-Objective":
+                if func_name == "Multi-Objective" and w_val is not None:
                     symbolic_expr = symbolic_expr.subs(w_sym, w_val)
 
                 f_lambdified = sp.lambdify((x_sym, y_sym), symbolic_expr, modules="numpy")
@@ -1445,7 +1445,8 @@ elif mode == "🌋 Optimization Playground":
 
         if mode == "Predefined":
             f_expr, constraints, description = predefined_funcs[func_name]
-            f_expr = f_expr.subs(w, w_val) if func_name == "Multi-Objective" else f_expr
+            if func_name == "Multi-Objective" and w_val is not None:
+                f_expr = f_expr.subs(w, w_val)
         else:
             try:
                 f_expr = sp.sympify(expr_str)
@@ -1456,12 +1457,13 @@ elif mode == "🌋 Optimization Playground":
                 st.stop()
 
 
+
         st.markdown(f"### 📘 Function Description:\n> {description}")
 
         # Setup for symbolic Lagrangian and KKT (if needed)
         L_expr = f_expr + sum(sp.Symbol(f"lambda{i+1}") * g for i, g in enumerate(constraints))
-        # grad_L = [sp.diff(L_expr, v) for v in (x, y)]
-        grad_L = [sp.diff(L_expr, v) for v in (x_sym, y_sym)]
+        grad_L = [sp.diff(L_expr, v) for v in (x, y)]
+        # grad_L = [sp.diff(L_expr, v) for v in (x_sym, y_sym)]
         kkt_conditions = grad_L + constraints
 
 
@@ -1804,31 +1806,17 @@ elif mode == "🌋 Optimization Playground":
             gif_buf.seek(0)
             st.image(gif_buf, caption="📽️ Animated Descent Path", use_container_width=True)
 
-        # if show_animation:
-        #     frames = []
-        #     fig_anim, ax_anim = plt.subplots(figsize=(5, 4))
-        #     ax_anim.contour(X, Y, Z, levels=30, cmap="viridis")
-        #     for i in range(1, len(path) + 1):
-        #         ax_anim.clear()
-        #         ax_anim.contour(X, Y, Z, levels=30, cmap="viridis")
-        #         ax_anim.plot(*zip(*path[:i]), 'r*-')
-        #         ax_anim.set_title(f"Step {i}/{len(path)-1}")
-        #         buf = BytesIO()
-        #         fig_anim.savefig(buf, format='png')
-        #         buf.seek(0)
-        #         img = Image.open(buf)
-        #         frames.append(img.copy())
-        #         buf.close()
-        #     gif_buf = BytesIO()
-        #     frames[0].save(gif_buf, format="GIF", save_all=True, append_images=frames[1:], duration=300, loop=0)
-        #     gif_buf.seek(0)
-        #     st.image(gif_buf, caption="Animated Descent Path", use_container_width=True)
+
 
     with st.expander("🧰 Optimizer Diagnostic Tools", expanded=True):
         col1, col2 = st.columns(2)
 
         with col1:
             st.markdown("#### 📊 Optimizer Comparison")
+
+            start_x = st.session_state.get("start_x", 0.0)
+            start_y = st.session_state.get("start_y", 0.0)
+
             selected_opts = st.multiselect(
                 "Optimizers",
                 ["GradientDescent", "Adam", "RMSProp", "Newton's Method"],
@@ -1892,7 +1880,9 @@ elif mode == "🌋 Optimization Playground":
 
 
             st.markdown("#### 🔥 Gradient Norm Heatmap")
-            norm_grad = np.sqrt((np.gradient(Z, axis=0))**2 + (np.gradient(Z, axis=1))**2)
+            # norm_grad = np.sqrt((np.gradient(Z, axis=0))**2 + (np.gradient(Z, axis=1))**2)
+            norm_grad = np.sqrt((np.gradient(Z_loss, axis=0))**2 + (np.gradient(Z_loss, axis=1))**2)
+
             fig3, ax3 = plt.subplots()
             heat = ax3.imshow(norm_grad, extent=[-5, 5, -5, 5], origin='lower', cmap='plasma')
             fig3.colorbar(heat, ax=ax3, label="‖∇f‖")
@@ -1951,6 +1941,10 @@ elif mode == "🌋 Optimization Playground":
                 st.pyplot(fig2d)
 
             st.markdown("#### ✅ Constraint Checker")
+
+            start_x = st.session_state.get("start_x", 0.0)
+            start_y = st.session_state.get("start_y", 0.0)
+
 
             # ⛳ Ensure path is updated
             path, losses, meta = optimize_path(
