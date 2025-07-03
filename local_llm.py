@@ -12,10 +12,11 @@ generator = pipeline(
 
 # local_llm.py
 
-# local_llm.py
-
 def query_local_llm(prompt: str) -> str:
-    # Echo‐stub: just returns the first 200 characters of the prompt
+    """
+    🦄 Dummy local‐LLM stub: echoes back up to 200 chars of the prompt.
+    Replace this with real inference later once your dependencies are sorted.
+    """
     snippet = prompt.replace("\n", " ")[:200]
-    return f"🤖 [local stub] you said: “{snippet}{'…' if len(prompt) > 200 else ''}”"
-
+    ellipsis = "…" if len(prompt) > 200 else ""
+    return f"🤖 [local stub] you said: “{snippet}{ellipsis}”"
