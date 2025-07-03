@@ -57,6 +57,7 @@ import streamlit as st
 from langchain_community.chat_models import ChatOpenAI
 
 from local_llm import query_local_llm
+client = openai  
 
 
 llm = ChatOpenAI(
@@ -2056,8 +2057,6 @@ elif mode == "🤖 LLM Assistant":
 
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
-    if "llm_choice" not in st.session_state:
-        st.session_state.llm_choice = "OpenAI"
 
     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
     if uploaded_file:
@@ -2098,61 +2097,51 @@ elif mode == "🤖 LLM Assistant":
 
     # === LLM Chat ===
 
-    llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"], index=0)
-
-
+    llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
+    
     if llm_choice == "OpenAI":
-        def query_llm(prompt):
-            response = client.chat.completions.create(
+        def query_llm(prompt: str) -> str:
+            resp = client.ChatCompletion.create(
                 model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "You are a data analysis assistant."},
-                    {"role": "user", "content": prompt}
-                ]
+                    {"role": "user", "content": prompt},
+                ],
             )
-            return response.choices[0].message.content.strip()
-
-    elif llm_choice == "Local LLM":
-        def query_llm(prompt):
-            # Use your actual local LLM function here
+            return resp.choices[0].message.content.strip()
+    else:  # Local LLM
+        def query_llm(prompt: str) -> str:
             return query_local_llm(prompt)
 
-
+    # ─── user input / querying ────────────────────────────────
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
         with st.spinner("🤖 Thinking..."):
+            # build your prompt exactly once
+            if df is not None:
+                summary = df.describe(include="all").to_string()
+                corr    = df.corr(numeric_only=True).round(3).to_string()
+                full_prompt = (
+                    f"You are a data analysis assistant.\n\n"
+                    f"Dataset summary:\n{summary}\n\n"
+                    f"Correlation matrix:\n{corr}\n\n"
+                    f"Q: {user_input}\nA:"
+                )
+            else:
+                full_prompt = user_input
+
             try:
-                if df is not None:
-                    summary = df.describe(include='all').to_string()
-                    correlation = df.corr(numeric_only=True).round(3).to_string()
-
-                    full_prompt = f"""You are a data analysis assistant.
-                    Here's the dataset summary:\n{summary}
-
-                    And here is the correlation matrix:\n{correlation}
-
-                    Now answer this question:\n{user_input}
-                    """
-
-                else:
-                    full_prompt = user_input
-
-                # response = client.chat.completions.create(
-                #     model="gpt-4o",
-                #     messages=[
-                #         {"role": "system", "content": "You are a data analysis assistant."},
-                #         {"role": "user", "content": full_prompt}
-                #     ]
-                # )
                 answer = query_llm(full_prompt)
                 st.session_state.chat_history.append((user_input, answer))
-                st.markdown(f"""
-                <div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>
-                    {answer}
-                </div>
-                """, unsafe_allow_html=True)
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
+                answer = None
+
+        if answer:
+            st.markdown(
+                f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
+                unsafe_allow_html=True,
+            )
 
     if df is not None:             
         st.markdown("### 📈 Custom Chart Generator")
