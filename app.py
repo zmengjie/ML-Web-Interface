@@ -2098,18 +2098,14 @@ elif mode == "🤖 LLM Assistant":
     # === LLM Chat ===
 
     llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
-    
     if llm_choice == "OpenAI":
         def query_llm(prompt: str) -> str:
             resp = client.ChatCompletion.create(
                 model="gpt-4o",
-                messages=[
-                    {"role": "system", "content": "You are a data analysis assistant."},
-                    {"role": "user", "content": prompt},
-                ],
+                messages=[ ... ],
             )
             return resp.choices[0].message.content.strip()
-    else:  # Local LLM
+    else:
         def query_llm(prompt: str) -> str:
             return query_local_llm(prompt)
 
