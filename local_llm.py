@@ -1,4 +1,5 @@
 # local_llm.py
+import torch
 from transformers import pipeline
 
 # this will download + cache GPT-2 (≈500 MB) the first time;
