@@ -1161,7 +1161,7 @@ elif mode == "🌋 Optimization Playground":
 
     st.title("🧪 Optimizer Visual Playground")
 
-    # x, y, w = sp.symbols("x y w")
+    x, y, w = sp.symbols("x y w")
     x_sym, y_sym, w_sym = sp.symbols("x y w")
 
     predefined_funcs = {
