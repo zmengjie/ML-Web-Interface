@@ -1,20 +1,21 @@
 # local_llm.py
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
-import streamlit as st
+from transformers import pipeline
 
-@st.cache_resource(show_spinner=False)
-def load_local_model():
-    model_name = "distilgpt2"  # lightweight GPT2 variant
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(model_name)
-    model.eval()
-    return tokenizer, model
+# this will download + cache GPT-2 (≈500 MB) the first time;
+# feel free to pick any other 🤗 model you like
+generator = pipeline("text-generation", model="gpt2")
 
-def query_local_llm(prompt):
-    tokenizer, model = load_local_model()
-    inputs = tokenizer(prompt, return_tensors="pt")
-    with torch.no_grad():
-        outputs = model.generate(**inputs, max_length=100, do_sample=True, temperature=0.7)
-    answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return answer[len(prompt):].strip()
+def query_local_llm(prompt: str) -> str:
+    """
+    A very simple local LLM: feeds `prompt` into GPT-2
+    and returns the generated text (up to 200 tokens).
+    """
+    out = generator(
+        prompt,
+        max_length=len(prompt.split()) + 100,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
+    )
+    # strip away the prompt itself
+    return out[0]["generated_text"][len(prompt) :].strip()
