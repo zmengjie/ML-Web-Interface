@@ -1462,8 +1462,8 @@ elif mode == "🌋 Optimization Playground":
 
         # Setup for symbolic Lagrangian and KKT (if needed)
         L_expr = f_expr + sum(sp.Symbol(f"lambda{i+1}") * g for i, g in enumerate(constraints))
-        grad_L = [sp.diff(L_expr, v) for v in (x, y)]
-        # grad_L = [sp.diff(L_expr, v) for v in (x_sym, y_sym)]
+        # grad_L = [sp.diff(L_expr, v) for v in (x, y)]
+        grad_L = [sp.diff(L_expr, v) for v in (x_sym, y_sym)]
         kkt_conditions = grad_L + constraints
 
         def backtracking_line_search_sym(f_sym, grad_f_sym, x0, y0, alpha0=1.0, beta=0.5, c=1e-4, max_iters=100):
