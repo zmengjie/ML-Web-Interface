@@ -1907,6 +1907,13 @@ elif mode == "🌋 Optimization Playground":
 
             st.markdown("#### 🔥 Gradient Norm Heatmap")
             # norm_grad = np.sqrt((np.gradient(Z, axis=0))**2 + (np.gradient(Z, axis=1))**2)
+            # Temporary definition in case not computed above
+            if 'Z_loss' not in locals():
+                x_range = np.linspace(-5, 5, 50)
+                y_range = np.linspace(-5, 5, 50)
+                X_loss, Y_loss = np.meshgrid(x_range, y_range)
+                Z_loss = (X_loss - 2)**2 + (Y_loss + 1)**2  # Default MSE-like loss
+
             norm_grad = np.sqrt((np.gradient(Z_loss, axis=0))**2 + (np.gradient(Z_loss, axis=1))**2)
 
             fig3, ax3 = plt.subplots()
