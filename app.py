@@ -1416,18 +1416,6 @@ elif mode == "🌋 Optimization Playground":
             # st.checkbox("🎮 Animate Descent Steps")
             show_animation = st.checkbox("🎮 Animate Descent Steps", key="show_animation")
 
-        # if not (optimizer == "GradientDescent" and options.get("use_backtracking", False)):
-        #     with col_right:
-        #         st.markdown("### 📊 Auto-Tuning Trial Log")
-        #         if "df_log" in st.session_state:
-        #             st.dataframe(st.session_state.df_log.sort_values("score").reset_index(drop=True))
-        #             st.markdown("""
-        #             **🧠 How to Read Score:**
-        #             - `score = final_loss + penalty × steps`
-        #             - ✅ Lower score is better (fast and accurate convergence).
-        #             """)
-        #         else:
-
         if auto_tune and optimizer in ["GradientDescent", "Adam", "RMSProp"]:
             with col_right:
                 st.markdown("### 📊 Auto-Tuning Trial Log")
@@ -1807,16 +1795,16 @@ elif mode == "🌋 Optimization Playground":
             ax2.set_title("2D Contour + Constraints")
             st.pyplot(fig2)
 
-        # ✅ Show alpha values if using backtracking
-        if optimizer == "GradientDescent" and options.get("use_backtracking", False) and alpha_log:
-            st.markdown("### 📉 Backtracking Step Sizes (α values)")
-            fig_alpha, ax_alpha = plt.subplots(figsize=(5, 3))
-            ax_alpha.plot(alpha_log, marker='o', linestyle='-')
-            ax_alpha.set_title("Backtracking Step Sizes (α)")
-            ax_alpha.set_xlabel("Step")
-            ax_alpha.set_ylabel("Alpha")
-            ax_alpha.grid(True)
-            st.pyplot(fig_alpha)
+        # # ✅ Show alpha values if using backtracking
+        # if optimizer == "GradientDescent" and options.get("use_backtracking", False) and alpha_log:
+        #     st.markdown("### 📉 Backtracking Step Sizes (α values)")
+        #     fig_alpha, ax_alpha = plt.subplots(figsize=(5, 3))
+        #     ax_alpha.plot(alpha_log, marker='o', linestyle='-')
+        #     ax_alpha.set_title("Backtracking Step Sizes (α)")
+        #     ax_alpha.set_xlabel("Step")
+        #     ax_alpha.set_ylabel("Alpha")
+        #     ax_alpha.grid(True)
+        #     st.pyplot(fig_alpha)
 
         if show_animation:
             frames = []
