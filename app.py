@@ -1734,8 +1734,8 @@ elif mode == "🌋 Optimization Playground":
                 "Gradient Norm": round(grad_norm, 4),
                 "Steps": len(path) - 1
             }
-
-        g_funcs = [sp.lambdify((x, y), g, modules=["numpy"]) for g in constraints]
+        g_funcs = [sp.lambdify((x_sym, y_sym), g, modules=["numpy"]) for g in constraints]  
+        # g_funcs = [sp.lambdify((x, y), g, modules=["numpy"]) for g in constraints]
         f_func = sp.lambdify((x_sym, y_sym), f_expr, modules=["numpy"])
         # f_func = sp.lambdify((x, y), f_expr, modules=["numpy"])
         grad_f = lambda x0, y0: np.array([
