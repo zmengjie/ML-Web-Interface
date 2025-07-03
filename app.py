@@ -1466,8 +1466,14 @@ elif mode == "🌋 Optimization Playground":
         # grad_L = [sp.diff(L_expr, v) for v in (x_sym, y_sym)]
         kkt_conditions = grad_L + constraints
 
-
         def backtracking_line_search_sym(f_sym, grad_f_sym, x0, y0, alpha0=1.0, beta=0.5, c=1e-4, max_iters=100):
+            # Declare standard symbols for lambdify
+            x, y = sp.symbols("x y")
+
+            # Ensure all expressions use x, y (not x_sym, y_sym)
+            f_sym = f_sym.subs({sp.Symbol("x"): x, sp.Symbol("y"): y})
+            grad_f_sym = [g.subs({sp.Symbol("x"): x, sp.Symbol("y"): y}) for g in grad_f_sym]
+
             f_lambd = sp.lambdify((x, y), f_sym, modules='numpy')
             grad_f_lambd = [sp.lambdify((x, y), g, modules='numpy') for g in grad_f_sym]
 
@@ -1497,6 +1503,38 @@ elif mode == "🌋 Optimization Playground":
                 alphas.append(alpha)
 
             return path, alphas
+
+
+        # def backtracking_line_search_sym(f_sym, grad_f_sym, x0, y0, alpha0=1.0, beta=0.5, c=1e-4, max_iters=100):
+        #     f_lambd = sp.lambdify((x, y), f_sym, modules='numpy')
+        #     grad_f_lambd = [sp.lambdify((x, y), g, modules='numpy') for g in grad_f_sym]
+
+        #     xk, yk = x0, y0
+        #     path = [(xk, yk)]
+        #     alphas = []
+
+        #     for _ in range(max_iters):
+        #         gx, gy = grad_f_lambd[0](xk, yk), grad_f_lambd[1](xk, yk)
+        #         grad_norm = gx**2 + gy**2
+
+        #         if grad_norm < 1e-10:
+        #             break
+
+        #         alpha = alpha0
+        #         while True:
+        #             x_new = xk - alpha * gx
+        #             y_new = yk - alpha * gy
+        #             lhs = f_lambd(x_new, y_new)
+        #             rhs = f_lambd(xk, yk) - c * alpha * grad_norm
+        #             if lhs <= rhs or alpha < 1e-8:
+        #                 break
+        #             alpha *= beta
+
+        #         xk, yk = xk - alpha * gx, yk - alpha * gy
+        #         path.append((xk, yk))
+        #         alphas.append(alpha)
+
+        #     return path, alphas
 
 
         def optimize_path(x0, y0, optimizer, lr, steps, f_func, grad_f=None, hessian_f=None, options=None):
