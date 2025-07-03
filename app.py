@@ -1990,16 +1990,18 @@ elif mode == "🌋 Optimization Playground":
             st.latex(fr"\text{{KKT}}_{{{i+1}}} = {sp.latex(cond)}")
 
         st.markdown("#### 🧮 Gradient & Hessian")
-        grad = [sp.diff(f_expr, v) for v in (x, y)]
-        hessian = sp.hessian(f_expr, (x, y))
+        grad = [sp.diff(f_expr, v) for v in (x_sym, y_sym)]
+        # grad = [sp.diff(f_expr, v) for v in (x, y)]
+        # hessian = sp.hessian(f_expr, (x, y))
+        hessian = sp.hessian(f_expr, (x_sym, y_sym))
+
         st.latex("Gradient: " + sp.latex(sp.Matrix(grad)))
         st.latex("Hessian: " + sp.latex(hessian))
 
         if optimizer == "Newton's Method":
-            st.markdown("#### 🧠 Newton Method Diagnostics")
-            
-            hess = sp.hessian(f_expr, (x, y))
-            hess_func = sp.lambdify((x, y), hess, modules="numpy")
+            st.markdown("#### 🧠 Newton Method Diagnostics")        
+            hess = sp.hessian(f_expr, (x_sym, y_sym))
+            hess_func = sp.lambdify((x_sym, y_sym), hess, modules="numpy")
             H_val = np.array(hess_func(start_x, start_y))
             det_val = np.linalg.det(H_val)
 
