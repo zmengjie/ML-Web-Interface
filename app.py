@@ -1504,7 +1504,7 @@ elif mode == "🌋 Optimization Playground":
 
             # --- Special Cases: Return early ---
             if optimizer == "GradientDescent" and options.get("use_backtracking", False):
-                grad_f_expr = [sp.diff(f_expr, v) for v in (x, y)]
+                grad_f_expr = [sp.diff(f_expr, v) for v in (x_sym, y_sym)]
                 path, alphas = backtracking_line_search_sym(f_expr, grad_f_expr, x0, y0)
                 meta["callback_steps"] = len(path)
                 return path, alphas, meta
