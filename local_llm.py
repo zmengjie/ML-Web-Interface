@@ -1,6 +1,6 @@
 # local_llm.py
 import torch
-from transformers import pipeline
+
 
 # instantiate the generator once at import time
 generator = pipeline(
