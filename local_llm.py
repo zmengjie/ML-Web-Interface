@@ -14,11 +14,8 @@
 import streamlit as st
 
 def query_local_llm(prompt: str) -> str:
-    """
-    Run local text generation using DistilGPT2.
-    """
     try:
-        import torch  # 🔥 Must be inside function to catch missing import
+        import torch
         from transformers import pipeline, set_seed
 
         if "local_llm" not in st.session_state:
@@ -29,10 +26,10 @@ def query_local_llm(prompt: str) -> str:
         else:
             generator = st.session_state.local_llm
 
-        output = generator(prompt, max_length=100, num_return_sequences=1)
+        # Add basic prompt context
+        formatted_prompt = f"You are a helpful assistant.\n\nQ: {prompt}\nA:"
+        output = generator(formatted_prompt, max_length=100, num_return_sequences=1)
         return output[0]["generated_text"]
 
-    except ImportError as e:
-        return "❌ PyTorch or Transformers not installed. Please check requirements.txt."
     except Exception as e:
         return f"❌ Local LLM error: {type(e).__name__}: {e}"
