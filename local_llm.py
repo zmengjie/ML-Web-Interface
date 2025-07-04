@@ -108,10 +108,13 @@ def format_prompt(prompt: str) -> str:
     prompt = prompt.strip()
     if MODEL_FORMAT == "tinyllama":
         return f"### Instruction:\n{prompt}\n\n### Response:\n"
-    elif MODEL_FORMAT in ("mistral", "llama3"):
+    elif MODEL_FORMAT == "mistral":
         return f"[INST] {prompt} [/INST]"
+    elif MODEL_FORMAT == "llama3":
+        return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
     else:
         return prompt
+
 
 
 # === Download model if missing ===
@@ -160,7 +163,13 @@ def query_local_llm(prompt: str) -> str:
         st.text("🧠 Raw output:\n" + full_output)
 
         # === Clean output ===
-        clean_output = full_output.replace("### Response:", "").split("###")[0].strip()
+        # clean_output = full_output.replace("### Response:", "").split("###")[0].strip()
+        clean_output = (
+        full_output.replace("<|im_start|>", "")
+                .replace("<|im_end|>", "")
+                .split("###")[0]
+                .strip()
+                        )
         return clean_output
 
     except Exception as e:
