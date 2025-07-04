@@ -2280,6 +2280,8 @@ elif mode == "🤖 LLM Assistant":
 
     final_key = user_key if user_key else st.secrets.get("OPENAI_API_KEY")
 
+    query_llm = None
+
     if llm_choice == "OpenAI":
         st.warning("⚠️ Using OpenAI's GPT may incur charges.")
         st.markdown("[💳 View billing](https://platform.openai.com/account/billing)", unsafe_allow_html=True)
@@ -2291,16 +2293,11 @@ elif mode == "🤖 LLM Assistant":
 
             llm = ChatOpenAI(temperature=0.3, openai_api_key=final_key)
             memory = ConversationBufferMemory()
-
-            def query_llm(prompt: str) -> str:
-                return llm.predict(prompt)
-
+            query_llm = lambda prompt: llm.predict(prompt)
         else:
-            def query_llm(prompt: str) -> str:
-                return "⚠️ Please check the billing checkbox to use OpenAI API."
+            query_llm = lambda prompt: "⚠️ OpenAI API key missing or billing not confirmed."
     else:
-        def query_llm(prompt: str) -> str:
-            return query_local_llm(prompt)
+        query_llm = lambda prompt: query_local_llm(prompt)
 
     # === 🧠 User Input ===
     user_input = st.text_input("💬 Ask something (about your data):")
@@ -2323,16 +2320,17 @@ elif mode == "🤖 LLM Assistant":
                 st.info("📡 Sending prompt to LLM...")
                 answer = query_llm(full_prompt)
 
-                if not answer.strip():
-                    st.warning("⚠️ Local LLM returned an empty response. It may have stalled or timed out.")
-                else:
+                if isinstance(answer, str) and answer.strip():
                     st.session_state.chat_history.append((user_input, answer))
+                else:
+                    st.warning("⚠️ LLM returned an empty or invalid response.")
+
 
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
                 answer = None
 
-        if answer and answer.strip():
+        if answer and isinstance(answer, str) and answer.strip():
             st.markdown(
                 f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
                 unsafe_allow_html=True,
