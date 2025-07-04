@@ -90,21 +90,44 @@
 #         return f"❌ Local LLM error: {type(e).__name__}: {e}"
 
 
+# local_llm.py
+
+import os
+import requests
 from ctransformers import AutoModelForCausalLM
 
-# Load TinyLLaMA GGUF model
-llm = AutoModelForCausalLM.from_pretrained(
-    "./tinyllama.gguf",             # path to your GGUF file
-    model_type="llama",             # TinyLLaMA uses LLaMA tokenizer/architecture
-    max_new_tokens=256,
-    temperature=0.7,
-    top_p=0.95,
-    repetition_penalty=1.1,
-    stop=["</s>"]
-)
+# === Configuration ===
+GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q2_K.gguf"
+GGUF_PATH = "tinyllama.gguf"
 
-def query_local(prompt: str) -> str:
+# === Download model if missing ===
+def download_gguf():
+    if not os.path.exists(GGUF_PATH):
+        print("🔽 Downloading TinyLLaMA model...")
+        with requests.get(GGUF_URL, stream=True) as r:
+            r.raise_for_status()
+            with open(GGUF_PATH, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        print("✅ Download complete.")
+
+# === Load GGUF model ===
+@st.cache_resource(show_spinner="🔄 Loading local TinyLLaMA model...")
+def load_local_model():
+    download_gguf()
+    return AutoModelForCausalLM.from_pretrained(
+        GGUF_PATH,
+        model_type="llama",
+        gpu_layers=0,  # Set >0 if using GPU acceleration
+    )
+
+# === Initialize once ===
+local_model = load_local_model()
+
+# === Query function ===
+def query_local_llm(prompt: str) -> str:
     try:
-        return llm(f"You are a helpful assistant. {prompt}")
+        output = local_model(prompt, max_new_tokens=100)
+        return output
     except Exception as e:
         return f"❌ Local LLM error: {e}"
