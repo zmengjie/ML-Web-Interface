@@ -13,6 +13,7 @@
 
 from transformers import pipeline, set_seed
 import streamlit as st
+import torch 
 
 def query_local_llm(prompt: str) -> str:
     """
