@@ -1207,6 +1207,22 @@ elif mode == "🌋 Optimization Playground":
 
     }
 
+            
+    with st.expander("💬 Ask the LLM about Optimizers or Math", expanded=False):
+        user_question = st.text_input("Ask anything (e.g., What is BFGS? Why is Newton unstable?)")
+        if user_question:
+            with st.spinner("🤖 Thinking..."):
+                full_prompt = (
+                    "You are an expert on numerical optimization methods such as Gradient Descent, "
+                    "Adam, Newton’s Method, Simulated Annealing, and Genetic Algorithms.\n\n"
+                    f"Question: {user_question}\nAnswer:"
+                )
+                response = query_llm(full_prompt)
+                st.markdown(
+                    f"<div style='background-color:#f4f9ff;padding:10px;border-radius:6px;'>{response}</div>",
+                    unsafe_allow_html=True,
+                )
+
     with st.expander("🧠 Taylor Series & Optimizer Foundations", expanded=True):
         st.markdown("### 📚 How Taylor Series Explains Optimizers")
 
@@ -1264,7 +1280,7 @@ elif mode == "🌋 Optimization Playground":
 
 
 
-    # 🧠 Optimizer Category Info Block (Outside main expander)
+    # 🪄 Optimizer Category Info Block (Outside main expander)
     with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
         st.markdown("""
         ### 🤖 Optimizer Categories
@@ -1297,21 +1313,6 @@ elif mode == "🌋 Optimization Playground":
         ⚠️ *Note:* Gradient-based methods require a smooth function. Use heuristic optimizers for discontinuous or non-differentiable objectives.
         """)
 
-            
-    with st.expander("💬 Ask the LLM about Optimizers or Math", expanded=False):
-        user_question = st.text_input("Ask anything (e.g., What is BFGS? Why is Newton unstable?)")
-        if user_question:
-            with st.spinner("🤖 Thinking..."):
-                full_prompt = (
-                    "You are an expert on numerical optimization methods such as Gradient Descent, "
-                    "Adam, Newton’s Method, Simulated Annealing, and Genetic Algorithms.\n\n"
-                    f"Question: {user_question}\nAnswer:"
-                )
-                response = query_llm(full_prompt)
-                st.markdown(
-                    f"<div style='background-color:#f4f9ff;padding:10px;border-radius:6px;'>{response}</div>",
-                    unsafe_allow_html=True,
-                )
 
 
     with st.expander("🚀 Optimizer Visual Playground", expanded=True):
