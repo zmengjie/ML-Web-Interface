@@ -58,8 +58,8 @@ import streamlit as st
 from langchain_community.chat_models import ChatOpenAI
 
 from local_llm import query_local_llm
-client = openai  
-
+# client = openai  
+client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 llm = ChatOpenAI(
     temperature=0.3,
@@ -2228,6 +2228,11 @@ elif mode == "🤖 LLM Assistant":
         """)
 
     # === LLM Selection ===
+    from openai import OpenAI
+
+    # Initialize OpenAI client
+    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+
     llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
     allow_openai_use = True
 
@@ -2238,20 +2243,21 @@ elif mode == "🤖 LLM Assistant":
 
         if allow_openai_use:
             def query_llm(prompt: str) -> str:
-                resp = client.ChatCompletion.create(
+                response = client.chat.completions.create(
                     model="gpt-4o",
                     messages=[
                         {"role": "system", "content": "You are a data analysis assistant."},
                         {"role": "user", "content": prompt},
-                    ],
+                    ]
                 )
-                return resp.choices[0].message.content.strip()
+                return response.choices[0].message.content.strip()
         else:
             def query_llm(prompt: str) -> str:
                 return "⚠️ Please confirm billing checkbox to use OpenAI API."
     else:
         def query_llm(prompt: str) -> str:
             return query_local_llm(prompt)
+
 
     # === User Prompt Input ===
     user_input = st.text_input("💬 Ask something (about your data):")
