@@ -2319,17 +2319,25 @@ elif mode == "🤖 LLM Assistant":
                 full_prompt = user_input
 
             try:
+                st.code(full_prompt, language="text")  # ✅ show prompt for debug
+                st.info("📡 Sending prompt to LLM...")
                 answer = query_llm(full_prompt)
-                st.session_state.chat_history.append((user_input, answer))
+
+                if not answer.strip():
+                    st.warning("⚠️ Local LLM returned an empty response. It may have stalled or timed out.")
+                else:
+                    st.session_state.chat_history.append((user_input, answer))
+
             except Exception as e:
                 st.error(f"❌ LLM Error: {e}")
                 answer = None
 
-        if answer:
+        if answer and answer.strip():
             st.markdown(
                 f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
                 unsafe_allow_html=True,
             )
+
 
     if df is not None:
         st.markdown("### 📈 Custom Chart Generator")
