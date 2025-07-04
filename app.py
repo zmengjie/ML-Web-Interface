@@ -2051,7 +2051,137 @@ elif mode == "🌋 Optimization Playground":
 
     # === Newton Method Info ===
 
+# # === Mode: LLM Assistant ===
+# elif mode == "🤖 LLM Assistant":
+#     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
+
+#     if "chat_history" not in st.session_state:
+#         st.session_state.chat_history = []
+
+#     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
+#     if uploaded_file:
+#         st.session_state.uploaded_file = uploaded_file
+
+#     df = None
+#     if "uploaded_file" in st.session_state:
+#         try:
+#             if st.session_state.uploaded_file is not None:
+#                 content = st.session_state.uploaded_file.read()
+#                 if content.strip() == b"":
+#                     raise ValueError("Uploaded file is empty.")
+#                 st.session_state.uploaded_file.seek(0)
+#                 df = pd.read_csv(st.session_state.uploaded_file)
+#             else:
+#                 raise ValueError("No file uploaded.")
+#         except Exception as e:
+#             st.error(f"❌ Failed to read uploaded CSV: {e}")
+#             st.session_state.uploaded_file = None
+#             df = None
+
+#     if df is not None:
+#         st.write("### 📄 Data Preview", df.head())
+#         st.write("### 📊 Summary Statistics")
+#         st.dataframe(df.describe(include='all'))
+
+#         st.markdown("### 💡 Suggested Prompts")
+#         st.markdown("""
+#         - What are the most correlated features?
+#         - Show a summary of missing values
+#         - Which features influence the target most?
+#         - What kind of plot would help visualize X vs Y?
+#         - Can you generate a histogram of column X?
+#         - Show pairwise plots for selected features
+#         - Predict the target using linear regression
+#         - Detect outliers or anomalies in the data
+#         """)
+
+#     # === LLM Chat ===
+
+#     llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
+#     if llm_choice == "OpenAI":
+#         def query_llm(prompt: str) -> str:
+#             resp = client.ChatCompletion.create(
+#                 model="gpt-4o",
+#                 messages=[ ... ],
+#             )
+#             return resp.choices[0].message.content.strip()
+#     else:
+#         def query_llm(prompt: str) -> str:
+#             return query_local_llm(prompt)
+
+#     # ─── user input / querying ────────────────────────────────
+#     user_input = st.text_input("💬 Ask something (about your data):")
+#     if user_input:
+#         with st.spinner("🤖 Thinking..."):
+#             # build your prompt exactly once
+#             if df is not None:
+#                 summary = df.describe(include="all").to_string()
+#                 corr    = df.corr(numeric_only=True).round(3).to_string()
+#                 full_prompt = (
+#                     f"You are a data analysis assistant.\n\n"
+#                     f"Dataset summary:\n{summary}\n\n"
+#                     f"Correlation matrix:\n{corr}\n\n"
+#                     f"Q: {user_input}\nA:"
+#                 )
+#             else:
+#                 full_prompt = user_input
+
+#             try:
+#                 answer = query_llm(full_prompt)
+#                 st.session_state.chat_history.append((user_input, answer))
+#             except Exception as e:
+#                 st.error(f"❌ LLM Error: {e}")
+#                 answer = None
+
+#         if answer:
+#             st.markdown(
+#                 f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
+#                 unsafe_allow_html=True,
+#             )
+
+#     if df is not None:             
+#         st.markdown("### 📈 Custom Chart Generator")
+#         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
+#         x_col = st.selectbox("X-axis Column", df.columns)
+#         y_col = st.selectbox("Y-axis Column", df.columns)
+#         if st.button("Generate Chart"):
+#             fig, ax = plt.subplots()
+#             if chart_type == "Line":
+#                 ax.plot(df[x_col], df[y_col])
+#             elif chart_type == "Bar":
+#                 ax.bar(df[x_col], df[y_col])
+#             elif chart_type == "Scatter":
+#                 ax.scatter(df[x_col], df[y_col])
+#             elif chart_type == "Histogram":
+#                 ax.hist(df[x_col], bins=20)
+#             ax.set_xlabel(x_col)
+#             ax.set_ylabel(y_col)
+#             st.pyplot(fig, use_container_width=True)
+
+#     st.markdown("### 💾 Export Data")
+#     file_name = st.text_input("Output file name (without extension)", "my_data")
+#     if st.button("Download as CSV"):
+#         tmp_csv = df.to_csv(index=False).encode("utf-8")
+#         st.download_button(
+#             label="📥 Download Processed CSV",
+#             data=tmp_csv,
+#             file_name=f"{file_name}.csv",
+#             mime="text/csv"
+#         )
+
+
+
+#     if st.session_state.chat_history:
+#         st.markdown("### 📜 Chat History")
+#         for q, a in st.session_state.chat_history[::-1]:
+#             st.markdown(f"**You:** {q}")
+#             st.markdown(f"**Assistant:** {a}")
+
+#     if "uploaded_file" not in st.session_state or df is None:
+#         st.info("📂 Upload a dataset to explore insights with the assistant.")
+
 # === Mode: LLM Assistant ===
+
 elif mode == "🤖 LLM Assistant":
     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
@@ -2095,28 +2225,40 @@ elif mode == "🤖 LLM Assistant":
         - Detect outliers or anomalies in the data
         """)
 
-    # === LLM Chat ===
+    # === LLM Selection & Query Function ===
+    llm_choice = st.radio("Choose LLM Backend", ["Local LLM", "Use My OpenAI Key"])
+    user_api_key = None
+    if llm_choice == "Use My OpenAI Key":
+        user_api_key = st.text_input("🔑 Enter your OpenAI API Key", type="password")
+        st.markdown("[💳 Manage your OpenAI Billing](https://platform.openai.com/account/billing)")
+        if user_api_key:
+            openai.api_key = user_api_key
 
-    llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
-    if llm_choice == "OpenAI":
-        def query_llm(prompt: str) -> str:
-            resp = client.ChatCompletion.create(
-                model="gpt-4o",
-                messages=[ ... ],
-            )
-            return resp.choices[0].message.content.strip()
-    else:
-        def query_llm(prompt: str) -> str:
+    def query_llm(prompt: str) -> str:
+        if llm_choice == "Use My OpenAI Key":
+            if not user_api_key:
+                return "❌ No API key provided."
+            try:
+                response = openai.ChatCompletion.create(
+                    model="gpt-4o",
+                    messages=[
+                        {"role": "system", "content": "You are a data analysis assistant."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                return response.choices[0].message.content.strip()
+            except Exception as e:
+                return f"❌ OpenAI Error: {e}"
+        else:
             return query_local_llm(prompt)
 
-    # ─── user input / querying ────────────────────────────────
+    # === User Input and LLM Chat ===
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
         with st.spinner("🤖 Thinking..."):
-            # build your prompt exactly once
             if df is not None:
                 summary = df.describe(include="all").to_string()
-                corr    = df.corr(numeric_only=True).round(3).to_string()
+                corr = df.corr(numeric_only=True).round(3).to_string()
                 full_prompt = (
                     f"You are a data analysis assistant.\n\n"
                     f"Dataset summary:\n{summary}\n\n"
@@ -2126,19 +2268,14 @@ elif mode == "🤖 LLM Assistant":
             else:
                 full_prompt = user_input
 
-            try:
-                answer = query_llm(full_prompt)
-                st.session_state.chat_history.append((user_input, answer))
-            except Exception as e:
-                st.error(f"❌ LLM Error: {e}")
-                answer = None
-
-        if answer:
+            answer = query_llm(full_prompt)
+            st.session_state.chat_history.append((user_input, answer))
             st.markdown(
                 f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
                 unsafe_allow_html=True,
             )
 
+    # === Chart Generator ===
     if df is not None:             
         st.markdown("### 📈 Custom Chart Generator")
         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
@@ -2158,9 +2295,10 @@ elif mode == "🤖 LLM Assistant":
             ax.set_ylabel(y_col)
             st.pyplot(fig, use_container_width=True)
 
+    # === CSV Export ===
     st.markdown("### 💾 Export Data")
     file_name = st.text_input("Output file name (without extension)", "my_data")
-    if st.button("Download as CSV"):
+    if st.button("Download as CSV") and df is not None:
         tmp_csv = df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download Processed CSV",
@@ -2169,8 +2307,7 @@ elif mode == "🤖 LLM Assistant":
             mime="text/csv"
         )
 
-
-
+    # === Chat History ===
     if st.session_state.chat_history:
         st.markdown("### 📜 Chat History")
         for q, a in st.session_state.chat_history[::-1]:
@@ -2179,7 +2316,6 @@ elif mode == "🤖 LLM Assistant":
 
     if "uploaded_file" not in st.session_state or df is None:
         st.info("📂 Upload a dataset to explore insights with the assistant.")
-
 
 # Footer
 st.markdown("---")
