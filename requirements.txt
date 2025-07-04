@@ -45,5 +45,5 @@ langchain-experimental
 
 
 streamlit
-torch>=2.0.0
-transformers>=4.30.0
+torch==2.2.1
+transformers==4.40.1
