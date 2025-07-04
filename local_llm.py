@@ -97,8 +97,9 @@ import requests
 from ctransformers import AutoModelForCausalLM
 
 # === Configuration ===
-GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q2_K.gguf"
+GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
 GGUF_PATH = "tinyllama.gguf"
+
 
 # === Global setting ===
 MODEL_FORMAT = "tinyllama"  # Change to "mistral" or "llama3" when upgrading
