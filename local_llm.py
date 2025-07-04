@@ -20,7 +20,8 @@ def query_local_llm(prompt: str) -> str:
 
         if "local_llm" not in st.session_state:
             with st.spinner("🔄 Loading DistilGPT2..."):
-                generator = pipeline("text-generation", model="distilgpt2")
+                # generator = pipeline("text-generation", model="distilgpt2")
+                generator = pipeline("text-generation", model="gpt2-medium")
                 set_seed(42)
                 st.session_state.local_llm = generator
         else:
