@@ -59,7 +59,7 @@ from langchain_community.chat_models import ChatOpenAI
 
 from local_llm import query_local_llm
 # client = openai  
-client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
+# client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
 llm = ChatOpenAI(
     temperature=0.3,
