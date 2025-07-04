@@ -56,8 +56,6 @@ import openai
 
 import streamlit as st
 from langchain_community.chat_models import ChatOpenAI
-from openai_llm import query_llm
-
 
 from local_llm import query_local_llm
 
@@ -1291,24 +1289,7 @@ elif mode == "🌋 Optimization Playground":
 
             optimizers = ["GradientDescent", "Adam", "RMSProp", "Newton's Method", "Simulated Annealing", "Genetic Algorithm"]
             optimizer = st.selectbox("Optimizer", optimizers)
-
-            col_opt, col_help = st.columns([5, 1])
-            with col_opt:
-                optimizer = st.selectbox("Choose optimizer", ["GradientDescent", "Adam", "RMSProp"], key="opt_choice")
-
-            with col_help:
-                if st.button("❓", key="ask_optimizer_help"):
-                    st.session_state.show_opt_help = not st.session_state.get("show_opt_help", False)
-
-            if st.session_state.get("show_opt_help", False):
-                with st.expander(f"💡 Ask about '{optimizer}' optimizer", expanded=True):
-                    q = st.text_input("Ask something about optimizer:", value=f"What is {optimizer} optimizer?")
-                    if st.button("Ask OpenAI", key="btn_ask_optimizer"):
-                        with st.spinner("🧠 Thinking..."):
-                            response = query_llm(f"You are a machine learning tutor. Explain clearly: {q}")
-                            st.markdown("##### 💬 Answer:")
-                            st.write(response)
-
+            
 
             options = {}
 
