@@ -61,12 +61,12 @@ from local_llm import query_local_llm
 # client = openai  
 # client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
-llm = ChatOpenAI(
-    temperature=0.3,
-    openai_api_key=st.secrets["OPENAI_API_KEY"]
-)
+# llm = ChatOpenAI(
+#     temperature=0.3,
+#     openai_api_key=st.secrets["OPENAI_API_KEY"]
+# )
 
-memory = ConversationBufferMemory()
+# memory = ConversationBufferMemory()
 
 st.markdown("""
     <style>
@@ -2181,7 +2181,6 @@ elif mode == "🌋 Optimization Playground":
 #     if "uploaded_file" not in st.session_state or df is None:
 #         st.info("📂 Upload a dataset to explore insights with the assistant.")
 
-# === Mode: LLM Assistant ===
 
 # === Mode: LLM Assistant ===
 elif mode == "🤖 LLM Assistant":
@@ -2227,39 +2226,36 @@ elif mode == "🤖 LLM Assistant":
         - Detect outliers or anomalies in the data
         """)
 
-    # === LLM Selection ===
-    from openai import OpenAI
-
-    # Initialize OpenAI client
-    client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
-
+    # === 🔐 API Key Selection ===
+    st.markdown("### 🔑 LLM Settings")
     llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
-    allow_openai_use = True
+    user_key = st.text_input("Enter your OpenAI API key (optional):", type="password")
+
+    final_key = user_key if user_key else st.secrets.get("OPENAI_API_KEY")
 
     if llm_choice == "OpenAI":
-        st.warning("⚠️ Using OpenAI's GPT may incur charges based on usage.")
-        st.markdown("[💳 View your billing dashboard](https://platform.openai.com/account/billing)", unsafe_allow_html=True)
-        allow_openai_use = st.checkbox("✅ I understand I may be billed for OpenAI usage")
+        st.warning("⚠️ Using OpenAI's GPT may incur charges.")
+        st.markdown("[💳 View billing](https://platform.openai.com/account/billing)", unsafe_allow_html=True)
+        allow_openai_use = st.checkbox("✅ I understand I may be billed for OpenAI usage", value=True)
 
         if allow_openai_use:
+            from langchain.chat_models import ChatOpenAI
+            from langchain.memory import ConversationBufferMemory
+
+            llm = ChatOpenAI(temperature=0.3, openai_api_key=final_key)
+            memory = ConversationBufferMemory()
+
             def query_llm(prompt: str) -> str:
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": "You are a data analysis assistant."},
-                        {"role": "user", "content": prompt},
-                    ]
-                )
-                return response.choices[0].message.content.strip()
+                return llm.predict(prompt)
+
         else:
             def query_llm(prompt: str) -> str:
-                return "⚠️ Please confirm billing checkbox to use OpenAI API."
+                return "⚠️ Please check the billing checkbox to use OpenAI API."
     else:
         def query_llm(prompt: str) -> str:
             return query_local_llm(prompt)
 
-
-    # === User Prompt Input ===
+    # === 🧠 User Input ===
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
         with st.spinner("🤖 Thinking..."):
@@ -2288,7 +2284,7 @@ elif mode == "🤖 LLM Assistant":
                 unsafe_allow_html=True,
             )
 
-    if df is not None:             
+    if df is not None:
         st.markdown("### 📈 Custom Chart Generator")
         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
         x_col = st.selectbox("X-axis Column", df.columns)
