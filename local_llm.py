@@ -14,17 +14,21 @@
 from transformers import pipeline, set_seed
 import streamlit as st
 
-@st.cache_resource
-def load_local_model():
-    generator = pipeline("text-generation", model="distilgpt2")
-    set_seed(42)
-    return generator
-
-local_model = load_local_model()
-
 def query_local_llm(prompt: str) -> str:
     """
-    Real local LLM using DistilGPT2 (transformers).
+    Runs local DistilGPT2 for text generation.
+    Loads model only when first called.
     """
-    result = local_model(prompt, max_length=100, num_return_sequences=1)
-    return result[0]["generated_text"]
+    try:
+        from transformers import pipeline, set_seed
+        generator = st.session_state.get("local_llm")
+        if generator is None:
+            with st.spinner("🔄 Loading local model (DistilGPT2)..."):
+                generator = pipeline("text-generation", model="distilgpt2")
+                set_seed(42)
+                st.session_state.local_llm = generator
+
+        result = generator(prompt, max_length=100, num_return_sequences=1)
+        return result[0]["generated_text"]
+    except Exception as e:
+        return f"❌ Local LLM error: {e}"
