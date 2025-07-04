@@ -69,6 +69,26 @@ from local_llm import query_local_llm
 
 # memory = ConversationBufferMemory()
 
+# === Define shared query_llm for use across all modes ===
+import os
+from langchain.chat_models import ChatOpenAI
+
+if "llm_backend" not in st.session_state:
+    st.session_state.llm_backend = "OpenAI"  # default
+if "openai_key" not in st.session_state:
+    st.session_state.openai_key = os.getenv("OPENAI_API_KEY", "")  # fallback to environment
+
+def query_llm(prompt: str) -> str:
+    if st.session_state.llm_backend == "OpenAI" and st.session_state.openai_key:
+        try:
+            llm = ChatOpenAI(temperature=0.3, openai_api_key=st.session_state.openai_key)
+            return llm.predict(prompt)
+        except Exception as e:
+            return f"❌ LLM Error: {e}"
+    else:
+        return "⚠️ LLM is not configured. Please check your API key or select OpenAI backend."
+
+
 st.markdown("""
     <style>
     .stMarkdown h4 {
@@ -1277,7 +1297,23 @@ elif mode == "🌋 Optimization Playground":
         ⚠️ *Note:* Gradient-based methods require a smooth function. Use heuristic optimizers for discontinuous or non-differentiable objectives.
         """)
 
-        
+            
+    with st.expander("💬 Ask the LLM about Optimizers or Math", expanded=False):
+        user_question = st.text_input("Ask anything (e.g., What is BFGS? Why is Newton unstable?)")
+        if user_question:
+            with st.spinner("🤖 Thinking..."):
+                full_prompt = (
+                    "You are an expert on numerical optimization methods such as Gradient Descent, "
+                    "Adam, Newton’s Method, Simulated Annealing, and Genetic Algorithms.\n\n"
+                    f"Question: {user_question}\nAnswer:"
+                )
+                response = query_llm(full_prompt)
+                st.markdown(
+                    f"<div style='background-color:#f4f9ff;padding:10px;border-radius:6px;'>{response}</div>",
+                    unsafe_allow_html=True,
+                )
+
+
     with st.expander("🚀 Optimizer Visual Playground", expanded=True):
         col_left, col_right = st.columns([1, 1])
 
