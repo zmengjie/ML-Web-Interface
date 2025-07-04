@@ -100,6 +100,20 @@ from ctransformers import AutoModelForCausalLM
 GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q2_K.gguf"
 GGUF_PATH = "tinyllama.gguf"
 
+# === Global setting ===
+MODEL_FORMAT = "tinyllama"  # Change to "mistral" or "llama3" when upgrading
+
+# === Prompt formatter ===
+def format_prompt(prompt: str) -> str:
+    prompt = prompt.strip()
+    if MODEL_FORMAT == "tinyllama":
+        return f"### Instruction:\n{prompt}\n\n### Response:\n"
+    elif MODEL_FORMAT in ("mistral", "llama3"):
+        return f"[INST] {prompt} [/INST]"
+    else:
+        return prompt
+
+
 # === Download model if missing ===
 def download_gguf():
     if not os.path.exists(GGUF_PATH):
@@ -127,14 +141,27 @@ local_model = load_local_model()
 # === Query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        # Use instruction-style prompt formatting
-        formatted_prompt = f"### Instruction:\n{prompt.strip()}\n\n### Response:\n"
-        
-        full_output = local_model(formatted_prompt, max_new_tokens=400)
+        # === Format prompt ===
+        formatted_prompt = format_prompt(prompt)
 
-        # Strip unwanted response artifacts
+        # === Token trimming ===
+        MAX_TOKENS = 2048
+        RESERVED_TOKENS = 400
+        max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
+
+        words = formatted_prompt.strip().split()
+        if len(words) > max_prompt_words:
+            formatted_prompt = " ".join(words[-max_prompt_words:])
+            st.warning(f"⚠️ Prompt was too long and has been trimmed to the last {max_prompt_words} words.")
+
+        # === Show prompt and response in Streamlit ===
+        st.code(formatted_prompt, language='text')
+        full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        st.text("🧠 Raw output:\n" + full_output)
+
+        # === Clean output ===
         clean_output = full_output.replace("### Response:", "").split("###")[0].strip()
-
         return clean_output
+
     except Exception as e:
         return f"❌ Local LLM error: {e}"
