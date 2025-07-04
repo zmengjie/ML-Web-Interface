@@ -1418,6 +1418,14 @@ elif mode == "🌋 Optimization Playground":
                 st.info("📌 Using Backtracking Line Search — no need to set learning rate or step count.")
 
 
+
+            # Ensure session_state values exist to avoid AttributeError
+            if "start_x" not in st.session_state:
+                st.session_state["start_x"] = -3.0
+            if "start_y" not in st.session_state:
+                st.session_state["start_y"] = 3.0
+
+
             st.slider("Initial x", -5.0, 5.0, st.session_state.start_x, key="start_x")
             st.slider("Initial y", -5.0, 5.0, st.session_state.start_y, key="start_y")
             # st.checkbox("🎮 Animate Descent Steps")
