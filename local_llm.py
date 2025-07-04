@@ -13,13 +13,18 @@
 
 import streamlit as st
 
-import streamlit as st
-
 def query_local_llm(prompt: str) -> str:
     try:
         import torch
         from transformers import pipeline, set_seed
 
+        # Sidebar sliders for controls
+        with st.sidebar:
+            st.markdown("### 🔧 Generation Settings (Local LLM)")
+            max_length = st.slider("Max Length", 20, 300, 100, step=10)
+            temperature = st.slider("Temperature", 0.1, 1.5, 0.8, step=0.1)
+
+        # ✅ Only load model when user queries
         if "local_llm" not in st.session_state:
             with st.spinner("🔄 Loading GPT2-medium..."):
                 generator = pipeline("text-generation", model="gpt2-medium")
@@ -27,12 +32,6 @@ def query_local_llm(prompt: str) -> str:
                 st.session_state.local_llm = generator
         else:
             generator = st.session_state.local_llm
-
-        # ✅ Streamlit UI for controls
-        with st.sidebar:
-            st.markdown("### 🔧 Generation Settings (Local LLM)")
-            max_length = st.slider("Maximum Length", 20, 300, 100, step=10)
-            temperature = st.slider("Temperature", 0.0, 1.5, 0.8, step=0.1)
 
         formatted_prompt = f"You are a helpful assistant.\nQ: {prompt}\nA:"
         output = generator(
