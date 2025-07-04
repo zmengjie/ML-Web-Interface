@@ -44,8 +44,6 @@ langchain-experimental
 
 
 
-torch>=2.0.0        # for Linux/Windows/Mac, see https://pytorch.org/get-started/locally/
-# — or —
-tensorflow>=2.0.0   # if you prefer TF
+
+torch>=2.0.0
 transformers>=4.30.0
-tf-keras>=2.11.0
