@@ -101,7 +101,6 @@ GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolv
 GGUF_PATH = "tinyllama-q4.gguf"
 
 
-
 # === Global setting ===
 MODEL_FORMAT = "tinyllama"  # Change to "mistral" or "llama3" when upgrading
 
@@ -115,9 +114,15 @@ def format_prompt(prompt: str) -> str:
     elif MODEL_FORMAT == "llama3":
         return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
     else:
-        return prompt
+        return prompt  # fallback
 
-
+# === Clean model output ===
+def clean_output(raw: str) -> str:
+    if MODEL_FORMAT == "llama3":
+        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
+    elif MODEL_FORMAT == "tinyllama":
+        raw = raw.replace("### Response:", "")
+    return raw.split("###")[0].strip()
 
 # === Download model if missing ===
 def download_gguf():
@@ -132,7 +137,6 @@ def download_gguf():
 
 # === Load GGUF model ===
 @st.cache_resource(show_spinner="🔄 Loading TinyLLaMA Q4_K_M...")
-
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
@@ -140,14 +144,6 @@ def load_local_model():
         model_type="llama",
         gpu_layers=0,  # Set >0 if using GPU acceleration
     )
-
-def clean_output(raw: str) -> str:
-    if MODEL_FORMAT == "llama3":
-        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
-    elif MODEL_FORMAT == "tinyllama":
-        raw = raw.replace("### Response:", "")
-    return raw.split("###")[0].strip()
-
 
 # === Initialize once ===
 local_model = load_local_model()
@@ -175,8 +171,7 @@ def query_local_llm(prompt: str) -> str:
 
         # === Clean output ===
         clean_output_text = clean_output(full_output)
-
-        return clean_output
+        return clean_output_text  # ✅ FIXED LINE
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
