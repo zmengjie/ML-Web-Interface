@@ -127,7 +127,8 @@ local_model = load_local_model()
 # === Query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        output = local_model(prompt, max_new_tokens=100)
+        formatted_prompt = f"### Instruction:\n{prompt}\n\n### Response:\n"
+        output = local_model(formatted_prompt, max_new_tokens=200)
         return output
     except Exception as e:
         return f"❌ Local LLM error: {e}"
