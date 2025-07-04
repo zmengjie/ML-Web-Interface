@@ -70,7 +70,8 @@ def query_local_llm(prompt: str) -> str:
         # ✅ Only load model when user queries
         if "local_llm" not in st.session_state:
             with st.spinner("🔄 Loading GPT2-medium..."):
-                generator = pipeline("text-generation", model="gpt2-medium")
+                # generator = pipeline("text-generation", model="gpt2-medium")
+                generator = pipeline("text-generation", model="gpt2-medium", eos_token_id=50256)
                 set_seed(42)
                 st.session_state.local_llm = generator
         else:
