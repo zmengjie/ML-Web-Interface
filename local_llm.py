@@ -98,7 +98,8 @@ from ctransformers import AutoModelForCausalLM
 
 # === Configuration ===
 GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
-GGUF_PATH = "tinyllama.gguf"
+GGUF_PATH = "tinyllama-q4.gguf"
+
 
 
 # === Global setting ===
@@ -130,7 +131,8 @@ def download_gguf():
         print("✅ Download complete.")
 
 # === Load GGUF model ===
-@st.cache_resource(show_spinner="🔄 Loading local TinyLLaMA model...")
+@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA Q4_K_M...")
+
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
@@ -138,6 +140,14 @@ def load_local_model():
         model_type="llama",
         gpu_layers=0,  # Set >0 if using GPU acceleration
     )
+
+def clean_output(raw: str) -> str:
+    if MODEL_FORMAT == "llama3":
+        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
+    elif MODEL_FORMAT == "tinyllama":
+        raw = raw.replace("### Response:", "")
+    return raw.split("###")[0].strip()
+
 
 # === Initialize once ===
 local_model = load_local_model()
@@ -164,13 +174,8 @@ def query_local_llm(prompt: str) -> str:
         st.text("🧠 Raw output:\n" + full_output)
 
         # === Clean output ===
-        # clean_output = full_output.replace("### Response:", "").split("###")[0].strip()
-        clean_output = (
-        full_output.replace("<|im_start|>", "")
-                .replace("<|im_end|>", "")
-                .split("###")[0]
-                .strip()
-                        )
+        clean_output_text = clean_output(full_output)
+
         return clean_output
 
     except Exception as e:
