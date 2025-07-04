@@ -51,6 +51,7 @@ from langchain_community.chat_models import ChatOpenAI
 from langchain_experimental.agents import create_pandas_dataframe_agent
 from langchain.memory import ConversationBufferMemory
 from langchain.chains import ConversationChain
+from langchain.schema import HumanMessage, SystemMessage
 import openai
 
 import streamlit as st
@@ -2182,6 +2183,7 @@ elif mode == "🌋 Optimization Playground":
 
 # === Mode: LLM Assistant ===
 
+# === Mode: LLM Assistant ===
 elif mode == "🤖 LLM Assistant":
     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
 
@@ -2225,34 +2227,33 @@ elif mode == "🤖 LLM Assistant":
         - Detect outliers or anomalies in the data
         """)
 
-    # === LLM Selection & Query Function ===
-    llm_choice = st.radio("Choose LLM Backend", ["Local LLM", "Use My OpenAI Key"])
-    user_api_key = None
-    if llm_choice == "Use My OpenAI Key":
-        user_api_key = st.text_input("🔑 Enter your OpenAI API Key", type="password")
-        st.markdown("[💳 Manage your OpenAI Billing](https://platform.openai.com/account/billing)")
-        if user_api_key:
-            openai.api_key = user_api_key
+    # === LLM Selection ===
+    llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
+    allow_openai_use = True
 
-    def query_llm(prompt: str) -> str:
-        if llm_choice == "Use My OpenAI Key":
-            if not user_api_key:
-                return "❌ No API key provided."
-            try:
-                response = openai.ChatCompletion.create(
+    if llm_choice == "OpenAI":
+        st.warning("⚠️ Using OpenAI's GPT may incur charges based on usage.")
+        st.markdown("[💳 View your billing dashboard](https://platform.openai.com/account/billing)", unsafe_allow_html=True)
+        allow_openai_use = st.checkbox("✅ I understand I may be billed for OpenAI usage")
+
+        if allow_openai_use:
+            def query_llm(prompt: str) -> str:
+                resp = client.ChatCompletion.create(
                     model="gpt-4o",
                     messages=[
                         {"role": "system", "content": "You are a data analysis assistant."},
-                        {"role": "user", "content": prompt}
-                    ]
+                        {"role": "user", "content": prompt},
+                    ],
                 )
-                return response.choices[0].message.content.strip()
-            except Exception as e:
-                return f"❌ OpenAI Error: {e}"
+                return resp.choices[0].message.content.strip()
         else:
+            def query_llm(prompt: str) -> str:
+                return "⚠️ Please confirm billing checkbox to use OpenAI API."
+    else:
+        def query_llm(prompt: str) -> str:
             return query_local_llm(prompt)
 
-    # === User Input and LLM Chat ===
+    # === User Prompt Input ===
     user_input = st.text_input("💬 Ask something (about your data):")
     if user_input:
         with st.spinner("🤖 Thinking..."):
@@ -2268,14 +2269,19 @@ elif mode == "🤖 LLM Assistant":
             else:
                 full_prompt = user_input
 
-            answer = query_llm(full_prompt)
-            st.session_state.chat_history.append((user_input, answer))
+            try:
+                answer = query_llm(full_prompt)
+                st.session_state.chat_history.append((user_input, answer))
+            except Exception as e:
+                st.error(f"❌ LLM Error: {e}")
+                answer = None
+
+        if answer:
             st.markdown(
                 f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
                 unsafe_allow_html=True,
             )
 
-    # === Chart Generator ===
     if df is not None:             
         st.markdown("### 📈 Custom Chart Generator")
         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
@@ -2295,10 +2301,9 @@ elif mode == "🤖 LLM Assistant":
             ax.set_ylabel(y_col)
             st.pyplot(fig, use_container_width=True)
 
-    # === CSV Export ===
     st.markdown("### 💾 Export Data")
     file_name = st.text_input("Output file name (without extension)", "my_data")
-    if st.button("Download as CSV") and df is not None:
+    if st.button("Download as CSV"):
         tmp_csv = df.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="📥 Download Processed CSV",
@@ -2307,7 +2312,6 @@ elif mode == "🤖 LLM Assistant":
             mime="text/csv"
         )
 
-    # === Chat History ===
     if st.session_state.chat_history:
         st.markdown("### 📜 Chat History")
         for q, a in st.session_state.chat_history[::-1]:
