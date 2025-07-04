@@ -127,8 +127,14 @@ local_model = load_local_model()
 # === Query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        formatted_prompt = f"### Instruction:\n{prompt}\n\n### Response:\n"
-        output = local_model(formatted_prompt, max_new_tokens=200)
-        return output
+        # Use instruction-style prompt formatting
+        formatted_prompt = f"### Instruction:\n{prompt.strip()}\n\n### Response:\n"
+        
+        full_output = local_model(formatted_prompt, max_new_tokens=200)
+
+        # Strip unwanted response artifacts
+        clean_output = full_output.replace("### Response:", "").split("###")[0].strip()
+
+        return clean_output
     except Exception as e:
         return f"❌ Local LLM error: {e}"
