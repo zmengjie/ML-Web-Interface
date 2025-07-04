@@ -130,7 +130,7 @@ def query_local_llm(prompt: str) -> str:
         # Use instruction-style prompt formatting
         formatted_prompt = f"### Instruction:\n{prompt.strip()}\n\n### Response:\n"
         
-        full_output = local_model(formatted_prompt, max_new_tokens=200)
+        full_output = local_model(formatted_prompt, max_new_tokens=400)
 
         # Strip unwanted response artifacts
         clean_output = full_output.replace("### Response:", "").split("###")[0].strip()
