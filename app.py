@@ -1287,60 +1287,77 @@ elif mode == "🌋 Optimization Playground":
         #     st.error(f"Plot rendering failed: {e}")
 
         try:
-                func_choice = st.selectbox("Choose a function:", ["cos(x)", "exp(x)", "ln(1+x)", "tanh(x)"])
+            func_choice = st.selectbox("Choose a function to expand:", ["cos(x)", "exp(x)", "ln(1+x)", "tanh(x)"])
+            show_3rd_4th = st.checkbox("➕ Show 3rd and 4th-order terms", value=False)
+            show_linear = st.checkbox("Show 1st-order (linear)", value=True)
+            show_parabola = st.checkbox("Show 2nd-order (parabola)", value=True)
 
-                def get_function_and_derivatives(choice):
-                    if choice == "cos(x)":
-                        f = lambda x: np.cos(x)
-                        f1 = lambda x: -np.sin(x)
-                        f2 = lambda x: -np.cos(x)
-                        domain = (-3, 3)
-                    elif choice == "exp(x)":
-                        f = lambda x: np.exp(x)
-                        f1 = lambda x: np.exp(x)
-                        f2 = lambda x: np.exp(x)
-                        domain = (-3, 3)
-                    elif choice == "ln(1+x)":
-                        f = lambda x: np.log(1 + x)
-                        f1 = lambda x: 1 / (1 + x)
-                        f2 = lambda x: -1 / (1 + x)**2
-                        domain = (-0.9, 3)
-                    elif choice == "tanh(x)":
-                        f = lambda x: np.tanh(x)
-                        f1 = lambda x: 1 - np.tanh(x)**2
-                        f2 = lambda x: -2 * np.tanh(x) * (1 - np.tanh(x)**2)
-                        domain = (-3, 3)
-                    return f, f1, f2, domain
+            def get_function_package(choice):
+                x = sp.symbols('x')
+                if choice == "cos(x)":
+                    f_sym = sp.cos(x)
+                    domain = (-3, 3)
+                elif choice == "exp(x)":
+                    f_sym = sp.exp(x)
+                    domain = (-3, 3)
+                elif choice == "ln(1+x)":
+                    f_sym = sp.ln(1 + x)
+                    domain = (-0.9, 3)
+                elif choice == "tanh(x)":
+                    f_sym = sp.tanh(x)
+                    domain = (-3, 3)
+                return f_sym, domain
 
-                # Get functions and domain
-                f, f1, f2, (xmin, xmax) = get_function_and_derivatives(func_choice)
-                a = st.slider("Choose expansion point x = a", min_value=float(xmin), max_value=float(xmax), value=0.0, step=0.1)
+            # Symbolic expression and Taylor expansion
+            f_sym, (xmin, xmax) = get_function_package(func_choice)
+            x_sym, a_sym = sp.symbols('x a')
+            f_taylor = f_sym.series(x_sym, x0=a_sym, n=5).removeO()
+            st.markdown("#### 🧮 Symbolic Taylor Expansion")
+            st.latex(f"f(x) = {sp.latex(f_taylor)}")
 
-                x = np.linspace(xmin, xmax, 500)
-                f_a = f(a)
-                f1_a = f1(a)
-                f2_a = f2(a)
-                taylor_1 = f_a + f1_a * (x - a)
-                taylor_2 = f_a + f1_a * (x - a) + 0.5 * f2_a * (x - a)**2
+            # Get lambdified numeric functions
+            f_np = sp.lambdify(x_sym, f_sym, "numpy")
+            f1_np = sp.lambdify(x_sym, sp.diff(f_sym, x_sym), "numpy")
+            f2_np = sp.lambdify(x_sym, sp.diff(f_sym, x_sym, 2), "numpy")
+            f3_np = sp.lambdify(x_sym, sp.diff(f_sym, x_sym, 3), "numpy")
+            f4_np = sp.lambdify(x_sym, sp.diff(f_sym, x_sym, 4), "numpy")
 
-                fig, ax = plt.subplots(figsize=(8, 5))
-                ax.plot(x, f(x), label=f'$f(x) = {func_choice}$', linewidth=2, color='blue')
+            # UI slider
+            a = st.slider("Choose expansion point x = a", min_value=float(xmin), max_value=float(xmax), value=0.0, step=0.1)
+
+            x = np.linspace(xmin, xmax, 500)
+            f_a, f1_a, f2_a = f_np(a), f1_np(a), f2_np(a)
+            f3_a = f3_np(a) if show_3rd_4th else 0
+            f4_a = f4_np(a) if show_3rd_4th else 0
+
+            # Build Taylor series
+            taylor_1 = f_a + f1_a * (x - a)
+            taylor_2 = taylor_1 + 0.5 * f2_a * (x - a)**2
+            taylor_4 = taylor_2 + (1/6) * f3_a * (x - a)**3 + (1/24) * f4_a * (x - a)**4
+
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax.plot(x, f_np(x), label=fr'$f(x) = {func_choice}$', linewidth=2, color='blue')
+            if show_linear:
                 ax.plot(x, taylor_1, label='1st-order (linear)', linestyle='--', color='red')
+            if show_parabola:
                 ax.plot(x, taylor_2, label='2nd-order (parabola)', linestyle='--', color='orange')
-                ax.scatter(a, f_a, color='black', zorder=5)
-                ax.axhline(0, color='black', linewidth=0.8)
-                ax.axvline(a, color='gray', linestyle=':')
-                ax.set_title(f'✅ LIVE: Taylor Approximations of {func_choice} at $x = {a}$')
-                ax.set_xlabel('x')
-                ax.set_ylabel('f(x)')
-                ax.legend()
-                ax.grid(True)
-                ax.set_ylim(np.nanmin(f(x)) - 1, np.nanmax(f(x)) + 1)
+            if show_3rd_4th:
+                ax.plot(x, taylor_4, label='3rd/4th-order', linestyle='--', color='green')
 
-                st.pyplot(fig)
+            ax.scatter(a, f_a, color='black', zorder=5)
+            ax.axhline(0, color='black', linewidth=0.8)
+            ax.axvline(a, color='gray', linestyle=':')
+            ax.set_title(f'✅ LIVE: Taylor Approximations of {func_choice} at $x = {a}$')
+            ax.set_xlabel('x')
+            ax.set_ylabel('f(x)')
+            ax.legend()
+            ax.grid(True)
+            ax.set_ylim(np.nanmin(f_np(x)) - 1, np.nanmax(f_np(x)) + 1)
+
+            st.pyplot(fig)
 
         except Exception as e:
-            st.error(f"Plot rendering failed: {e}")
+            st.error(f"Rendering failed: {e}")
 
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
