@@ -1312,8 +1312,33 @@ elif mode == "🌋 Optimization Playground":
             f_sym, (xmin, xmax) = get_function_package(func_choice)
             x_sym, a_sym = sp.symbols('x a')
             f_taylor = f_sym.series(x_sym, x0=a_sym, n=5).removeO()
-            st.markdown("#### 🧮 Symbolic Taylor Expansion")
-            st.latex(f"f(x) = {sp.latex(f_taylor)}")
+            
+            # Compute symbolic derivatives at x = a
+            x_sym, a_sym = sp.symbols('x a')
+            h = x_sym - a_sym
+
+            f1_sym = sp.diff(f_sym, x_sym)
+            f2_sym = sp.diff(f_sym, x_sym, 2)
+            f3_sym = sp.diff(f_sym, x_sym, 3)
+            f4_sym = sp.diff(f_sym, x_sym, 4)
+
+            # Taylor terms at x = a
+            T1 = f_sym.subs(x_sym, a_sym) + f1_sym.subs(x_sym, a_sym) * h
+            T2 = T1 + (1/2) * f2_sym.subs(x_sym, a_sym) * h**2
+            T4 = T2 + (1/6) * f3_sym.subs(x_sym, a_sym) * h**3 + (1/24) * f4_sym.subs(x_sym, a_sym) * h**4
+
+            # Display formulas
+            st.markdown("#### 🧮 Symbolic Taylor Expansion at $x = a$")
+            st.markdown("**1st-order (Gradient Descent basis):**")
+            st.latex(f"f(x) \\approx {sp.latex(T1)}")
+
+            st.markdown("**2nd-order (Newton's Method basis):**")
+            st.latex(f"f(x) \\approx {sp.latex(T2)}")
+
+            if show_3rd_4th:
+                st.markdown("**Full Expansion (up to 4th-order):**")
+                st.latex(f"f(x) \\approx {sp.latex(T4)}")
+
 
             # Get lambdified numeric functions
             f_np = sp.lambdify(x_sym, f_sym, "numpy")
