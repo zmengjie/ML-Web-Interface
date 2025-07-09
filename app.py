@@ -1258,17 +1258,19 @@ elif mode == "🌋 Optimization Playground":
             x = np.linspace(-3, 3, 500)
             fx = np.cos(x)
 
-            # 1st-order (constant) Taylor approximation at x = a
+            # Values at x = a
             f_a = np.cos(a)
-            taylor_1 = np.ones_like(x) * f_a
+            f1_a = -np.sin(a)  # First derivative at a
+            f2_a = -np.cos(a)  # Second derivative at a
 
-            # 2nd-order Taylor approximation at x = a: f(a) - 0.5 * f''(a) * (x - a)^2, since f''(x) = -cos(x)
-            taylor_2 = f_a - 0.5 * np.cos(a) * (x - a)**2
+            # Taylor approximations
+            taylor_1 = f_a + f1_a * (x - a)  # 1st-order (linear)
+            taylor_2 = f_a + f1_a * (x - a) + 0.5 * f2_a * (x - a)**2  # 2nd-order (parabola)
 
             fig, ax = plt.subplots(figsize=(8, 5))
             ax.plot(x, fx, label=r'$f(x) = \cos x$', linewidth=2, color='blue')
-            ax.plot(x, taylor_1, label='1st-order (constant)', linestyle='--', color='red')
-            ax.plot(x, taylor_2, label='2nd-order', linestyle='--', color='orange')
+            ax.plot(x, taylor_1, label='1st-order (linear)', linestyle='--', color='red')
+            ax.plot(x, taylor_2, label='2nd-order (parabola)', linestyle='--', color='orange')
             ax.scatter(a, f_a, color='black', zorder=5)
             ax.axhline(0, color='black', linewidth=0.8)
             ax.axvline(a, color='gray', linestyle=':')
@@ -1283,6 +1285,7 @@ elif mode == "🌋 Optimization Playground":
 
         except Exception as e:
             st.error(f"Plot rendering failed: {e}")
+
 
 
 
