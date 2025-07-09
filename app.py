@@ -1252,41 +1252,95 @@ elif mode == "🌋 Optimization Playground":
         """)
 
         # === 🧠 Interactive Taylor expansion plot ===
+        # try:
+        #     a = st.slider("Choose expansion point x = a", min_value=-3.0, max_value=3.0, value=0.0, step=0.1)
+
+        #     x = np.linspace(-3, 3, 500)
+        #     fx = np.cos(x)
+
+        #     # Values at x = a
+        #     f_a = np.cos(a)
+        #     f1_a = -np.sin(a)  # First derivative at a
+        #     f2_a = -np.cos(a)  # Second derivative at a
+
+        #     # Taylor approximations
+        #     taylor_1 = f_a + f1_a * (x - a)  # 1st-order (linear)
+        #     taylor_2 = f_a + f1_a * (x - a) + 0.5 * f2_a * (x - a)**2  # 2nd-order (parabola)
+
+        #     fig, ax = plt.subplots(figsize=(8, 5))
+        #     ax.plot(x, fx, label=r'$f(x) = \cos x$', linewidth=2, color='blue')
+        #     ax.plot(x, taylor_1, label='1st-order (linear)', linestyle='--', color='red')
+        #     ax.plot(x, taylor_2, label='2nd-order (parabola)', linestyle='--', color='orange')
+        #     ax.scatter(a, f_a, color='black', zorder=5)
+        #     ax.axhline(0, color='black', linewidth=0.8)
+        #     ax.axvline(a, color='gray', linestyle=':')
+        #     ax.set_title(f'✅ LIVE: Taylor Approximations of $\\cos x$ at $x = {a}$')
+        #     ax.set_xlabel('x')
+        #     ax.set_ylabel('f(x)')
+        #     ax.legend()
+        #     ax.grid(True)
+        #     ax.set_ylim(-2, 2)
+
+        #     st.pyplot(fig)
+
+        # except Exception as e:
+        #     st.error(f"Plot rendering failed: {e}")
+
         try:
-            a = st.slider("Choose expansion point x = a", min_value=-3.0, max_value=3.0, value=0.0, step=0.1)
+                func_choice = st.selectbox("Choose a function:", ["cos(x)", "exp(x)", "ln(1+x)", "tanh(x)"])
 
-            x = np.linspace(-3, 3, 500)
-            fx = np.cos(x)
+                def get_function_and_derivatives(choice):
+                    if choice == "cos(x)":
+                        f = lambda x: np.cos(x)
+                        f1 = lambda x: -np.sin(x)
+                        f2 = lambda x: -np.cos(x)
+                        domain = (-3, 3)
+                    elif choice == "exp(x)":
+                        f = lambda x: np.exp(x)
+                        f1 = lambda x: np.exp(x)
+                        f2 = lambda x: np.exp(x)
+                        domain = (-3, 3)
+                    elif choice == "ln(1+x)":
+                        f = lambda x: np.log(1 + x)
+                        f1 = lambda x: 1 / (1 + x)
+                        f2 = lambda x: -1 / (1 + x)**2
+                        domain = (-0.9, 3)
+                    elif choice == "tanh(x)":
+                        f = lambda x: np.tanh(x)
+                        f1 = lambda x: 1 - np.tanh(x)**2
+                        f2 = lambda x: -2 * np.tanh(x) * (1 - np.tanh(x)**2)
+                        domain = (-3, 3)
+                    return f, f1, f2, domain
 
-            # Values at x = a
-            f_a = np.cos(a)
-            f1_a = -np.sin(a)  # First derivative at a
-            f2_a = -np.cos(a)  # Second derivative at a
+                # Get functions and domain
+                f, f1, f2, (xmin, xmax) = get_function_and_derivatives(func_choice)
+                a = st.slider("Choose expansion point x = a", min_value=float(xmin), max_value=float(xmax), value=0.0, step=0.1)
 
-            # Taylor approximations
-            taylor_1 = f_a + f1_a * (x - a)  # 1st-order (linear)
-            taylor_2 = f_a + f1_a * (x - a) + 0.5 * f2_a * (x - a)**2  # 2nd-order (parabola)
+                x = np.linspace(xmin, xmax, 500)
+                f_a = f(a)
+                f1_a = f1(a)
+                f2_a = f2(a)
+                taylor_1 = f_a + f1_a * (x - a)
+                taylor_2 = f_a + f1_a * (x - a) + 0.5 * f2_a * (x - a)**2
 
-            fig, ax = plt.subplots(figsize=(8, 5))
-            ax.plot(x, fx, label=r'$f(x) = \cos x$', linewidth=2, color='blue')
-            ax.plot(x, taylor_1, label='1st-order (linear)', linestyle='--', color='red')
-            ax.plot(x, taylor_2, label='2nd-order (parabola)', linestyle='--', color='orange')
-            ax.scatter(a, f_a, color='black', zorder=5)
-            ax.axhline(0, color='black', linewidth=0.8)
-            ax.axvline(a, color='gray', linestyle=':')
-            ax.set_title(f'✅ LIVE: Taylor Approximations of $\\cos x$ at $x = {a}$')
-            ax.set_xlabel('x')
-            ax.set_ylabel('f(x)')
-            ax.legend()
-            ax.grid(True)
-            ax.set_ylim(-2, 2)
+                fig, ax = plt.subplots(figsize=(8, 5))
+                ax.plot(x, f(x), label=f'$f(x) = {func_choice}$', linewidth=2, color='blue')
+                ax.plot(x, taylor_1, label='1st-order (linear)', linestyle='--', color='red')
+                ax.plot(x, taylor_2, label='2nd-order (parabola)', linestyle='--', color='orange')
+                ax.scatter(a, f_a, color='black', zorder=5)
+                ax.axhline(0, color='black', linewidth=0.8)
+                ax.axvline(a, color='gray', linestyle=':')
+                ax.set_title(f'✅ LIVE: Taylor Approximations of {func_choice} at $x = {a}$')
+                ax.set_xlabel('x')
+                ax.set_ylabel('f(x)')
+                ax.legend()
+                ax.grid(True)
+                ax.set_ylim(np.nanmin(f(x)) - 1, np.nanmax(f(x)) + 1)
 
-            st.pyplot(fig)
+                st.pyplot(fig)
 
-        except Exception as e:
-            st.error(f"Plot rendering failed: {e}")
-
-
+            except Exception as e:
+                st.error(f"Plot rendering failed: {e}")
 
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
