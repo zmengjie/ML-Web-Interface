@@ -1339,8 +1339,8 @@ elif mode == "🌋 Optimization Playground":
 
                 st.pyplot(fig)
 
-            except Exception as e:
-                st.error(f"Plot rendering failed: {e}")
+        except Exception as e:
+            st.error(f"Plot rendering failed: {e}")
 
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
