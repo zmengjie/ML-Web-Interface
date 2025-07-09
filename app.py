@@ -1224,66 +1224,65 @@ elif mode == "🌋 Optimization Playground":
                 )
 
     with st.expander("🧠 Taylor Series & Optimizer Foundations", expanded=True):
-    st.markdown("### 📚 How Taylor Series Explains Optimizers")
+        st.markdown("### 📚 How Taylor Series Explains Optimizers")
 
-    st.markdown("Many optimization methods are based on the **Taylor series expansion** of a function. This helps us approximate the function locally using its derivatives:")
+        st.markdown("Many optimization methods are based on the **Taylor series expansion** of a function. This helps us approximate the function locally using its derivatives:")
 
-    st.latex(r"""
-    f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
-    """)
-    st.markdown("- This is the **1st-order Taylor expansion**, which is the basis of **Gradient Descent**. It only uses the slope (gradient) to decide the direction to move.")
+        st.latex(r"""
+        f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
+        """)
+        st.markdown("- This is the **1st-order Taylor expansion**, which is the basis of **Gradient Descent**. It only uses the slope (gradient) to decide the direction to move.")
 
-    st.latex(r"""
-    f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
-    """)
-    st.markdown("- This is the **2nd-order Taylor expansion**, used in **Newton's Method**. It adds the **Hessian** (curvature) to adjust the step size and improve convergence.")
+        st.latex(r"""
+        f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
+        """)
+        st.markdown("- This is the **2nd-order Taylor expansion**, used in **Newton's Method**. It adds the **Hessian** (curvature) to adjust the step size and improve convergence.")
 
-    st.markdown("### ✍️ Summary")
-    st.markdown("""
-    You can imagine it like this:
-    - ✅ **1st-order**: Approximates with a **tangent line** (local slope).
-    - ✅ **2nd-order**: Approximates with a **parabola** (slope + curvature).
+        st.markdown("### ✍️ Summary")
+        st.markdown("""
+        You can imagine it like this:
+        - ✅ **1st-order**: Approximates with a **tangent line** (local slope).
+        - ✅ **2nd-order**: Approximates with a **parabola** (slope + curvature).
 
-    This helps students connect abstract equations with **optimizer logic**.
-                    
-    - **Gradient Descent** is a 1st-order method → uses slope only.
-    - **Newton's Method** is a 2nd-order method → uses slope and curvature.
-    - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
-    """)
+        This helps students connect abstract equations with **optimizer logic**.
+                        
+        - **Gradient Descent** is a 1st-order method → uses slope only.
+        - **Newton's Method** is a 2nd-order method → uses slope and curvature.
+        - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
+        """)
 
-    # === 🧠 Interactive Taylor expansion plot ===
-    try:
-        a = st.slider("Choose expansion point x = a", min_value=-3.0, max_value=3.0, value=0.0, step=0.1)
+        # === 🧠 Interactive Taylor expansion plot ===
+        try:
+            a = st.slider("Choose expansion point x = a", min_value=-3.0, max_value=3.0, value=0.0, step=0.1)
 
-        x = np.linspace(-3, 3, 500)
-        fx = np.cos(x)
+            x = np.linspace(-3, 3, 500)
+            fx = np.cos(x)
 
-        # 1st-order (constant) Taylor approximation at x = a
-        f_a = np.cos(a)
-        taylor_1 = np.ones_like(x) * f_a
+            # 1st-order (constant) Taylor approximation at x = a
+            f_a = np.cos(a)
+            taylor_1 = np.ones_like(x) * f_a
 
-        # 2nd-order Taylor approximation at x = a: f(a) - 0.5 * f''(a) * (x - a)^2, since f''(x) = -cos(x)
-        taylor_2 = f_a - 0.5 * np.cos(a) * (x - a)**2
+            # 2nd-order Taylor approximation at x = a: f(a) - 0.5 * f''(a) * (x - a)^2, since f''(x) = -cos(x)
+            taylor_2 = f_a - 0.5 * np.cos(a) * (x - a)**2
 
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.plot(x, fx, label=r'$f(x) = \cos x$', linewidth=2, color='blue')
-        ax.plot(x, taylor_1, label='1st-order (constant)', linestyle='--', color='red')
-        ax.plot(x, taylor_2, label='2nd-order', linestyle='--', color='orange')
-        ax.scatter(a, f_a, color='black', zorder=5)
-        ax.axhline(0, color='black', linewidth=0.8)
-        ax.axvline(a, color='gray', linestyle=':')
-        ax.set_title(f'✅ LIVE: Taylor Approximations of $\\cos x$ at $x = {a}$')
-        ax.set_xlabel('x')
-        ax.set_ylabel('f(x)')
-        ax.legend()
-        ax.grid(True)
-        ax.set_ylim(-2, 2)
+            fig, ax = plt.subplots(figsize=(8, 5))
+            ax.plot(x, fx, label=r'$f(x) = \cos x$', linewidth=2, color='blue')
+            ax.plot(x, taylor_1, label='1st-order (constant)', linestyle='--', color='red')
+            ax.plot(x, taylor_2, label='2nd-order', linestyle='--', color='orange')
+            ax.scatter(a, f_a, color='black', zorder=5)
+            ax.axhline(0, color='black', linewidth=0.8)
+            ax.axvline(a, color='gray', linestyle=':')
+            ax.set_title(f'✅ LIVE: Taylor Approximations of $\\cos x$ at $x = {a}$')
+            ax.set_xlabel('x')
+            ax.set_ylabel('f(x)')
+            ax.legend()
+            ax.grid(True)
+            ax.set_ylim(-2, 2)
 
-        st.pyplot(fig)
+            st.pyplot(fig)
 
-    except Exception as e:
-        st.error(f"Plot rendering failed: {e}")
-
+        except Exception as e:
+            st.error(f"Plot rendering failed: {e}")
 
 
 
