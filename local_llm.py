@@ -91,6 +91,93 @@
 
 
 # local_llm.py
+# import streamlit as st
+# import os
+# import requests
+# from ctransformers import AutoModelForCausalLM
+
+# # === Configuration ===
+# GGUF_URL = "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main/mistral-7b-instruct-v0.1.Q4_K_M.gguf"
+# GGUF_PATH = "mistral-7b-instruct-q4.gguf"
+
+# # === Global setting ===
+# MODEL_FORMAT = "mistral"  # <- Set to "mistral"
+
+
+# # === Prompt formatter ===
+# def format_prompt(prompt: str) -> str:
+#     prompt = prompt.strip()
+#     if MODEL_FORMAT == "tinyllama":
+#         return f"### Instruction:\n{prompt}\n\n### Response:\n"
+#     elif MODEL_FORMAT == "mistral":
+#         return f"[INST] {prompt} [/INST]"
+#     elif MODEL_FORMAT == "llama3":
+#         return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
+#     else:
+#         return prompt  # fallback
+
+# # === Clean model output ===
+# def clean_output(raw: str) -> str:
+#     if MODEL_FORMAT == "llama3":
+#         raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
+#     elif MODEL_FORMAT == "mistral":
+#         raw = raw.split("[/INST]")[-1].strip()
+#     return raw.split("###")[0].strip()
+
+# # === Download model if missing ===
+# def download_gguf():
+#     if not os.path.exists(GGUF_PATH):
+#         print("🔽 Downloading Mistral-7B-Instruct model...")
+#         with requests.get(GGUF_URL, stream=True) as r:
+#             r.raise_for_status()
+#             with open(GGUF_PATH, 'wb') as f:
+#                 for chunk in r.iter_content(chunk_size=8192):
+#                     f.write(chunk)
+#         print("✅ Download complete.")
+
+# # === Load GGUF model ===
+
+# @st.cache_resource(show_spinner="🔄 Loading Mistral-7B-Instruct Q4_K_M...")
+# def load_local_model():
+#     download_gguf()
+#     return AutoModelForCausalLM.from_pretrained(
+#         GGUF_PATH,
+#         model_type="mistral",  # <---- Important!
+#         gpu_layers=0,         # adjust based on your GPU
+#     )
+
+
+# # === Initialize once ===
+# local_model = load_local_model()
+
+# # === Query function ===
+# def query_local_llm(prompt: str) -> str:
+#     try:
+#         # === Format prompt ===
+#         formatted_prompt = format_prompt(prompt)
+
+#         # === Token trimming ===
+#         MAX_TOKENS = 2048
+#         RESERVED_TOKENS = 400
+#         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
+
+#         words = formatted_prompt.strip().split()
+#         if len(words) > max_prompt_words:
+#             formatted_prompt = " ".join(words[-max_prompt_words:])
+#             st.warning(f"⚠️ Prompt was too long and has been trimmed to the last {max_prompt_words} words.")
+
+#         # === Show prompt and response in Streamlit ===
+#         st.code(formatted_prompt, language='text')
+#         full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+#         st.text("🧠 Raw output:\n" + full_output)
+
+#         # === Clean output ===
+#         clean_output_text = clean_output(full_output)
+#         return clean_output_text  # ✅ FIXED LINE
+
+#     except Exception as e:
+#         return f"❌ Local LLM error: {e}"
+
 import streamlit as st
 import os
 import requests
@@ -99,10 +186,7 @@ from ctransformers import AutoModelForCausalLM
 # === Configuration ===
 GGUF_URL = "https://huggingface.co/TheBloke/Mistral-7B-Instruct-v0.1-GGUF/resolve/main/mistral-7b-instruct-v0.1.Q4_K_M.gguf"
 GGUF_PATH = "mistral-7b-instruct-q4.gguf"
-
-# === Global setting ===
-MODEL_FORMAT = "mistral"  # <- Set to "mistral"
-
+MODEL_FORMAT = "mistral"
 
 # === Prompt formatter ===
 def format_prompt(prompt: str) -> str:
@@ -114,7 +198,7 @@ def format_prompt(prompt: str) -> str:
     elif MODEL_FORMAT == "llama3":
         return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
     else:
-        return prompt  # fallback
+        return prompt
 
 # === Clean model output ===
 def clean_output(raw: str) -> str:
@@ -136,19 +220,20 @@ def download_gguf():
         print("✅ Download complete.")
 
 # === Load GGUF model ===
-
 @st.cache_resource(show_spinner="🔄 Loading Mistral-7B-Instruct Q4_K_M...")
-def load_local_model():
+def load_local_model(gpu_layers=0):
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
-        model_type="mistral",  # <---- Important!
-        gpu_layers=0,         # adjust based on your GPU
+        model_type="mistral",
+        gpu_layers=gpu_layers,
     )
 
+# === Global load with fallback to CPU
+low_memory_mode = st.sidebar.checkbox("💡 Enable Low-Memory Mode (safer)", value=True)
+gpu_layers = 0 if low_memory_mode else 10  # Optional: if you have GPU
 
-# === Initialize once ===
-local_model = load_local_model()
+local_model = load_local_model(gpu_layers=gpu_layers)
 
 # === Query function ===
 def query_local_llm(prompt: str) -> str:
@@ -156,24 +241,28 @@ def query_local_llm(prompt: str) -> str:
         # === Format prompt ===
         formatted_prompt = format_prompt(prompt)
 
-        # === Token trimming ===
-        MAX_TOKENS = 2048
-        RESERVED_TOKENS = 400
-        max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
+        # === Dynamic trim for safety ===
+        MAX_WORDS = 300 if low_memory_mode else 600
+        RESPONSE_TOKENS = 100 if low_memory_mode else 200
 
         words = formatted_prompt.strip().split()
-        if len(words) > max_prompt_words:
-            formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt was too long and has been trimmed to the last {max_prompt_words} words.")
+        if len(words) > MAX_WORDS:
+            formatted_prompt = " ".join(words[-MAX_WORDS:])
+            st.warning(f"⚠️ Prompt trimmed to last {MAX_WORDS} words due to memory limits.")
 
-        # === Show prompt and response in Streamlit ===
+        # === Display prompt ===
         st.code(formatted_prompt, language='text')
-        full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
-        st.text("🧠 Raw output:\n" + full_output)
+
+        # === Try generating safely ===
+        with st.spinner("🧠 Thinking..."):
+            output = local_model(formatted_prompt, max_new_tokens=RESPONSE_TOKENS)
+            if not isinstance(output, str):
+                raise ValueError("⚠️ Unexpected model output format.")
+
+        st.text("🧠 Raw output:\n" + output)
 
         # === Clean output ===
-        clean_output_text = clean_output(full_output)
-        return clean_output_text  # ✅ FIXED LINE
+        return clean_output(output)
 
     except Exception as e:
-        return f"❌ Local LLM error: {e}"
+        return f"❌ Local LLM error: {str(e)}"
