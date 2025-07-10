@@ -179,75 +179,69 @@
 #         return f"❌ Local LLM error: {e}"
 
 
-import streamlit as st
-import os
-import requests
-from ctransformers import AutoModelForCausalLM
+# import streamlit as st
+# import os
+# import requests
+# from ctransformers import AutoModelForCausalLM
 
-try:
-    from rag_retriever import retrieve_relevant_chunks
-except ImportError as e:
-    print(f"⚠️ Failed to import RAG module: {e}")
-    def retrieve_relevant_chunks(query, top_k=3): return []
+# try:
+#     from rag_retriever import retrieve_relevant_chunks
+# except ImportError as e:
+#     print(f"⚠️ Failed to import RAG module: {e}")
+#     def retrieve_relevant_chunks(query, top_k=3): return []
 
 
-# === Configuration ===
+# # === Configuration ===
 # GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
 # GGUF_PATH = "tinyllama-q4.gguf"
 
 # # === Global setting ===
 # MODEL_FORMAT = "tinyllama"
 
+# # === Prompt formatter ===
+# def format_prompt(prompt: str) -> str:
+#     prompt = prompt.strip()
+#     if MODEL_FORMAT == "tinyllama":
+#         return f"### Instruction:\n{prompt}\n\n### Response:\n"
+#     elif MODEL_FORMAT == "mistral":
+#         return f"[INST] {prompt} [/INST]"
+#     elif MODEL_FORMAT == "llama3":
+#         return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
+#     else:
+#         return prompt  # fallback
 
+# # === Clean model output ===
+# def clean_output(raw: str) -> str:
+#     if MODEL_FORMAT == "llama3":
+#         raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
+#     elif MODEL_FORMAT == "tinyllama":
+#         raw = raw.replace("### Response:", "")
+#     return raw.split("###")[0].strip()
 
-GGUF_URL = "https://huggingface.co/TheBloke/orca-mini-3B-GGUF/resolve/main/orca-mini-3b.Q4_0.gguf"
-GGUF_PATH = "orca-mini-3b-q4.gguf"
-MODEL_FORMAT = "mistral"  # or fallback
+# # === Download model if missing ===
+# def download_gguf():
+#     if not os.path.exists(GGUF_PATH):
+#         print("🔽 Downloading TinyLLaMA model...")
+#         with requests.get(GGUF_URL, stream=True) as r:
+#             r.raise_for_status()
+#             with open(GGUF_PATH, 'wb') as f:
+#                 for chunk in r.iter_content(chunk_size=8192):
+#                     f.write(chunk)
+#         print("✅ Download complete.")
 
-# === Prompt formatter ===
-def format_prompt(prompt: str) -> str:
-    prompt = prompt.strip()
-    if MODEL_FORMAT == "tinyllama":
-        return f"### Instruction:\n{prompt}\n\n### Response:\n"
-    elif MODEL_FORMAT == "mistral":
-        return f"[INST] {prompt} [/INST]"
-    elif MODEL_FORMAT == "llama3":
-        return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
-    else:
-        return prompt  # fallback
+# @st.cache_resource(show_spinner="🔄 Loading Orca Mini 3B...")
+# def load_local_model():
+#     download_gguf()
+#     return AutoModelForCausalLM.from_pretrained(
+#         GGUF_PATH,
+#         model_type="llama",  # Orca Mini is LLaMA-based
+#         gpu_layers=0
+#     )
 
-# === Clean model output ===
-def clean_output(raw: str) -> str:
-    if MODEL_FORMAT == "llama3":
-        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
-    elif MODEL_FORMAT == "tinyllama":
-        raw = raw.replace("### Response:", "")
-    return raw.split("###")[0].strip()
+# # === Initialize model ===
+# local_model = load_local_model()
 
-# === Download model if missing ===
-def download_gguf():
-    if not os.path.exists(GGUF_PATH):
-        print("🔽 Downloading TinyLLaMA model...")
-        with requests.get(GGUF_URL, stream=True) as r:
-            r.raise_for_status()
-            with open(GGUF_PATH, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-        print("✅ Download complete.")
-
-@st.cache_resource(show_spinner="🔄 Loading Orca Mini 3B...")
-def load_local_model():
-    download_gguf()
-    return AutoModelForCausalLM.from_pretrained(
-        GGUF_PATH,
-        model_type="llama",  # Orca Mini is LLaMA-based
-        gpu_layers=0
-    )
-
-# === Initialize model ===
-local_model = load_local_model()
-
-# === Query function with RAG ===
+# # === Query function with RAG ===
 # def query_local_llm(prompt: str) -> str:
 #     try:
 #         # === Retrieve relevant chunks from local vector DB ===
@@ -291,74 +285,117 @@ local_model = load_local_model()
 #     except Exception as e:
 #         return f"❌ Local LLM error: {e}"
 
-def clean_output(raw: str) -> str:
-    """Clean LLM output and truncate after irrelevant or hallucinated segments."""
-    if MODEL_FORMAT == "llama3":
-        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
-    elif MODEL_FORMAT == "tinyllama":
-        raw = raw.replace("### Response:", "")
-    elif MODEL_FORMAT == "mistral":
-        raw = raw.replace("[/INST]", "")
 
-    # Truncate at known stop phrases or nonsense drift
-    stop_tokens = ["###", "Instruction", "Context", "Wings of Glass", "I've been working on"]
+import os
+import streamlit as st
+from huggingface_hub import hf_hub_download
+from ctransformers import AutoModelForCausalLM
+
+# === RAG chunk retriever ===
+try:
+    from rag_retriever import retrieve_relevant_chunks
+except ImportError as e:
+    print(f"⚠️ Failed to import RAG module: {e}")
+    def retrieve_relevant_chunks(query, top_k=3): return []
+
+# === Configuration for Orca Mini 3B ===
+REPO_ID = "TheBloke/orca-mini-3B-GGUF"
+GGUF_FILENAME = "orca-mini-3b.Q4_0.gguf"
+GGUF_PATH = os.path.join(".", GGUF_FILENAME)
+MODEL_FORMAT = "mistral"  # reuse prompt style
+
+# === Download GGUF via Hugging Face Hub ===
+def download_gguf():
+    if not os.path.exists(GGUF_PATH):
+        print("🔽 Downloading Orca Mini model...")
+        model_file = hf_hub_download(
+            repo_id=REPO_ID,
+            filename=GGUF_FILENAME,
+            local_dir=".",
+            local_dir_use_symlinks=False
+        )
+        os.rename(model_file, GGUF_PATH)
+        print("✅ Download complete.")
+
+# === Format prompt ===
+def format_prompt(prompt: str) -> str:
+    prompt = prompt.strip()
+    if MODEL_FORMAT == "mistral":
+        return f"[INST] {prompt} [/INST]"
+    elif MODEL_FORMAT == "tinyllama":
+        return f"### Instruction:\n{prompt}\n\n### Response:\n"
+    elif MODEL_FORMAT == "llama3":
+        return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
+    return prompt
+
+# === Clean model output ===
+def clean_output(raw: str) -> str:
+    stop_tokens = ["###", "[/INST]", "Instruction", "Context", "Wings of Glass"]
     for token in stop_tokens:
         if token in raw:
             raw = raw.split(token)[0]
-
     return raw.strip()
 
-
+# === Check if answer uses context ===
 def is_answer_contextual(answer: str, context: str) -> bool:
-    """Simple keyword check to see if the answer uses any of the context."""
     answer_words = set(answer.lower().split())
     context_words = set(context.lower().split())
-    overlap = answer_words & context_words
-    return len(overlap) >= 3  # threshold can be adjusted
+    return len(answer_words & context_words) >= 3
 
+# === Load local LLM model ===
+@st.cache_resource(show_spinner="🔄 Loading Orca Mini 3B...")
+def load_local_model():
+    download_gguf()
+    return AutoModelForCausalLM.from_pretrained(
+        GGUF_PATH,
+        model_type="llama",  # Orca Mini is LLaMA-family
+        gpu_layers=0
+    )
 
+# === Initialize model globally ===
+local_model = load_local_model()
+
+# === Main LLM query with RAG and safeguards ===
 def query_local_llm(prompt: str) -> str:
     try:
-        # === RAG retrieval ===
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
         context_str = "\n\n".join(context_chunks)
 
-        # === Construct a strict instruction-following prompt ===
         base_prompt = (
             "You are a helpful assistant that only answers based on the given context. "
-            "If the answer is not in the context, reply exactly with: 'I don't know based on the provided context.'\n\n"
+            "If the answer is not in the context, reply exactly: 'I don't know based on the provided context.'\n\n"
             f"### Context:\n{context_str}\n\n"
             f"### Question:\n{prompt}\n\n"
             f"### Answer:\n"
         )
+
         formatted_prompt = format_prompt(base_prompt)
 
-        # === Trim if too long ===
+        # Optional truncation for token limits
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
         words = formatted_prompt.strip().split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt trimmed to {max_prompt_words} words.")
+            st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
 
-        # === Display context and prompt ===
+        # Show prompt & context for debugging
         st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
         st.code(formatted_prompt, language='text')
 
-        # === Generate output ===
-        full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
-        st.text("🧠 Raw output:\n" + full_output)
+        # Run inference
+        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        st.text("🧠 Raw output:\n" + raw_output)
 
-        # === Clean output ===
-        cleaned = clean_output(full_output)
+        cleaned = clean_output(raw_output)
 
-        # === Reject hallucinations ===
+        # Reject hallucinated answers
         if not is_answer_contextual(cleaned, context_str):
             return "⚠️ I don't know based on the provided context."
 
-        return cleaned or "⚠️ No valid response returned."
+        return cleaned or "⚠️ No valid response generated."
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
