@@ -354,39 +354,52 @@ local_model = load_local_model()
 # === Main query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        prompt_keywords = prompt.lower().split()
+        # Retrieve relevant context
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        filtered_chunks = filter_context(context_chunks, prompt_keywords)
-        context_str = "\n\n".join(filtered_chunks)
+        context_str = "\n\n".join(context_chunks)
 
+        # Build RAG-style prompt
         full_prompt = (
-            f"You are a helpful assistant. Use the context below only if relevant.\n\n"
+            "You are a helpful assistant. Use the context below only if relevant.\n\n"
             f"### Context:\n{context_str}\n\n"
             f"### Question:\n{prompt}\n\n"
-            f"### Answer:\n"
+            "### Answer:\n"
         )
 
         formatted_prompt = format_prompt(full_prompt)
 
-        # Token trimming
+        # Trim long prompts
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
         words = formatted_prompt.strip().split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt was trimmed to last {max_prompt_words} words.")
+            st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
 
-        st.markdown("📚 **Filtered Context:**")
+        # Display prompt & context
+        st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
         st.code(formatted_prompt, language='text')
 
+        # Run local model
         raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
         st.text("🧠 Raw output:\n" + raw_output)
 
+        # === Clean hallucinated additions ===
         cleaned = clean_output(raw_output)
-        final = remove_unrelated_lines(cleaned, prompt_keywords)
-        return final or "⚠️ No meaningful answer returned."
+
+        # Optional: remove known irrelevant boilerplate hallucinations
+        noise_phrases = [
+            "FAISS is", "TinyLLaMA is", "RAG enables", 
+            "It uses histograms to", "used by many models", 
+            "It's used for fast vector similarity search"
+        ]
+        for phrase in noise_phrases:
+            if phrase in cleaned:
+                cleaned = cleaned.split(phrase)[0].strip()
+
+        return cleaned or "⚠️ No meaningful answer returned."
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
