@@ -24,7 +24,7 @@ def build_index(text_chunks: List[str]):
     faiss.write_index(index, FAISS_INDEX_PATH)
 
 
-def retrieve_chunks(query: str, top_k: int = 3) -> List[str]:
+def retrieve_relevant_chunks(query: str, top_k: int = 3) -> List[str]:
     if not os.path.exists(FAISS_INDEX_PATH) or not os.path.exists(DOC_STORE_PATH):
         raise FileNotFoundError("RAG index or doc store not found. Please run build_index() first.")
 
