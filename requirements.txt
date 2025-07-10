@@ -49,3 +49,4 @@ langchain-experimental
 # transformers==4.40.1
 
 ctransformers
+faiss-cpu
