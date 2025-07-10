@@ -60,3 +60,5 @@ torch==2.1.2+cpu
 faiss-cpu
 ctransformers
 --extra-index-url https://download.pytorch.org/whl/cpu
+
+faiss-cpu==1.7.4 
