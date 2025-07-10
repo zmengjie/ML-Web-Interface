@@ -285,80 +285,65 @@
 #     except Exception as e:
 #         return f"❌ Local LLM error: {e}"
 
-
 import os
 import streamlit as st
 from huggingface_hub import hf_hub_download
 from ctransformers import AutoModelForCausalLM
 
-# === Optional: RAG retriever ===
+# === Optional RAG retriever ===
 try:
     from rag_retriever import retrieve_relevant_chunks
 except ImportError:
     def retrieve_relevant_chunks(query, top_k=3): return []
 
-# === GGUF Configuration ===
-MISTRAL_REPO = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
-MISTRAL_FILE = "mistral-7b-instruct-v0.1.Q4_0.gguf"
-MISTRAL_PATH = os.path.join(".", MISTRAL_FILE)
+# === TinyLLaMA GGUF Config ===
+REPO_ID = "TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF"
+GGUF_FILENAME = "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
+GGUF_PATH = os.path.join(".", GGUF_FILENAME)
 
-TINYLLAMA_REPO = "TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF"
-TINYLLAMA_FILE = "tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
-TINYLLAMA_PATH = os.path.join(".", TINYLLAMA_FILE)
-
-# === Download if missing ===
-def download_model(repo_id, filename, save_path):
-    if not os.path.exists(save_path):
-        print(f"🔽 Downloading {filename}...")
+# === Download GGUF model from HuggingFace ===
+def download_gguf():
+    if not os.path.exists(GGUF_PATH):
+        print("🔽 Downloading TinyLLaMA Q4_K_M...")
         model_file = hf_hub_download(
-            repo_id=repo_id,
-            filename=filename,
+            repo_id=REPO_ID,
+            filename=GGUF_FILENAME,
             local_dir=".",
             local_dir_use_symlinks=False
         )
-        os.rename(model_file, save_path)
+        os.rename(model_file, GGUF_PATH)
         print("✅ Download complete.")
 
-# === Prompt formatting ===
+# === Format prompt (TinyLLaMA chat style) ===
 def format_prompt(prompt: str) -> str:
     return f"[INST] {prompt.strip()} [/INST]"
 
-# === Clean and truncate output ===
+# === Output cleaner ===
 def clean_output(raw: str) -> str:
-    stop_tokens = ["[/INST]", "###", "<|", "Wings of Glass", "I've been working on"]
+    stop_tokens = ["[/INST]", "###", "<|", "User:", "Assistant:"]
     for token in stop_tokens:
         if token in raw:
             raw = raw.split(token)[0]
     return raw.strip()
 
-# === Check if answer matches context ===
+# === Basic context check ===
 def is_answer_contextual(answer: str, context: str) -> bool:
     answer_words = set(answer.lower().split())
     context_words = set(context.lower().split())
     return len(answer_words & context_words) >= 3
 
-# === Load models ===
-@st.cache_resource(show_spinner="🔄 Loading Mistral 7B...")
-def load_mistral():
-    download_model(MISTRAL_REPO, MISTRAL_FILE, MISTRAL_PATH)
+# === Load TinyLLaMA model ===
+@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA Q4_K_M...")
+def load_local_model():
+    download_gguf()
     return AutoModelForCausalLM.from_pretrained(
-        MISTRAL_PATH,
-        model_type="mistral",
+        GGUF_PATH,
+        model_type="llama",  # TinyLLaMA uses llama-type architecture
         gpu_layers=0
     )
 
-@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA...")
-def load_tinyllama():
-    download_model(TINYLLAMA_REPO, TINYLLAMA_FILE, TINYLLAMA_PATH)
-    return AutoModelForCausalLM.from_pretrained(
-        TINYLLAMA_PATH,
-        model_type="llama",
-        gpu_layers=0
-    )
-
-# === Global instances ===
-mistral_model = load_mistral()
-tinyllama_model = load_tinyllama()
+# === Load model once ===
+local_model = load_local_model()
 
 # === Main query function ===
 def query_local_llm(prompt: str) -> str:
@@ -366,39 +351,30 @@ def query_local_llm(prompt: str) -> str:
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
         context_str = "\n\n".join(context_chunks)
 
-        # Prompt for Mistral
-        base_prompt = (
+        full_prompt = (
             "You are a helpful assistant that only answers based on the given context. "
             "If the answer is not in the context, reply with: 'I don't know based on the provided context.'\n\n"
             f"### Context:\n{context_str}\n\n"
             f"### Question:\n{prompt.strip()}\n\n"
             f"### Answer:\n"
         )
-        mistral_input = format_prompt(base_prompt)
 
-        MAX_TOKENS = 2048
-        RESERVED_TOKENS = 400
-        max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
-        words = mistral_input.strip().split()
-        if len(words) > max_prompt_words:
-            mistral_input = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Mistral prompt trimmed to last {max_prompt_words} words.")
+        formatted_prompt = format_prompt(full_prompt)
 
+        # Display for debugging
         st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
-        st.code(mistral_input, language='text')
+        st.code(formatted_prompt, language='text')
 
-        # Mistral inference
-        mistral_output = mistral_model(mistral_input, max_new_tokens=RESERVED_TOKENS)
-        cleaned = clean_output(mistral_output)
+        raw_output = local_model(formatted_prompt, max_new_tokens=300)
+        st.text("🧠 Raw output:\n" + raw_output)
 
-        if cleaned and is_answer_contextual(cleaned, context_str):
-            return cleaned
+        cleaned = clean_output(raw_output)
 
-        # ⛑ Fallback: TinyLLaMA (if Mistral failed or context empty)
-        fallback_prompt = f"Answer this question briefly: {prompt.strip()}"
-        tiny_output = tinyllama_model(format_prompt(fallback_prompt), max_new_tokens=300)
-        return clean_output(tiny_output)
+        if not is_answer_contextual(cleaned, context_str):
+            return "⚠️ I don't know based on the provided context."
+
+        return cleaned or "⚠️ No meaningful answer returned."
 
     except Exception as e:
-        return f"❌ Local LLM error: {e}"
+        return f"❌ TinyLLaMA error: {e}"
