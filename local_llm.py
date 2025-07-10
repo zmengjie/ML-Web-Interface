@@ -297,26 +297,29 @@ try:
 except ImportError:
     def retrieve_relevant_chunks(query, top_k=3): return []
 
-# === GGUF Configuration for Mistral 7B Instruct ===
-REPO_ID = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
-GGUF_FILENAME = "mistral-7b-instruct-v0.1.Q4_0.gguf"
-GGUF_PATH = os.path.join(".", GGUF_FILENAME)
-MODEL_FORMAT = "mistral"
+# === GGUF Configuration ===
+MISTRAL_REPO = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
+MISTRAL_FILE = "mistral-7b-instruct-v0.1.Q4_0.gguf"
+MISTRAL_PATH = os.path.join(".", MISTRAL_FILE)
 
-# === Download GGUF model from Hugging Face ===
-def download_gguf():
-    if not os.path.exists(GGUF_PATH):
-        print("🔽 Downloading Mistral 7B Q4_0...")
+TINYLLAMA_REPO = "TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF"
+TINYLLAMA_FILE = "tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
+TINYLLAMA_PATH = os.path.join(".", TINYLLAMA_FILE)
+
+# === Download if missing ===
+def download_model(repo_id, filename, save_path):
+    if not os.path.exists(save_path):
+        print(f"🔽 Downloading {filename}...")
         model_file = hf_hub_download(
-            repo_id=REPO_ID,
-            filename=GGUF_FILENAME,
+            repo_id=repo_id,
+            filename=filename,
             local_dir=".",
             local_dir_use_symlinks=False
         )
-        os.rename(model_file, GGUF_PATH)
+        os.rename(model_file, save_path)
         print("✅ Download complete.")
 
-# === Prompt formatting for Mistral-compatible models ===
+# === Prompt formatting ===
 def format_prompt(prompt: str) -> str:
     return f"[INST] {prompt.strip()} [/INST]"
 
@@ -328,31 +331,42 @@ def clean_output(raw: str) -> str:
             raw = raw.split(token)[0]
     return raw.strip()
 
-# === Ensure answer is based on retrieved context ===
+# === Check if answer matches context ===
 def is_answer_contextual(answer: str, context: str) -> bool:
     answer_words = set(answer.lower().split())
     context_words = set(context.lower().split())
     return len(answer_words & context_words) >= 3
 
-# === Load Mistral GGUF model (cached in Streamlit Cloud) ===
-@st.cache_resource(show_spinner="🔄 Loading Mistral 7B Q4_0...")
-def load_local_model():
-    download_gguf()
+# === Load models ===
+@st.cache_resource(show_spinner="🔄 Loading Mistral 7B...")
+def load_mistral():
+    download_model(MISTRAL_REPO, MISTRAL_FILE, MISTRAL_PATH)
     return AutoModelForCausalLM.from_pretrained(
-        GGUF_PATH,
-        model_type="mistral",  # ✅ required for Mistral GGUF
-        gpu_layers=0  # Change to >0 if GPU is available locally
+        MISTRAL_PATH,
+        model_type="mistral",
+        gpu_layers=0
     )
 
-# === Global model instance ===
-local_model = load_local_model()
+@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA...")
+def load_tinyllama():
+    download_model(TINYLLAMA_REPO, TINYLLAMA_FILE, TINYLLAMA_PATH)
+    return AutoModelForCausalLM.from_pretrained(
+        TINYLLAMA_PATH,
+        model_type="llama",
+        gpu_layers=0
+    )
 
-# === Main query function with context-aware safety ===
+# === Global instances ===
+mistral_model = load_mistral()
+tinyllama_model = load_tinyllama()
+
+# === Main query function ===
 def query_local_llm(prompt: str) -> str:
     try:
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
         context_str = "\n\n".join(context_chunks)
 
+        # Prompt for Mistral
         base_prompt = (
             "You are a helpful assistant that only answers based on the given context. "
             "If the answer is not in the context, reply with: 'I don't know based on the provided context.'\n\n"
@@ -360,34 +374,31 @@ def query_local_llm(prompt: str) -> str:
             f"### Question:\n{prompt.strip()}\n\n"
             f"### Answer:\n"
         )
+        mistral_input = format_prompt(base_prompt)
 
-        formatted_prompt = format_prompt(base_prompt)
-
-        # Token budget check (approximate)
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
-        words = formatted_prompt.strip().split()
+        words = mistral_input.strip().split()
         if len(words) > max_prompt_words:
-            formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt was trimmed to last {max_prompt_words} words.")
+            mistral_input = " ".join(words[-max_prompt_words:])
+            st.warning(f"⚠️ Mistral prompt trimmed to last {max_prompt_words} words.")
 
-        # Show context for debugging
         st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
-        st.code(formatted_prompt, language='text')
+        st.code(mistral_input, language='text')
 
-        # Run model inference
-        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
-        st.text("🧠 Raw output:\n" + raw_output)
+        # Mistral inference
+        mistral_output = mistral_model(mistral_input, max_new_tokens=RESERVED_TOKENS)
+        cleaned = clean_output(mistral_output)
 
-        cleaned = clean_output(raw_output)
+        if cleaned and is_answer_contextual(cleaned, context_str):
+            return cleaned
 
-        # Final safeguard: check hallucination
-        if not is_answer_contextual(cleaned, context_str):
-            return "⚠️ I don't know based on the provided context."
-
-        return cleaned or "⚠️ No meaningful answer returned."
+        # ⛑ Fallback: TinyLLaMA (if Mistral failed or context empty)
+        fallback_prompt = f"Answer this question briefly: {prompt.strip()}"
+        tiny_output = tinyllama_model(format_prompt(fallback_prompt), max_new_tokens=300)
+        return clean_output(tiny_output)
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
