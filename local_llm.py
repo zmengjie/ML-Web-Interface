@@ -242,7 +242,7 @@ def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
-        model_type="phi",
+        model_type="gpt2",
         gpu_layers=0,  # Set >0 if GPU memory available
     )
 
