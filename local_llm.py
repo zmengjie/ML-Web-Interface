@@ -348,33 +348,49 @@ local_model = load_local_model()
 # === Main query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        # 🔍 Retrieve context
+        # Step 1: Retrieve relevant context (via RAG)
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        context_str = "\n".join(context_chunks).strip()
 
-        # 🧠 Instruction + context separation
+        # Step 2: If no relevant context, inject fallback knowledge (or skip constraint)
+        if not context_chunks:
+            context_chunks = [
+                "A histogram is a graphical representation of the distribution of numerical data, "
+                "typically displayed as bars where the height indicates frequency."
+            ]
+            st.warning("⚠️ No relevant context found — using fallback general knowledge.")
+
+        # Step 3: Format the base prompt with retrieved or fallback context
+        context_str = "\n\n".join(context_chunks)
         base_prompt = (
-            "You are a helpful assistant answering based only on the provided context.\n\n"
-            f"### Context:\n{context_str if context_str else 'No context available.'}\n\n"
-            f"### Task:\nAnswer the following question in 1–2 clear sentences. If the answer is not in context, say 'I don't know based on the provided context.'\n\n"
+            "You are a helpful assistant that only answers based on the given context. "
+            "If the answer is not in the context, reply with: 'I don't know based on the provided context.'\n\n"
+            f"### Context:\n{context_str}\n\n"
             f"### Question:\n{prompt.strip()}\n\n"
-            "### Answer:"
+            f"### Answer:\n"
         )
-
         formatted_prompt = format_prompt(base_prompt)
 
-        # 🔒 Token budget
+        # Step 4: Trim long prompt if needed
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
+        max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
         words = formatted_prompt.strip().split()
-        if len(words) > (MAX_TOKENS - RESERVED_TOKENS):
-            formatted_prompt = " ".join(words[-(MAX_TOKENS - RESERVED_TOKENS):])
+        if len(words) > max_prompt_words:
+            formatted_prompt = " ".join(words[-max_prompt_words:])
+            st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
 
-        # 🧠 Generate
+        # Step 5: Display debug info
+        st.markdown("📚 **Retrieved or Fallback Context:**")
+        st.code(context_str, language='text')
+        st.code(formatted_prompt, language='text')
+
+        # Step 6: Run model inference
         raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        st.text("🧠 Raw output:\n" + raw_output)
+
+        # Step 7: Clean and validate output
         cleaned = clean_output(raw_output)
 
-        # ✅ Final sanity check
         if not is_answer_contextual(cleaned, context_str):
             return "⚠️ I don't know based on the provided context."
 
@@ -382,3 +398,4 @@ def query_local_llm(prompt: str) -> str:
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
+
