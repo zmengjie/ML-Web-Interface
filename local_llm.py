@@ -344,48 +344,47 @@ def is_relevant(chunk: str, question: str, threshold=0.2) -> bool:
 def query_local_llm(prompt: str) -> str:
     try:
         # === Retrieve relevant context ===
-        raw_chunks = retrieve_relevant_chunks(prompt, top_k=10)
-        context_chunks = [c for c in raw_chunks if is_relevant(c, prompt)]
-        context_str = "\n\n".join(context_chunks[:3]) if context_chunks else ""
+        context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
+        context_clean = "\n\n".join(c for c in context_chunks if "Unnamed:" not in c and "### Instruction" not in c)
 
-        # === Escape dangerous content ===
+        # === Sanitize prompt ===
         def sanitize(text: str) -> str:
-            return text.replace("###", "## ").replace("<|", "").replace("|>", "")
+            return (
+                text.replace("<|", "").replace("|>", "")
+                    .replace("### Instruction", "")
+                    .replace("### Response", "")
+                    .replace("Unnamed:", "")
+                    .strip()
+            )
 
         prompt_clean = sanitize(prompt)
-        context_clean = sanitize(context_str)
+        context_clean = sanitize(context_clean)
 
-        # === Build full prompt ===
+        # === Compose prompt ===
         full_prompt = (
-            "You are a helpful data science assistant. "
-            + ("Use the context below only if relevant.\n\n" if context_clean else "")
-            + (f"## Context:\n{context_clean}\n\n" if context_clean else "")
-            + f"## Question:\n{prompt_clean}\n\n"
-            + "## Answer:\n"
+            "You are a helpful data science assistant.\n"
+            + (f"\nContext:\n{context_clean}\n" if context_clean else "")
+            + f"\nQuestion: {prompt_clean}\n\nAnswer:"
         )
 
         formatted_prompt = format_prompt(full_prompt)
 
-        # === Token safeguard ===
+        # === Token trimming ===
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
         words = formatted_prompt.split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
+            st.warning(f"⚠️ Prompt trimmed to {max_prompt_words} words.")
 
-        # === Optional: show context ===
-        if context_clean:
-            st.markdown("📚 **Retrieved Context:**")
-            st.code(context_clean)
+        # === Output in app ===
+        st.code(formatted_prompt, language="text")
+        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        st.text("🧠 Raw output:\n" + raw_output)
 
-        # === Show prompt + run model ===
-        st.code(formatted_prompt, language='text')
-        full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
-        st.text("🧠 Raw output:\n" + full_output)
-
-        return clean_output(full_output)
+        # === Clean response ===
+        return clean_output(raw_output)
 
     except Exception as e:
-        return f"❌ Local LLM error: {e}"
+        return f"❌ LLM error: {e}"
