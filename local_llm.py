@@ -340,26 +340,33 @@ def is_relevant(chunk: str, question: str, threshold=0.2) -> bool:
     return SequenceMatcher(None, chunk.lower(), question.lower()).ratio() > threshold
 
 # === Main query function ===
+
 def query_local_llm(prompt: str) -> str:
     try:
-        # Retrieve context chunks
+        # === Retrieve relevant context ===
         raw_chunks = retrieve_relevant_chunks(prompt, top_k=10)
         context_chunks = [c for c in raw_chunks if is_relevant(c, prompt)]
         context_str = "\n\n".join(context_chunks[:3]) if context_chunks else ""
 
-        # Compose full prompt
+        # === Escape dangerous content ===
+        def sanitize(text: str) -> str:
+            return text.replace("###", "## ").replace("<|", "").replace("|>", "")
+
+        prompt_clean = sanitize(prompt)
+        context_clean = sanitize(context_str)
+
+        # === Build full prompt ===
         full_prompt = (
-            "You are a helpful assistant. "
-            + ("Use the context below to answer the question.\n\n" if context_str else "")
-            + (f"### Context:\n{context_str}\n\n" if context_str else "")
-            + f"### Question:\n{prompt}\n\n"
-            + "### Answer:\n"
+            "You are a helpful data science assistant. "
+            + ("Use the context below only if relevant.\n\n" if context_clean else "")
+            + (f"## Context:\n{context_clean}\n\n" if context_clean else "")
+            + f"## Question:\n{prompt_clean}\n\n"
+            + "## Answer:\n"
         )
 
-        # Format prompt
         formatted_prompt = format_prompt(full_prompt)
 
-        # Token trim safeguard
+        # === Token safeguard ===
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
@@ -368,12 +375,12 @@ def query_local_llm(prompt: str) -> str:
             formatted_prompt = " ".join(words[-max_prompt_words:])
             st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
 
-        # Show context (optional)
-        if context_str:
+        # === Optional: show context ===
+        if context_clean:
             st.markdown("📚 **Retrieved Context:**")
-            st.code(context_str)
+            st.code(context_clean)
 
-        # Run model
+        # === Show prompt + run model ===
         st.code(formatted_prompt, language='text')
         full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
         st.text("🧠 Raw output:\n" + full_output)
