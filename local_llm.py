@@ -291,23 +291,22 @@ import streamlit as st
 from huggingface_hub import hf_hub_download
 from ctransformers import AutoModelForCausalLM
 
-# === RAG chunk retriever ===
+# === Optional: RAG retriever ===
 try:
     from rag_retriever import retrieve_relevant_chunks
-except ImportError as e:
-    print(f"⚠️ Failed to import RAG module: {e}")
+except ImportError:
     def retrieve_relevant_chunks(query, top_k=3): return []
 
-# === Configuration for Orca Mini 3B ===
-REPO_ID = "TheBloke/orca-mini-3B-GGUF"
-GGUF_FILENAME = "orca-mini-3b.Q4_0.gguf"
+# === GGUF Configuration for Mistral 7B Instruct ===
+REPO_ID = "TheBloke/Mistral-7B-Instruct-v0.1-GGUF"
+GGUF_FILENAME = "mistral-7b-instruct-v0.1.Q4_0.gguf"
 GGUF_PATH = os.path.join(".", GGUF_FILENAME)
-MODEL_FORMAT = "mistral"  # reuse prompt style
+MODEL_FORMAT = "mistral"
 
-# === Download GGUF via Hugging Face Hub ===
+# === Download GGUF model from Hugging Face ===
 def download_gguf():
     if not os.path.exists(GGUF_PATH):
-        print("🔽 Downloading Orca Mini model...")
+        print("🔽 Downloading Mistral 7B Q4_0...")
         model_file = hf_hub_download(
             repo_id=REPO_ID,
             filename=GGUF_FILENAME,
@@ -317,45 +316,38 @@ def download_gguf():
         os.rename(model_file, GGUF_PATH)
         print("✅ Download complete.")
 
-# === Format prompt ===
+# === Prompt formatting for Mistral-compatible models ===
 def format_prompt(prompt: str) -> str:
-    prompt = prompt.strip()
-    if MODEL_FORMAT == "mistral":
-        return f"[INST] {prompt} [/INST]"
-    elif MODEL_FORMAT == "tinyllama":
-        return f"### Instruction:\n{prompt}\n\n### Response:\n"
-    elif MODEL_FORMAT == "llama3":
-        return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
-    return prompt
+    return f"[INST] {prompt.strip()} [/INST]"
 
-# === Clean model output ===
+# === Clean and truncate output ===
 def clean_output(raw: str) -> str:
-    stop_tokens = ["###", "[/INST]", "Instruction", "Context", "Wings of Glass"]
+    stop_tokens = ["[/INST]", "###", "<|", "Wings of Glass", "I've been working on"]
     for token in stop_tokens:
         if token in raw:
             raw = raw.split(token)[0]
     return raw.strip()
 
-# === Check if answer uses context ===
+# === Ensure answer is based on retrieved context ===
 def is_answer_contextual(answer: str, context: str) -> bool:
     answer_words = set(answer.lower().split())
     context_words = set(context.lower().split())
     return len(answer_words & context_words) >= 3
 
-# === Load local LLM model ===
-@st.cache_resource(show_spinner="🔄 Loading Orca Mini 3B...")
+# === Load Mistral GGUF model (cached in Streamlit Cloud) ===
+@st.cache_resource(show_spinner="🔄 Loading Mistral 7B Q4_0...")
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
-        model_type="llama",  # Orca Mini is LLaMA-family
-        gpu_layers=0
+        model_type="mistral",  # ✅ required for Mistral GGUF
+        gpu_layers=0  # Change to >0 if GPU is available locally
     )
 
-# === Initialize model globally ===
+# === Global model instance ===
 local_model = load_local_model()
 
-# === Main LLM query with RAG and safeguards ===
+# === Main query function with context-aware safety ===
 def query_local_llm(prompt: str) -> str:
     try:
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
@@ -363,39 +355,39 @@ def query_local_llm(prompt: str) -> str:
 
         base_prompt = (
             "You are a helpful assistant that only answers based on the given context. "
-            "If the answer is not in the context, reply exactly: 'I don't know based on the provided context.'\n\n"
+            "If the answer is not in the context, reply with: 'I don't know based on the provided context.'\n\n"
             f"### Context:\n{context_str}\n\n"
-            f"### Question:\n{prompt}\n\n"
+            f"### Question:\n{prompt.strip()}\n\n"
             f"### Answer:\n"
         )
 
         formatted_prompt = format_prompt(base_prompt)
 
-        # Optional truncation for token limits
+        # Token budget check (approximate)
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
         words = formatted_prompt.strip().split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
+            st.warning(f"⚠️ Prompt was trimmed to last {max_prompt_words} words.")
 
-        # Show prompt & context for debugging
+        # Show context for debugging
         st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
         st.code(formatted_prompt, language='text')
 
-        # Run inference
+        # Run model inference
         raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
         st.text("🧠 Raw output:\n" + raw_output)
 
         cleaned = clean_output(raw_output)
 
-        # Reject hallucinated answers
+        # Final safeguard: check hallucination
         if not is_answer_contextual(cleaned, context_str):
             return "⚠️ I don't know based on the provided context."
 
-        return cleaned or "⚠️ No valid response generated."
+        return cleaned or "⚠️ No meaningful answer returned."
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
