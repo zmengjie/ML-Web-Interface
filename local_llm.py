@@ -343,11 +343,15 @@ def is_relevant(chunk: str, question: str, threshold=0.2) -> bool:
 
 def query_local_llm(prompt: str) -> str:
     try:
-        # === Sanitize context ===
+        # === Get context from RAG (optional) ===
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        context_str = "\n\n".join(c for c in context_chunks if all(k not in c for k in ["###", "Instruction", "Unnamed:", "you are you are"]))
+        context_str = "\n\n".join(
+            c for c in context_chunks if all(
+                k not in c for k in ["###", "Instruction", "Unnamed:", "you are you are"]
+            )
+        )
 
-        # === Clean question ===
+        # === Clean helper ===
         def clean(text):
             return text.replace("<|", "").replace("|>", "").replace("###", "").strip()
 
@@ -355,13 +359,14 @@ def query_local_llm(prompt: str) -> str:
         context = clean(context_str)
 
         # === Compose prompt ===
-        composed_prompt = f"""You are a helpful assistant.
-{f"\nContext:\n{context}\n" if context else ""}
-Question: {question}
-Answer:"""
+        composed_prompt = "You are a helpful assistant.\n"
+        if context:
+            composed_prompt += f"\nContext:\n{context}\n"
+        composed_prompt += f"\nQuestion: {question}\nAnswer:"
+
         final_prompt = format_prompt(composed_prompt)
 
-        # === Token budget trimming ===
+        # === Token trimming ===
         MAX_TOKENS = 2048
         RESERVED = 400
         words = final_prompt.split()
@@ -369,20 +374,22 @@ Answer:"""
             final_prompt = " ".join(words[-(MAX_TOKENS - RESERVED):])
             st.warning("⚠️ Prompt was trimmed to fit token limit.")
 
-        # === Show prompt (debug)
-        st.code(final_prompt, language="text")
+        # === Show prompt for debugging
+        st.markdown("📚 **Final Prompt:**")
+        st.code(final_prompt)
 
-        # === Run inference
+        # === Inference
         raw_output = local_model(final_prompt, max_new_tokens=RESERVED)
         st.text("🧠 Raw output:\n" + raw_output)
 
         # === Clean output
         answer = clean_output(raw_output)
 
-        # === Final guard: is it nonsense?
-        if any(phrase in answer for phrase in [
-            "you are you are", "Unnamed:", "### Instruction", "funn Please", "Correctangle", "Idecide_1"
-        ]) or len(answer.strip()) < 5:
+        if any(
+            bad in answer for bad in [
+                "you are you are", "Unnamed:", "### Instruction", "Correctangle", "Idecide_1"
+            ]
+        ) or len(answer.strip()) < 5:
             return "⚠️ Sorry, the local model could not generate a valid answer."
 
         return answer
