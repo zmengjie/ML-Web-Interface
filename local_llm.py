@@ -143,7 +143,7 @@ def load_local_model():
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
         model_type="mistral",  # <---- Important!
-        gpu_layers=2,         # adjust based on your GPU
+        gpu_layers=0,         # adjust based on your GPU
     )
 
 
