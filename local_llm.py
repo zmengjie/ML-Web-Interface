@@ -192,11 +192,18 @@ except ImportError as e:
 
 
 # === Configuration ===
-GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
-GGUF_PATH = "tinyllama-q4.gguf"
+# GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
+# GGUF_PATH = "tinyllama-q4.gguf"
 
-# === Global setting ===
-MODEL_FORMAT = "tinyllama"
+# # === Global setting ===
+# MODEL_FORMAT = "tinyllama"
+
+
+# === Use Phi-2 instead ===
+GGUF_URL = "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf"
+GGUF_PATH = "phi2-q4.gguf"
+MODEL_FORMAT = "mistral"  # or "llama3" if needed
+
 
 # === Prompt formatter ===
 def format_prompt(prompt: str) -> str:
@@ -285,24 +292,50 @@ local_model = load_local_model()
 
 #     except Exception as e:
 #         return f"❌ Local LLM error: {e}"
+
+def clean_output(raw: str) -> str:
+    """Clean LLM output and truncate after irrelevant or hallucinated segments."""
+    if MODEL_FORMAT == "llama3":
+        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
+    elif MODEL_FORMAT == "tinyllama":
+        raw = raw.replace("### Response:", "")
+    elif MODEL_FORMAT == "mistral":
+        raw = raw.replace("[/INST]", "")
+
+    # Truncate at known stop phrases or nonsense drift
+    stop_tokens = ["###", "Instruction", "Context", "Wings of Glass", "I've been working on"]
+    for token in stop_tokens:
+        if token in raw:
+            raw = raw.split(token)[0]
+
+    return raw.strip()
+
+
+def is_answer_contextual(answer: str, context: str) -> bool:
+    """Simple keyword check to see if the answer uses any of the context."""
+    answer_words = set(answer.lower().split())
+    context_words = set(context.lower().split())
+    overlap = answer_words & context_words
+    return len(overlap) >= 3  # threshold can be adjusted
+
+
 def query_local_llm(prompt: str) -> str:
     try:
-        # === Retrieve context ===
+        # === RAG retrieval ===
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
         context_str = "\n\n".join(context_chunks)
 
-        # === Robust Prompt ===
+        # === Construct a strict instruction-following prompt ===
         base_prompt = (
             "You are a helpful assistant that only answers based on the given context. "
-            "If the answer is not in the context, reply 'I don't know based on the provided context.'\n\n"
+            "If the answer is not in the context, reply exactly with: 'I don't know based on the provided context.'\n\n"
             f"### Context:\n{context_str}\n\n"
             f"### Question:\n{prompt}\n\n"
             f"### Answer:\n"
         )
-
         formatted_prompt = format_prompt(base_prompt)
 
-        # === Token limit control ===
+        # === Trim if too long ===
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
@@ -311,21 +344,23 @@ def query_local_llm(prompt: str) -> str:
             formatted_prompt = " ".join(words[-max_prompt_words:])
             st.warning(f"⚠️ Prompt trimmed to {max_prompt_words} words.")
 
-        # === Show context and prompt ===
+        # === Display context and prompt ===
         st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
         st.code(formatted_prompt, language='text')
 
-        # === Run local LLM ===
+        # === Generate output ===
         full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
         st.text("🧠 Raw output:\n" + full_output)
 
-        # === Clean & trim hallucinations ===
-        answer = clean_output(full_output)
-        for stop_token in ["###", "Instruction", "Context", "Question"]:
-            if stop_token in answer:
-                answer = answer.split(stop_token)[0].strip()
-        return answer or "⚠️ No valid response extracted."
+        # === Clean output ===
+        cleaned = clean_output(full_output)
+
+        # === Reject hallucinations ===
+        if not is_answer_contextual(cleaned, context_str):
+            return "⚠️ I don't know based on the provided context."
+
+        return cleaned or "⚠️ No valid response returned."
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
