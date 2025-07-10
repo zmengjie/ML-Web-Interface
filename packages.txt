@@ -1,2 +1,2 @@
-faiss-cpu
-libstdcxx-ng
+libfaiss-dev
+libopenblas-dev
