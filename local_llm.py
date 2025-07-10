@@ -290,6 +290,7 @@
 import streamlit as st
 import os
 import requests
+from difflib import SequenceMatcher
 from ctransformers import AutoModelForCausalLM
 
 try:
@@ -302,33 +303,7 @@ GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolv
 GGUF_PATH = "tinyllama-q4.gguf"
 MODEL_FORMAT = "tinyllama"
 
-# === Prompt formatter ===
-def format_prompt(prompt: str) -> str:
-    return f"### Instruction:\n{prompt.strip()}\n\n### Response:\n"
-
-# === Clean output ===
-def clean_output(raw: str) -> str:
-    raw = raw.replace("### Response:", "")
-    return raw.split("###")[0].strip()
-
-# === Filter context based on prompt keywords ===
-def filter_context(context_chunks, keywords):
-    filtered = []
-    for chunk in context_chunks:
-        if any(k in chunk.lower() for k in keywords):
-            filtered.append(chunk)
-    return filtered
-
-# === Post-filter to remove unrelated lines ===
-def remove_unrelated_lines(output: str, prompt_keywords) -> str:
-    lines = output.strip().split("\n")
-    return "\n".join([
-        line for line in lines
-        if not any(w in line.lower() for w in ["faiss", "tinyllama", "rag"])
-        or any(w in line.lower() for w in prompt_keywords)
-    ])
-
-# === Download model if not present ===
+# === Download model if missing ===
 def download_gguf():
     if not os.path.exists(GGUF_PATH):
         print("🔽 Downloading TinyLLaMA model...")
@@ -340,66 +315,70 @@ def download_gguf():
         print("✅ Download complete.")
 
 # === Load model ===
-@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA Q4_K_M...")
+@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA...")
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
         model_type="llama",
-        gpu_layers=0,
+        gpu_layers=0  # Set >0 if GPU available
     )
 
 local_model = load_local_model()
 
+# === Format prompt for model ===
+def format_prompt(prompt: str) -> str:
+    prompt = prompt.strip()
+    return f"### Instruction:\n{prompt}\n\n### Response:\n"
+
+# === Clean model output ===
+def clean_output(raw: str) -> str:
+    return raw.replace("### Response:", "").split("###")[0].strip()
+
+# === Simple relevance filter ===
+def is_relevant(chunk: str, question: str, threshold=0.2) -> bool:
+    return SequenceMatcher(None, chunk.lower(), question.lower()).ratio() > threshold
+
 # === Main query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        # Retrieve relevant context
-        context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        context_str = "\n\n".join(context_chunks)
+        # Retrieve context chunks
+        raw_chunks = retrieve_relevant_chunks(prompt, top_k=10)
+        context_chunks = [c for c in raw_chunks if is_relevant(c, prompt)]
+        context_str = "\n\n".join(context_chunks[:3]) if context_chunks else ""
 
-        # Build RAG-style prompt
+        # Compose full prompt
         full_prompt = (
-            "You are a helpful assistant. Use the context below only if relevant.\n\n"
-            f"### Context:\n{context_str}\n\n"
-            f"### Question:\n{prompt}\n\n"
-            "### Answer:\n"
+            "You are a helpful assistant. "
+            + ("Use the context below to answer the question.\n\n" if context_str else "")
+            + (f"### Context:\n{context_str}\n\n" if context_str else "")
+            + f"### Question:\n{prompt}\n\n"
+            + "### Answer:\n"
         )
 
+        # Format prompt
         formatted_prompt = format_prompt(full_prompt)
 
-        # Trim long prompts
+        # Token trim safeguard
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
-        words = formatted_prompt.strip().split()
+        words = formatted_prompt.split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
             st.warning(f"⚠️ Prompt trimmed to last {max_prompt_words} words.")
 
-        # Display prompt & context
-        st.markdown("📚 **Retrieved Context:**")
-        st.code(context_str, language='text')
+        # Show context (optional)
+        if context_str:
+            st.markdown("📚 **Retrieved Context:**")
+            st.code(context_str)
+
+        # Run model
         st.code(formatted_prompt, language='text')
+        full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        st.text("🧠 Raw output:\n" + full_output)
 
-        # Run local model
-        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
-        st.text("🧠 Raw output:\n" + raw_output)
-
-        # === Clean hallucinated additions ===
-        cleaned = clean_output(raw_output)
-
-        # Optional: remove known irrelevant boilerplate hallucinations
-        noise_phrases = [
-            "FAISS is", "TinyLLaMA is", "RAG enables", 
-            "It uses histograms to", "used by many models", 
-            "It's used for fast vector similarity search"
-        ]
-        for phrase in noise_phrases:
-            if phrase in cleaned:
-                cleaned = cleaned.split(phrase)[0].strip()
-
-        return cleaned or "⚠️ No meaningful answer returned."
+        return clean_output(full_output)
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
