@@ -1,1 +1,2 @@
-libomp5
+faiss-cpu
+libstdcxx-ng
