@@ -186,8 +186,9 @@ from ctransformers import AutoModelForCausalLM
 
 try:
     from rag_retriever import retrieve_relevant_chunks
-except ImportError:
-    def retrieve_relevant_chunks(query, k=3): return []
+except ImportError as e:
+    print(f"⚠️ Failed to import RAG module: {e}")
+    def retrieve_relevant_chunks(query, top_k=3): return []
 
 
 # === Configuration ===
