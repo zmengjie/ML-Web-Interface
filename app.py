@@ -59,20 +59,22 @@ from langchain_community.chat_models import ChatOpenAI
 
 # from local_llm import query_local_llm
 import requests
-COLAB_LLM_URL = "https://c193262ee1c4.ngrok-free.app/generate"
+# COLAB_LLM_URL = "https://c193262ee1c4.ngrok-free.app/generate"
 
+
+COLAB_LLM_URL = "https://your-llm-app-name.loca.lt/generate" 
 
 def query_local_llm(prompt):
     try:
         response = requests.post(COLAB_LLM_URL, json={"query": prompt})
         if response.ok:
-            return response.json().get("response", "⚠️ No response from model.")
+            return response.json().get("response", "").strip()
         else:
             return f"⚠️ LLM API error: {response.status_code}"
     except Exception as e:
         return f"❌ Connection to LLM failed: {e}"
     
-
+    
 # client = openai  
 # client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 
