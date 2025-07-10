@@ -50,3 +50,4 @@ langchain-experimental
 
 ctransformers
 faiss-cpu
+sentence-transformers
