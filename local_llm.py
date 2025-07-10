@@ -237,12 +237,12 @@ def download_gguf():
         print("✅ Download complete.")
 
 # === Load GGUF model ===
-@st.cache_resource(show_spinner="🔄 Loading TinyLLaMA Q4_K_M...")
+@st.cache_resource(show_spinner="🔄 Loading Phi-2 Q4_K_M...")
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
-        model_type="llama",
+        model_type="phi",
         gpu_layers=0,  # Set >0 if GPU memory available
     )
 
