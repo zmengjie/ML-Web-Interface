@@ -14,7 +14,7 @@ encoder = SentenceTransformer("all-MiniLM-L6-v2")
 
 # === Build or load index ===
 def build_index(text_chunks: List[str]):
-    embeddings = encoder.encode(text_chunks, convert_to_numpy=True)
+    embeddings = encoder.encode(text_chunks, convert_to_numpy=True, show_progress_bar=True, normalize_embeddings=True, batch_size=32, num_workers=0)
     dim = embeddings.shape[1]
     index = faiss.IndexFlatL2(dim)
     index.add(embeddings)
@@ -32,6 +32,6 @@ def retrieve_relevant_chunks(query: str, top_k: int = 3) -> List[str]:
     with open(DOC_STORE_PATH, "rb") as f:
         documents = pickle.load(f)
 
-    query_emb = encoder.encode([query], convert_to_numpy=True)
+    query_emb = encoder.encode([query], convert_to_numpy=True, num_workers=0)
     D, I = index.search(query_emb, top_k)
     return [documents[i] for i in I[0] if i < len(documents)]
