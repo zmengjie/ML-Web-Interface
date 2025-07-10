@@ -48,6 +48,15 @@ langchain-experimental
 # torch==2.2.1
 # transformers==4.40.1
 
-ctransformers
-faiss-cpu
+# ctransformers
+# faiss-cpu
+# sentence-transformers
+
+
+
 sentence-transformers
+transformers>=4.37.0
+torch==2.1.2+cpu
+faiss-cpu
+ctransformers
+--extra-index-url https://download.pytorch.org/whl/cpu
