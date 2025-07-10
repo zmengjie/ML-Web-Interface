@@ -243,45 +243,89 @@ def load_local_model():
 local_model = load_local_model()
 
 # === Query function with RAG ===
+# def query_local_llm(prompt: str) -> str:
+#     try:
+#         # === Retrieve relevant chunks from local vector DB ===
+#         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
+#         context_str = "\n\n".join(context_chunks)
+
+#         # === Build RAG-enhanced prompt ===
+#         full_prompt = (
+#             f"You are a helpful assistant. Use the context below to answer the question.\n\n"
+#             f"### Context:\n{context_str}\n\n"
+#             f"### Question:\n{prompt}\n\n"
+#             f"### Answer:\n"
+#         )
+
+#         # === Format prompt ===
+#         formatted_prompt = format_prompt(full_prompt)
+
+#         # === Token trimming ===
+#         MAX_TOKENS = 2048
+#         RESERVED_TOKENS = 400
+#         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
+
+#         words = formatted_prompt.strip().split()
+#         if len(words) > max_prompt_words:
+#             formatted_prompt = " ".join(words[-max_prompt_words:])
+#             st.warning(f"⚠️ Prompt was too long and trimmed to last {max_prompt_words} words.")
+
+#         # === Optional: show context ===
+#         st.markdown("📚 **Retrieved Context:**")
+#         st.code(context_str, language='text')
+
+#         # === Show prompt and response ===
+#         st.code(formatted_prompt, language='text')
+#         full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+#         st.text("🧠 Raw output:\n" + full_output)
+
+#         # === Clean output ===
+#         clean_output_text = clean_output(full_output)
+#         return clean_output_text
+
+#     except Exception as e:
+#         return f"❌ Local LLM error: {e}"
 def query_local_llm(prompt: str) -> str:
     try:
-        # === Retrieve relevant chunks from local vector DB ===
+        # === Retrieve context ===
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
         context_str = "\n\n".join(context_chunks)
 
-        # === Build RAG-enhanced prompt ===
-        full_prompt = (
-            f"You are a helpful assistant. Use the context below to answer the question.\n\n"
+        # === Robust Prompt ===
+        base_prompt = (
+            "You are a helpful assistant that only answers based on the given context. "
+            "If the answer is not in the context, reply 'I don't know based on the provided context.'\n\n"
             f"### Context:\n{context_str}\n\n"
             f"### Question:\n{prompt}\n\n"
             f"### Answer:\n"
         )
 
-        # === Format prompt ===
-        formatted_prompt = format_prompt(full_prompt)
+        formatted_prompt = format_prompt(base_prompt)
 
-        # === Token trimming ===
+        # === Token limit control ===
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
-
         words = formatted_prompt.strip().split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt was too long and trimmed to last {max_prompt_words} words.")
+            st.warning(f"⚠️ Prompt trimmed to {max_prompt_words} words.")
 
-        # === Optional: show context ===
+        # === Show context and prompt ===
         st.markdown("📚 **Retrieved Context:**")
         st.code(context_str, language='text')
-
-        # === Show prompt and response ===
         st.code(formatted_prompt, language='text')
+
+        # === Run local LLM ===
         full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
         st.text("🧠 Raw output:\n" + full_output)
 
-        # === Clean output ===
-        clean_output_text = clean_output(full_output)
-        return clean_output_text
+        # === Clean & trim hallucinations ===
+        answer = clean_output(full_output)
+        for stop_token in ["###", "Instruction", "Context", "Question"]:
+            if stop_token in answer:
+                answer = answer.split(stop_token)[0].strip()
+        return answer or "⚠️ No valid response extracted."
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
