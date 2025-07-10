@@ -292,44 +292,43 @@ import os
 import requests
 from ctransformers import AutoModelForCausalLM
 
-# === Optional RAG retriever ===
 try:
     from rag_retriever import retrieve_relevant_chunks
 except ImportError:
     def retrieve_relevant_chunks(query, top_k=3): return []
 
-# === Configuration for TinyLLaMA GGUF ===
+# === Configuration ===
 GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
 GGUF_PATH = "tinyllama-q4.gguf"
-MODEL_FORMAT = "tinyllama"  # could be "mistral", "llama3" etc.
-MAX_TOKENS = 2048
-RESERVED_TOKENS = 400
+MODEL_FORMAT = "tinyllama"
 
-# === Prompt Formatter ===
+# === Prompt formatter ===
 def format_prompt(prompt: str) -> str:
-    prompt = prompt.strip()
-    if MODEL_FORMAT == "tinyllama":
-        return f"### Instruction:\n{prompt}\n\n### Response:\n"
-    elif MODEL_FORMAT == "mistral":
-        return f"[INST] {prompt} [/INST]"
-    elif MODEL_FORMAT == "llama3":
-        return f"<|im_start|>user\n{prompt}\n<|im_end|>\n<|im_start|>assistant\n"
-    else:
-        return prompt  # fallback
+    return f"### Instruction:\n{prompt.strip()}\n\n### Response:\n"
 
-# === Output Cleaner ===
+# === Clean output ===
 def clean_output(raw: str) -> str:
-    if MODEL_FORMAT == "llama3":
-        raw = raw.replace("<|im_start|>", "").replace("<|im_end|>", "")
-    elif MODEL_FORMAT == "tinyllama":
-        raw = raw.replace("### Response:", "")
+    raw = raw.replace("### Response:", "")
     return raw.split("###")[0].strip()
 
-# === Optional: Contextual Relevance Checker ===
-def is_answer_contextual(answer: str, context: str) -> bool:
-    return len(set(answer.lower().split()) & set(context.lower().split())) >= 3
+# === Filter context based on prompt keywords ===
+def filter_context(context_chunks, keywords):
+    filtered = []
+    for chunk in context_chunks:
+        if any(k in chunk.lower() for k in keywords):
+            filtered.append(chunk)
+    return filtered
 
-# === Download GGUF if missing ===
+# === Post-filter to remove unrelated lines ===
+def remove_unrelated_lines(output: str, prompt_keywords) -> str:
+    lines = output.strip().split("\n")
+    return "\n".join([
+        line for line in lines
+        if not any(w in line.lower() for w in ["faiss", "tinyllama", "rag"])
+        or any(w in line.lower() for w in prompt_keywords)
+    ])
+
+# === Download model if not present ===
 def download_gguf():
     if not os.path.exists(GGUF_PATH):
         print("🔽 Downloading TinyLLaMA model...")
@@ -340,73 +339,54 @@ def download_gguf():
                     f.write(chunk)
         print("✅ Download complete.")
 
-# === Load GGUF model ===
+# === Load model ===
 @st.cache_resource(show_spinner="🔄 Loading TinyLLaMA Q4_K_M...")
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
         model_type="llama",
-        gpu_layers=0  # Use >0 if you have GPU support
+        gpu_layers=0,
     )
 
-# === Global model instance ===
 local_model = load_local_model()
 
-# === Main Query Function with Optional RAG ===
-def enrich_with_relevant_context(answer: str, context: str, keywords=None) -> str:
-    """Append relevant context lines based on keywords to make output more useful."""
-    if not keywords:
-        keywords = ["histogram", "distribution", "frequency", "bins", "data", "plot", "chart"]
-    relevant_lines = []
-    for line in context.strip().split("\n"):
-        if any(k in line.lower() for k in keywords):
-            relevant_lines.append(line.strip())
-    if relevant_lines:
-        answer += "\n\n📌 **Related context:**\n" + "\n".join(relevant_lines)
-    return answer
-
-
+# === Main query function ===
 def query_local_llm(prompt: str) -> str:
     try:
-        # === Retrieve relevant chunks from local vector DB ===
+        prompt_keywords = prompt.lower().split()
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        context_str = "\n\n".join(context_chunks)
+        filtered_chunks = filter_context(context_chunks, prompt_keywords)
+        context_str = "\n\n".join(filtered_chunks)
 
-        # === Build RAG-enhanced prompt ===
         full_prompt = (
-            f"You are a helpful assistant. Use the context below to answer the question.\n\n"
+            f"You are a helpful assistant. Use the context below only if relevant.\n\n"
             f"### Context:\n{context_str}\n\n"
-            f"### Question:\n{prompt.strip()}\n\n"
+            f"### Question:\n{prompt}\n\n"
             f"### Answer:\n"
         )
 
-        # === Format prompt ===
         formatted_prompt = format_prompt(full_prompt)
 
-        # === Token trimming ===
+        # Token trimming
         MAX_TOKENS = 2048
         RESERVED_TOKENS = 400
         max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
         words = formatted_prompt.strip().split()
         if len(words) > max_prompt_words:
             formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt was too long and trimmed to last {max_prompt_words} words.")
+            st.warning(f"⚠️ Prompt was trimmed to last {max_prompt_words} words.")
 
-        # === Optional: show context ===
-        st.markdown("📚 **Retrieved Context:**")
+        st.markdown("📚 **Filtered Context:**")
         st.code(context_str, language='text')
-
-        # === Show prompt and response ===
         st.code(formatted_prompt, language='text')
-        full_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
-        st.text("🧠 Raw output:\n" + full_output)
 
-        # === Clean + Enrich output ===
-        cleaned = clean_output(full_output)
-        enriched = enrich_with_relevant_context(cleaned, context_str)
+        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        st.text("🧠 Raw output:\n" + raw_output)
 
-        return enriched or "⚠️ No meaningful answer returned."
+        cleaned = clean_output(raw_output)
+        final = remove_unrelated_lines(cleaned, prompt_keywords)
+        return final or "⚠️ No meaningful answer returned."
 
     except Exception as e:
         return f"❌ Local LLM error: {e}"
