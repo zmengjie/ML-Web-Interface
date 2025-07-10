@@ -2481,6 +2481,33 @@ elif mode == "🤖 LLM Assistant":
     if "uploaded_file" not in st.session_state or df is None:
         st.info("📂 Upload a dataset to explore insights with the assistant.")
 
+
+
+
+
+elif mode == "🧠 Unsupervised Learning":
+    st.subheader("🧠 Unsupervised Learning Explorer")
+
+    # Submodule selection in sidebar
+    unsup_option = st.sidebar.radio("Select Unsupervised Module", [
+        "Clustering",
+        # "Dimensionality Reduction",
+        # "Anomaly Detection",
+        # Add more modules as needed
+    ])
+
+    # Render selected module
+    if unsup_option == "Clustering":
+        from clustering import clustering_ui
+        clustering_ui()
+
+
+
+
+
+
+
+
 # Footer
 st.markdown("---")
 st.info("Switch between ML tasks and optimization demos using the sidebar.")
