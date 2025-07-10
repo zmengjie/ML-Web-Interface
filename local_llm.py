@@ -343,48 +343,49 @@ def is_relevant(chunk: str, question: str, threshold=0.2) -> bool:
 
 def query_local_llm(prompt: str) -> str:
     try:
-        # === Retrieve relevant context ===
+        # === Sanitize context ===
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        context_clean = "\n\n".join(c for c in context_chunks if "Unnamed:" not in c and "### Instruction" not in c)
+        context_str = "\n\n".join(c for c in context_chunks if all(k not in c for k in ["###", "Instruction", "Unnamed:", "you are you are"]))
 
-        # === Sanitize prompt ===
-        def sanitize(text: str) -> str:
-            return (
-                text.replace("<|", "").replace("|>", "")
-                    .replace("### Instruction", "")
-                    .replace("### Response", "")
-                    .replace("Unnamed:", "")
-                    .strip()
-            )
+        # === Clean question ===
+        def clean(text):
+            return text.replace("<|", "").replace("|>", "").replace("###", "").strip()
 
-        prompt_clean = sanitize(prompt)
-        context_clean = sanitize(context_clean)
+        question = clean(prompt)
+        context = clean(context_str)
 
         # === Compose prompt ===
-        full_prompt = (
-            "You are a helpful data science assistant.\n"
-            + (f"\nContext:\n{context_clean}\n" if context_clean else "")
-            + f"\nQuestion: {prompt_clean}\n\nAnswer:"
-        )
+        composed_prompt = f"""You are a helpful assistant.
+{f"\nContext:\n{context}\n" if context else ""}
+Question: {question}
+Answer:"""
+        final_prompt = format_prompt(composed_prompt)
 
-        formatted_prompt = format_prompt(full_prompt)
-
-        # === Token trimming ===
+        # === Token budget trimming ===
         MAX_TOKENS = 2048
-        RESERVED_TOKENS = 400
-        max_prompt_words = int((MAX_TOKENS - RESERVED_TOKENS) / 1.3)
-        words = formatted_prompt.split()
-        if len(words) > max_prompt_words:
-            formatted_prompt = " ".join(words[-max_prompt_words:])
-            st.warning(f"⚠️ Prompt trimmed to {max_prompt_words} words.")
+        RESERVED = 400
+        words = final_prompt.split()
+        if len(words) > (MAX_TOKENS - RESERVED):
+            final_prompt = " ".join(words[-(MAX_TOKENS - RESERVED):])
+            st.warning("⚠️ Prompt was trimmed to fit token limit.")
 
-        # === Output in app ===
-        st.code(formatted_prompt, language="text")
-        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
+        # === Show prompt (debug)
+        st.code(final_prompt, language="text")
+
+        # === Run inference
+        raw_output = local_model(final_prompt, max_new_tokens=RESERVED)
         st.text("🧠 Raw output:\n" + raw_output)
 
-        # === Clean response ===
-        return clean_output(raw_output)
+        # === Clean output
+        answer = clean_output(raw_output)
+
+        # === Final guard: is it nonsense?
+        if any(phrase in answer for phrase in [
+            "you are you are", "Unnamed:", "### Instruction", "funn Please", "Correctangle", "Idecide_1"
+        ]) or len(answer.strip()) < 5:
+            return "⚠️ Sorry, the local model could not generate a valid answer."
+
+        return answer
 
     except Exception as e:
-        return f"❌ LLM error: {e}"
+        return f"❌ Local LLM error: {e}"
