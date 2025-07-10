@@ -348,33 +348,37 @@ local_model = load_local_model()
 # === Main query function ===
 def query_local_llm(prompt: str) -> str:
     try:
+        # 🔍 Retrieve context
         context_chunks = retrieve_relevant_chunks(prompt, top_k=3)
-        context_str = "\n\n".join(context_chunks)
+        context_str = "\n".join(context_chunks).strip()
 
-        full_prompt = (
-            "You are a helpful assistant that only answers based on the given context. "
-            "If the answer is not in the context, reply with: 'I don't know based on the provided context.'\n\n"
-            f"### Context:\n{context_str}\n\n"
+        # 🧠 Instruction + context separation
+        base_prompt = (
+            "You are a helpful assistant answering based only on the provided context.\n\n"
+            f"### Context:\n{context_str if context_str else 'No context available.'}\n\n"
+            f"### Task:\nAnswer the following question in 1–2 clear sentences. If the answer is not in context, say 'I don't know based on the provided context.'\n\n"
             f"### Question:\n{prompt.strip()}\n\n"
-            f"### Answer:\n"
+            "### Answer:"
         )
 
-        formatted_prompt = format_prompt(full_prompt)
+        formatted_prompt = format_prompt(base_prompt)
 
-        # Display for debugging
-        st.markdown("📚 **Retrieved Context:**")
-        st.code(context_str, language='text')
-        st.code(formatted_prompt, language='text')
+        # 🔒 Token budget
+        MAX_TOKENS = 2048
+        RESERVED_TOKENS = 400
+        words = formatted_prompt.strip().split()
+        if len(words) > (MAX_TOKENS - RESERVED_TOKENS):
+            formatted_prompt = " ".join(words[-(MAX_TOKENS - RESERVED_TOKENS):])
 
-        raw_output = local_model(formatted_prompt, max_new_tokens=300)
-        st.text("🧠 Raw output:\n" + raw_output)
-
+        # 🧠 Generate
+        raw_output = local_model(formatted_prompt, max_new_tokens=RESERVED_TOKENS)
         cleaned = clean_output(raw_output)
 
+        # ✅ Final sanity check
         if not is_answer_contextual(cleaned, context_str):
             return "⚠️ I don't know based on the provided context."
 
         return cleaned or "⚠️ No meaningful answer returned."
 
     except Exception as e:
-        return f"❌ TinyLLaMA error: {e}"
+        return f"❌ Local LLM error: {e}"
