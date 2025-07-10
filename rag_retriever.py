@@ -24,7 +24,7 @@ def build_index(text_chunks: List[str]):
     faiss.write_index(index, FAISS_INDEX_PATH)
 
 
-def retrieve_chunks(query: str, k: int = 3) -> List[str]:
+def retrieve_chunks(query: str, top_k: int = 3) -> List[str]:
     if not os.path.exists(FAISS_INDEX_PATH) or not os.path.exists(DOC_STORE_PATH):
         raise FileNotFoundError("RAG index or doc store not found. Please run build_index() first.")
 
@@ -33,5 +33,5 @@ def retrieve_chunks(query: str, k: int = 3) -> List[str]:
         documents = pickle.load(f)
 
     query_emb = encoder.encode([query], convert_to_numpy=True)
-    D, I = index.search(query_emb, k)
+    D, I = index.search(query_emb, top_k)
     return [documents[i] for i in I[0] if i < len(documents)]
