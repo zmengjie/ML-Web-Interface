@@ -199,11 +199,10 @@ except ImportError as e:
 # MODEL_FORMAT = "tinyllama"
 
 
-# === Use Phi-2 instead ===
-GGUF_URL = "https://huggingface.co/TheBloke/phi-2-GGUF/resolve/main/phi-2.Q4_K_M.gguf"
-GGUF_PATH = "phi2-q4.gguf"
-MODEL_FORMAT = "mistral"  # or "llama3" if needed
 
+GGUF_URL = "https://huggingface.co/TheBloke/orca-mini-3B-GGUF/resolve/main/orca-mini-3b.Q4_0.gguf"
+GGUF_PATH = "orca-mini-3b-q4.gguf"
+MODEL_FORMAT = "mistral"  # or fallback
 
 # === Prompt formatter ===
 def format_prompt(prompt: str) -> str:
@@ -236,14 +235,13 @@ def download_gguf():
                     f.write(chunk)
         print("✅ Download complete.")
 
-# === Load GGUF model ===
-@st.cache_resource(show_spinner="🔄 Loading Phi-2 Q4_K_M...")
+@st.cache_resource(show_spinner="🔄 Loading Orca Mini 3B...")
 def load_local_model():
     download_gguf()
     return AutoModelForCausalLM.from_pretrained(
         GGUF_PATH,
-        model_type="gpt2",
-        gpu_layers=0,  # Set >0 if GPU memory available
+        model_type="llama",  # Orca Mini is LLaMA-based
+        gpu_layers=0
     )
 
 # === Initialize model ===
