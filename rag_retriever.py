@@ -13,15 +13,43 @@ DOC_STORE_PATH = "rag_docs.pkl"
 encoder = SentenceTransformer("all-MiniLM-L6-v2")
 
 # === Build or load index ===
-def build_index(text_chunks: List[str]):
-    embeddings = encoder.encode(text_chunks, convert_to_numpy=True, show_progress_bar=True, normalize_embeddings=True, batch_size=32, num_workers=0)
-    dim = embeddings.shape[1]
-    index = faiss.IndexFlatL2(dim)
+import faiss
+import re
+from sentence_transformers import SentenceTransformer
+
+def chunk_text(text, max_words=50):
+    """Split a long string into chunks of ~max_words tokens"""
+    sentences = re.split(r'(?<=[.!?])\s+', text.strip())
+    chunks = []
+    current_chunk = []
+
+    for sent in sentences:
+        current_chunk.append(sent)
+        if len(" ".join(current_chunk).split()) >= max_words:
+            chunks.append(" ".join(current_chunk))
+            current_chunk = []
+
+    if current_chunk:
+        chunks.append(" ".join(current_chunk))
+
+    return chunks
+
+def build_index(docs, model_name="all-MiniLM-L6-v2"):
+    model = SentenceTransformer(model_name)
+    
+    all_chunks = []
+    for doc in docs:
+        all_chunks.extend(chunk_text(doc))
+
+    embeddings = model.encode(all_chunks, show_progress_bar=True)
+    index = faiss.IndexFlatL2(embeddings.shape[1])
     index.add(embeddings)
 
-    with open(DOC_STORE_PATH, "wb") as f:
-        pickle.dump(text_chunks, f)
-    faiss.write_index(index, FAISS_INDEX_PATH)
+    with open("rag_docs.pkl", "wb") as f:
+        pickle.dump(all_chunks, f)
+    faiss.write_index(index, "rag_index.faiss")
+    print(f"✅ RAG index built with {len(all_chunks)} chunks.")
+
 
 
 def retrieve_relevant_chunks(query: str, top_k: int = 3) -> List[str]:
