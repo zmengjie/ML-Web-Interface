@@ -183,7 +183,12 @@ import streamlit as st
 import os
 import requests
 from ctransformers import AutoModelForCausalLM
-from rag_retriever import retrieve_relevant_chunks  # ← RAG integration
+
+try:
+    from rag_retriever import retrieve_relevant_chunks
+except ImportError:
+    def retrieve_relevant_chunks(query, k=3): return []
+
 
 # === Configuration ===
 GGUF_URL = "https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v0.3-GGUF/resolve/main/tinyllama-1.1b-chat-v0.3.Q4_K_M.gguf"
