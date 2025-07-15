@@ -223,7 +223,7 @@ def plot_2d_contour(x_vals, y_vals, Z, path,
                 method="relayout",
                 args=[{"xaxis.autorange": True, "yaxis.autorange": True}]
             )],
-            x=0, y=1.15, xanchor='left', yanchor='top'
+            x=0, y=0.9, xanchor='left', yanchor='top'
         )]
     )
 
