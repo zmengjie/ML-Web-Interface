@@ -784,8 +784,17 @@ elif mode == "🌋 Optimization Playground":
 
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
-            a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
-            b_val = st.slider("b (expansion y)", -5.0, 5.0, float(start_y), step=0.1)
+            if float(start_x) == 0.0 and float(start_y) == 0.0 and func_name != "Quadratic Bowl":
+                default_ax = 0.1
+                default_by = 0.1
+                st.info("🔁 Auto-shifted expansion point from (0,0) → (0.1, 0.1)")
+            else:
+                default_ax = float(start_x)
+                default_by = float(start_y)
+
+            a_val = st.slider("a (expansion x)", -5.0, 5.0, default_ax, step=0.1)
+            b_val = st.slider("b (expansion y)", -5.0, 5.0, default_by, step=0.1)
+
 
             if show_taylor and a_val == 0 and b_val == 0 and func_name != "Quadratic Bowl":
                 st.info("🔁 Auto-shifted expansion point to avoid singularity at (0,0)")
