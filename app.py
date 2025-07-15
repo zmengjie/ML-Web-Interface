@@ -770,13 +770,17 @@ elif mode == "🌋 Optimization Playground":
         Z = f_func(X, Y)
 
         # --- Taylor Expansion Toggle ---
+
         show_taylor = st.checkbox("📐 Show Taylor Approximation at (a, b)", value=False)
 
         show_2nd = False
         Z_t1 = None
         Z_t2 = None
 
-        expansion_point = (a_val, b_val) if show_taylor else None
+        a_val, b_val = None, None  # set early to avoid NameError
+        expansion_point = None
+
+        # expansion_point = (a_val, b_val) if show_taylor else None
 
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
