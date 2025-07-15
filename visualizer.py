@@ -126,8 +126,14 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
     #     ))
 
     if show_taylor and show_2nd and Z_t2 is not None:
-        Z_t2 = np.array(Z_t2)
         try:
+            Z_t2 = np.array(Z_t2, dtype=np.float64)
+            if Z_t2.shape != (len(y_vals), len(x_vals)):
+                if Z_t2.shape == (len(x_vals), len(y_vals)):
+                    Z_t2 = Z_t2.T  # auto-fix transpose mismatch
+                else:
+                    raise ValueError(f"Z_t2 shape {Z_t2.shape} incompatible with (x={len(x_vals)}, y={len(y_vals)})")
+            
             fig_3d.add_trace(go.Surface(
                 z=Z_t2, x=x_vals, y=y_vals,
                 colorscale='RdBu',
@@ -138,6 +144,7 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
             ))
         except Exception as e:
             st.error(f"❌ Failed to plot 2nd-order Taylor surface: {e}")
+
 
     # Marker and dashed line from (a,b) to step 1
     if expansion_point is not None and f_func is not None:
