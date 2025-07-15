@@ -789,6 +789,31 @@ elif mode == "🌋 Optimization Playground":
             expansion_point = (a_val, b_val) 
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
 
+            # -- Show LaTeX expansion formula dynamically --
+            st.markdown("**📐 Symbolic Taylor Expansion (centered at (a, b))**")
+
+            a_fmt = f"{a_val:.2f}"
+            b_fmt = f"{b_val:.2f}"
+            fx = grad_vals[0]
+            fy = grad_vals[1]
+            Hxx = hess_vals[0, 0]
+            Hxy = hess_vals[0, 1]
+            Hyy = hess_vals[1, 1]
+
+            if show_2nd:
+                st.latex(
+                    fr"""f(x, y) \approx {f_ab:.2f}
+                    + ({fx:.2f})(x - {a_fmt}) + ({fy:.2f})(y - {b_fmt})
+                    + \frac{{1}}{{2}}\left[({Hxx:.2f})(x - {a_fmt})^2 + 2({Hxy:.2f})(x - {a_fmt})(y - {b_fmt}) + ({Hyy:.2f})(y - {b_fmt})^2\right]
+                    """
+                )
+            else:
+                st.latex(
+                    fr"""f(x, y) \approx {f_ab:.2f}
+                    + ({fx:.2f})(x - {a_fmt}) + ({fy:.2f})(y - {b_fmt})"""
+                )
+
+
             # --- Symbolic derivatives ---
             grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
             hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
@@ -1083,136 +1108,7 @@ elif mode == "🌋 Optimization Playground":
             else:
                 st.success("✅ Hessian is suitable for Newton's Method descent.")
 
-    # === Newton Method Info ===
 
-# # === Mode: LLM Assistant ===
-# elif mode == "🤖 LLM Assistant":
-#     st.subheader("🤖 LLM Assistant: Explore Your Data Intelligently")
-
-#     if "chat_history" not in st.session_state:
-#         st.session_state.chat_history = []
-
-#     uploaded_file = st.file_uploader("📁 Upload a dataset (CSV)", type=["csv"])
-#     if uploaded_file:
-#         st.session_state.uploaded_file = uploaded_file
-
-#     df = None
-#     if "uploaded_file" in st.session_state:
-#         try:
-#             if st.session_state.uploaded_file is not None:
-#                 content = st.session_state.uploaded_file.read()
-#                 if content.strip() == b"":
-#                     raise ValueError("Uploaded file is empty.")
-#                 st.session_state.uploaded_file.seek(0)
-#                 df = pd.read_csv(st.session_state.uploaded_file)
-#             else:
-#                 raise ValueError("No file uploaded.")
-#         except Exception as e:
-#             st.error(f"❌ Failed to read uploaded CSV: {e}")
-#             st.session_state.uploaded_file = None
-#             df = None
-
-#     if df is not None:
-#         st.write("### 📄 Data Preview", df.head())
-#         st.write("### 📊 Summary Statistics")
-#         st.dataframe(df.describe(include='all'))
-
-#         st.markdown("### 💡 Suggested Prompts")
-#         st.markdown("""
-#         - What are the most correlated features?
-#         - Show a summary of missing values
-#         - Which features influence the target most?
-#         - What kind of plot would help visualize X vs Y?
-#         - Can you generate a histogram of column X?
-#         - Show pairwise plots for selected features
-#         - Predict the target using linear regression
-#         - Detect outliers or anomalies in the data
-#         """)
-
-#     # === LLM Chat ===
-
-#     llm_choice = st.radio("Choose LLM Backend", ["OpenAI", "Local LLM"])
-#     if llm_choice == "OpenAI":
-#         def query_llm(prompt: str) -> str:
-#             resp = client.ChatCompletion.create(
-#                 model="gpt-4o",
-#                 messages=[ ... ],
-#             )
-#             return resp.choices[0].message.content.strip()
-#     else:
-#         def query_llm(prompt: str) -> str:
-#             return query_local_llm(prompt)
-
-#     # ─── user input / querying ────────────────────────────────
-#     user_input = st.text_input("💬 Ask something (about your data):")
-#     if user_input:
-#         with st.spinner("🤖 Thinking..."):
-#             # build your prompt exactly once
-#             if df is not None:
-#                 summary = df.describe(include="all").to_string()
-#                 corr    = df.corr(numeric_only=True).round(3).to_string()
-#                 full_prompt = (
-#                     f"You are a data analysis assistant.\n\n"
-#                     f"Dataset summary:\n{summary}\n\n"
-#                     f"Correlation matrix:\n{corr}\n\n"
-#                     f"Q: {user_input}\nA:"
-#                 )
-#             else:
-#                 full_prompt = user_input
-
-#             try:
-#                 answer = query_llm(full_prompt)
-#                 st.session_state.chat_history.append((user_input, answer))
-#             except Exception as e:
-#                 st.error(f"❌ LLM Error: {e}")
-#                 answer = None
-
-#         if answer:
-#             st.markdown(
-#                 f"<div style='background-color:#e8f5e9;padding:10px;border-radius:8px;'>{answer}</div>",
-#                 unsafe_allow_html=True,
-#             )
-
-#     if df is not None:             
-#         st.markdown("### 📈 Custom Chart Generator")
-#         chart_type = st.selectbox("Select Chart Type", ["Line", "Bar", "Scatter", "Histogram"])
-#         x_col = st.selectbox("X-axis Column", df.columns)
-#         y_col = st.selectbox("Y-axis Column", df.columns)
-#         if st.button("Generate Chart"):
-#             fig, ax = plt.subplots()
-#             if chart_type == "Line":
-#                 ax.plot(df[x_col], df[y_col])
-#             elif chart_type == "Bar":
-#                 ax.bar(df[x_col], df[y_col])
-#             elif chart_type == "Scatter":
-#                 ax.scatter(df[x_col], df[y_col])
-#             elif chart_type == "Histogram":
-#                 ax.hist(df[x_col], bins=20)
-#             ax.set_xlabel(x_col)
-#             ax.set_ylabel(y_col)
-#             st.pyplot(fig, use_container_width=True)
-
-#     st.markdown("### 💾 Export Data")
-#     file_name = st.text_input("Output file name (without extension)", "my_data")
-#     if st.button("Download as CSV"):
-#         tmp_csv = df.to_csv(index=False).encode("utf-8")
-#         st.download_button(
-#             label="📥 Download Processed CSV",
-#             data=tmp_csv,
-#             file_name=f"{file_name}.csv",
-#             mime="text/csv"
-#         )
-
-
-
-#     if st.session_state.chat_history:
-#         st.markdown("### 📜 Chat History")
-#         for q, a in st.session_state.chat_history[::-1]:
-#             st.markdown(f"**You:** {q}")
-#             st.markdown(f"**Assistant:** {a}")
-
-#     if "uploaded_file" not in st.session_state or df is None:
-#         st.info("📂 Upload a dataset to explore insights with the assistant.")
 
 
 # === Mode: LLM Assistant ===
