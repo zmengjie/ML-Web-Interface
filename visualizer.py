@@ -128,22 +128,30 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
     if show_taylor and show_2nd and Z_t2 is not None:
         try:
             Z_t2 = np.array(Z_t2, dtype=np.float64)
+
             if Z_t2.shape != (len(y_vals), len(x_vals)):
                 if Z_t2.shape == (len(x_vals), len(y_vals)):
-                    Z_t2 = Z_t2.T  # auto-fix transpose mismatch
+                    Z_t2 = Z_t2.T
                 else:
-                    raise ValueError(f"Z_t2 shape {Z_t2.shape} incompatible with (x={len(x_vals)}, y={len(y_vals)})")
-            
-            fig_3d.add_trace(go.Surface(
-                z=Z_t2, x=x_vals, y=y_vals,
-                colorscale='RdBu',
-                opacity=0.4,
-                cmin=np.min(Z_t2),
-                cmax=np.max(Z_t2),
-                name="2nd-Order Taylor"
-            ))
+                    raise ValueError(f"Z_t2 shape {Z_t2.shape} doesn't match grid")
+
+            z_min, z_max = np.min(Z_t2), np.max(Z_t2)
+
+            if np.isclose(z_max, z_min):
+                st.warning("⚠️ Skipping 2nd-order Taylor surface: it's flat at this point.")
+            else:
+                fig_3d.add_trace(go.Surface(
+                    z=Z_t2, x=x_vals, y=y_vals,
+                    colorscale='RdBu',
+                    opacity=0.4,
+                    cmin=z_min,
+                    cmax=z_max,
+                    name="2nd-Order Taylor"
+                ))
+
         except Exception as e:
             st.error(f"❌ Failed to plot 2nd-order Taylor surface: {e}")
+
 
 
     # Marker and dashed line from (a,b) to step 1
