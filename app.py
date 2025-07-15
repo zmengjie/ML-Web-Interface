@@ -786,6 +786,7 @@ elif mode == "🌋 Optimization Playground":
             st.markdown("**Taylor Expansion Center (a, b)**")
             a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
             b_val = st.slider("b (expansion y)", -5.0, 5.0, float(start_y), step=0.1)
+            expansion_point = (a_val, b_val) 
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
 
             # --- Symbolic derivatives ---
