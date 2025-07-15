@@ -139,31 +139,9 @@ elif mode == "🌋 Optimization Playground":
     from taylor_expansion import show_univariate_taylor
 
 
-
     # === Main Area: Title & Playground ===
     st.title("🧪 Optimizer Visual Playground")
 
-    x, y, w = sp.symbols("x y w")
-    x_sym, y_sym, w_sym = sp.symbols("x y w")
-
-    predefined_funcs = {
-        "Quadratic Bowl": (x**2 + y**2, [], "Convex bowl, global min at origin."),
-        "Saddle": (x**2 - y**2, [], "Saddle point at origin, non-convex."),
-        "Rosenbrock": ((1 - x)**2 + 100 * (y - x**2)**2, [], "Banana-shaped curved valley, classic test function."),
-        "Constrained Circle": (x * y, [x + y - 1], "Constrained optimization with line x + y = 1."),
-        "Double Constraint": (x**2 + y**2, [x + y - 1, x**2 + y**2 - 4], "Circular + linear intersection constraints."),
-        "Multi-Objective": (w * ((x - 1)**2 + (y - 2)**2) + (1 - w) * ((x + 2)**2 + (y + 1)**2), [], "Weighted sum of two loss terms."),
-        "Ackley": (-20*sp.exp(-0.2*sp.sqrt(0.5*(x**2 + y**2))) - sp.exp(0.5*(sp.cos(2*sp.pi*x) + sp.cos(2*sp.pi*y))) + sp.E + 20, [], "Multimodal non-convex function."),
-        "Rastrigin": (20 + x**2 - 10*sp.cos(2*sp.pi*x) + y**2 - 10*sp.cos(2*sp.pi*y), [], "Many local minima, non-convex."),
-        "Styblinski-Tang": (0.5*((x**4 - 16*x**2 + 5*x) + (y**4 - 16*y**2 + 5*y)), [], "Non-convex with multiple minima."),
-        "Sphere": (x**2 + y**2, [], "Simple convex function."),
-        "Himmelblau": ((x**2 + y - 11)**2 + (x + y**2 - 7)**2, [], "Multiple global minima, non-convex."),
-        "Booth": ((x + 2*y - 7)**2 + (2*x + y - 5)**2, [], "Simple convex function."),
-        "Beale": ((1.5 - x + x*y)**2 + (2.25 - x + x*y**2)**2 + (2.625 - x + x*y**3)**2, [], "Non-convex with multiple minima.")
-
-    }
-
-            
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
     with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
@@ -247,8 +225,25 @@ elif mode == "🌋 Optimization Playground":
 
 
 
+    x, y, w = sp.symbols("x y w")
+    x_sym, y_sym, w_sym = sp.symbols("x y w")
 
+    predefined_funcs = {
+        "Quadratic Bowl": (x**2 + y**2, [], "Convex bowl, global min at origin."),
+        "Saddle": (x**2 - y**2, [], "Saddle point at origin, non-convex."),
+        "Rosenbrock": ((1 - x)**2 + 100 * (y - x**2)**2, [], "Banana-shaped curved valley, classic test function."),
+        "Constrained Circle": (x * y, [x + y - 1], "Constrained optimization with line x + y = 1."),
+        "Double Constraint": (x**2 + y**2, [x + y - 1, x**2 + y**2 - 4], "Circular + linear intersection constraints."),
+        "Multi-Objective": (w * ((x - 1)**2 + (y - 2)**2) + (1 - w) * ((x + 2)**2 + (y + 1)**2), [], "Weighted sum of two loss terms."),
+        "Ackley": (-20*sp.exp(-0.2*sp.sqrt(0.5*(x**2 + y**2))) - sp.exp(0.5*(sp.cos(2*sp.pi*x) + sp.cos(2*sp.pi*y))) + sp.E + 20, [], "Multimodal non-convex function."),
+        "Rastrigin": (20 + x**2 - 10*sp.cos(2*sp.pi*x) + y**2 - 10*sp.cos(2*sp.pi*y), [], "Many local minima, non-convex."),
+        "Styblinski-Tang": (0.5*((x**4 - 16*x**2 + 5*x) + (y**4 - 16*y**2 + 5*y)), [], "Non-convex with multiple minima."),
+        "Sphere": (x**2 + y**2, [], "Simple convex function."),
+        "Himmelblau": ((x**2 + y - 11)**2 + (x + y**2 - 7)**2, [], "Multiple global minima, non-convex."),
+        "Booth": ((x + 2*y - 7)**2 + (2*x + y - 5)**2, [], "Simple convex function."),
+        "Beale": ((1.5 - x + x*y)**2 + (2.25 - x + x*y**2)**2 + (2.625 - x + x*y**3)**2, [], "Non-convex with multiple minima.")
 
+    }
 
 
     with st.expander("🚀 Optimizer Visual Playground", expanded=True):
