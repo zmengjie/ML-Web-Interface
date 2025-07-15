@@ -8,6 +8,7 @@ from io import BytesIO
 import tempfile
 import base64
 import streamlit.components.v1 as components
+from PIL import Image
 
 def show_univariate_taylor():
     st.markdown("### 🔍 Univariate Taylor Expansion (1D Preview)")
