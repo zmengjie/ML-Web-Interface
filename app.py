@@ -441,6 +441,38 @@ elif mode == "🌋 Optimization Playground":
             st.plotly_chart(fig_taylor, use_container_width=True)
 
 
+        # 💡 Add Gradient Vectors on True Function
+        st.markdown("### 📌 Gradient Vector Field")
+
+        # Compute vector field
+        U, V = np.zeros_like(X), np.zeros_like(Y)
+        for i in range(X.shape[0]):
+            for j in range(X.shape[1]):
+                gx = float(grad[0].subs({x: X[i, j], y: Y[i, j]}))
+                gy = float(grad[1].subs({x: X[i, j], y: Y[i, j]}))
+                U[i, j], V[i, j] = gx, gy
+
+        # Downsample for cones
+        skip = (slice(None, None, 4), slice(None, None, 4))
+        Xq, Yq, Uq, Vq = X[skip], Y[skip], U[skip], V[skip]
+        Zq = f_np(Xq, Yq)
+
+        # Plot surface with cones (gradients)
+        fig_grad = go.Figure(data=[
+            go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis', opacity=0.8),
+            go.Cone(
+                x=Xq.flatten(), y=Yq.flatten(), z=Zq.flatten(),
+                u=-Uq.flatten(), v=-Vq.flatten(), w=np.zeros_like(Uq).flatten(),
+                colorscale='Blues', sizemode="scaled", sizeref=15, anchor="tail"
+            )
+        ])
+        fig_grad.update_layout(
+            scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'),
+            margin=dict(l=0, r=0, t=40, b=0),
+            title="Function Surface with Gradient Vectors"
+        )
+        st.plotly_chart(fig_grad, use_container_width=True)
+
         # multi_func = st.selectbox("Choose multivariable function:", ["Quadratic Bowl", "Rosenbrock"])
         # x, y, a, b = sp.symbols('x y a b')
         # h1, h2 = x - a, y - b
