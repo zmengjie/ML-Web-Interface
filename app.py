@@ -38,6 +38,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.colors import ListedColormap
 from matplotlib.animation import FuncAnimation
+from matplotlib.animation import PillowWriter
 
 from sympy import symbols, lambdify
 from io import BytesIO
@@ -294,9 +295,12 @@ elif mode == "🌋 Optimization Playground":
                 ani = FuncAnimation(fig_anim, update, frames=len(a_vals), interval=100, blit=True)
 
                 buf = BytesIO()
-                ani.save(buf, writer="pillow", fps=20)
-                gif_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+                writer = PillowWriter(fps=20)
+                ani.save(buf, writer=writer)  # No 'format', just use PillowWriter
+                buf.seek(0)
+                gif_base64 = base64.b64encode(buf.read()).decode("utf-8")
                 components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
+
 
         except Exception as e:
             st.error(f"Rendering error: {e}")
