@@ -5,6 +5,7 @@ import streamlit as st
 import plotly.graph_objects as go
 import streamlit.components.v1 as components
 import base64
+import tempfile
 
 st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
 
@@ -296,9 +297,11 @@ elif mode == "🌋 Optimization Playground":
 
                 buf = BytesIO()
                 writer = PillowWriter(fps=20)
-                ani.save(buf, writer=writer)  # No 'format', just use PillowWriter
-                buf.seek(0)
-                gif_base64 = base64.b64encode(buf.read()).decode("utf-8")
+                with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmpfile:
+                    ani.save(tmpfile.name, writer=PillowWriter(fps=20))
+                    tmpfile.seek(0)
+                    gif_base64 = base64.b64encode(tmpfile.read()).decode("utf-8")
+
                 components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
 
 
