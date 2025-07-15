@@ -784,6 +784,8 @@ elif mode == "🌋 Optimization Playground":
 
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
+
+            # 🔁 Auto-bump before sliders
             if float(start_x) == 0.0 and float(start_y) == 0.0 and func_name != "Quadratic Bowl":
                 default_ax = 0.1
                 default_by = 0.1
@@ -792,17 +794,12 @@ elif mode == "🌋 Optimization Playground":
                 default_ax = float(start_x)
                 default_by = float(start_y)
 
-            a_val = st.slider("a (expansion x)", -5.0, 5.0, default_ax, step=0.1)
-            b_val = st.slider("b (expansion y)", -5.0, 5.0, default_by, step=0.1)
-
-
-            if show_taylor and a_val == 0 and b_val == 0 and func_name != "Quadratic Bowl":
-                st.info("🔁 Auto-shifted expansion point to avoid singularity at (0,0)")
-                a_val += 0.1
-                b_val += 0.1
+            a_val = st.slider("a (expansion x)", -5.0, 5.0, value=default_ax, step=0.1)
+            b_val = st.slider("b (expansion y)", -5.0, 5.0, value=default_by, step=0.1)
 
             expansion_point = (a_val, b_val)
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
+
 
             # --- Symbolic derivatives ---
             grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
