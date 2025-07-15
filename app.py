@@ -786,6 +786,12 @@ elif mode == "🌋 Optimization Playground":
             st.markdown("**Taylor Expansion Center (a, b)**")
             a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
             b_val = st.slider("b (expansion y)", -5.0, 5.0, float(start_y), step=0.1)
+
+            if show_taylor and a_val == 0 and b_val == 0 and func_name != "Quadratic Bowl":
+                st.info("🔁 Auto-shifted expansion point to avoid singularity at (0,0)")
+                a_val += 0.1
+                b_val += 0.1
+
             expansion_point = (a_val, b_val)
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
 
@@ -793,14 +799,9 @@ elif mode == "🌋 Optimization Playground":
             grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
             hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
 
-            if show_taylor and a_val == 0 and b_val == 0 and func_name != "Quadratic Bowl":
-                st.info("🔁 Auto-shifted expansion point to avoid singularity at (0,0)")
-                a_val += 0.1
-                b_val += 0.1
-
             subs = {x_sym: a_val, y_sym: b_val}
             st.text(f"📌 Taylor center used: (a={a_val:.3f}, b={b_val:.3f})")
-            
+
             f_ab = float(f_expr.subs(subs))
             grad_vals = [float(g.subs(subs)) for g in grad_fx]
             hess_vals = hess_fx.subs(subs)
