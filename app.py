@@ -993,6 +993,11 @@ elif mode == "🌋 Optimization Playground":
 
         # --- Taylor Expansion Toggle ---
         show_taylor = st.checkbox("📐 Show Taylor Approximation at (a, b)", value=False)
+
+        show_2nd = False
+        Z_t1 = None
+        Z_t2 = None
+        
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
             a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
