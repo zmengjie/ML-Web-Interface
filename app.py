@@ -388,7 +388,13 @@ elif mode == "🌋 Optimization Playground":
 
         # 🔧 Add zoom toggle
         zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
-        xlim, ylim = (-1, 1) if zoom_in else (-5, 5)
+        if zoom_in:
+            xlim = (a_val - 1, a_val + 1)
+            ylim = (b_val - 1, b_val + 1)
+        else:
+            xlim = (-5, 5)
+            ylim = (-5, 5)
+
 
         # Compute Taylor expansions
         f_a = fxy.subs({x: a, y: b})
