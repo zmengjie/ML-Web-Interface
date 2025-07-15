@@ -908,6 +908,11 @@ elif mode == "🌋 Optimization Playground":
         if show_2nd:
             try:
                 if Z_t2 is not None:
+                    # ❗ Reject raw scalar values
+                    if isinstance(Z_t2, (int, float)):
+                        st.warning(f"❌ Z_t2 is a scalar ({Z_t2}), not an array.")
+                        Z_t2 = None
+
                     Z_t2 = np.array(Z_t2, dtype=np.float64)
 
                     if Z_t2.ndim != 2:
