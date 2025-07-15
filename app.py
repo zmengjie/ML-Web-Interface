@@ -789,7 +789,28 @@ elif mode == "🌋 Optimization Playground":
             expansion_point = (a_val, b_val) 
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
 
-            # -- Show LaTeX expansion formula dynamically --
+            # --- Symbolic derivatives ---
+            grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
+            hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
+            subs = {x_sym: a_val, y_sym: b_val}
+            dx, dy = x_sym - a_val, y_sym - b_val
+
+            f_ab = f_expr.subs(subs)
+            grad_vals = [g.subs(subs) for g in grad_fx]
+            hess_vals = hess_fx.subs(subs)
+
+            # 1st and 2nd-order Taylor expressions
+            T1_expr = f_ab + grad_vals[0]*dx + grad_vals[1]*dy
+            T2_expr = T1_expr + 0.5 * (
+                hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
+            )
+
+            t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
+            t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
+            Z_t1 = t1_np(X, Y)
+            Z_t2 = t2_np(X, Y) if show_2nd else None
+
+                # ✅ Display symbolic expansion as LaTeX
             st.markdown("**📐 Symbolic Taylor Expansion (centered at (a, b))**")
 
             a_fmt = f"{a_val:.2f}"
@@ -812,28 +833,6 @@ elif mode == "🌋 Optimization Playground":
                     fr"""f(x, y) \approx {f_ab:.2f}
                     + ({fx:.2f})(x - {a_fmt}) + ({fy:.2f})(y - {b_fmt})"""
                 )
-
-
-            # --- Symbolic derivatives ---
-            grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
-            hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
-            subs = {x_sym: a_val, y_sym: b_val}
-            dx, dy = x_sym - a_val, y_sym - b_val
-
-            f_ab = f_expr.subs(subs)
-            grad_vals = [g.subs(subs) for g in grad_fx]
-            hess_vals = hess_fx.subs(subs)
-
-            # 1st and 2nd-order Taylor expressions
-            T1_expr = f_ab + grad_vals[0]*dx + grad_vals[1]*dy
-            T2_expr = T1_expr + 0.5 * (
-                hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
-            )
-
-            t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
-            t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
-            Z_t1 = t1_np(X, Y)
-            Z_t2 = t2_np(X, Y) if show_2nd else None
 
         from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
 
