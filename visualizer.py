@@ -113,15 +113,25 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
             colorscale='Reds', opacity=0.5,
             name="1st-Order Taylor"
         ))
-    if show_taylor and show_2nd and Z_t2 is not None and expansion_point is not None:
-        a, b = expansion_point
-        distance = np.sqrt((x_vals[:, None] - a)**2 + (y_vals[None, :] - b)**2)
-        fade_opacity = 0.6 * np.exp(-0.1 * distance)
+    # if show_taylor and show_2nd and Z_t2 is not None and expansion_point is not None:
+    #     a, b = expansion_point
+    #     distance = np.sqrt((x_vals[:, None] - a)**2 + (y_vals[None, :] - b)**2)
+    #     fade_opacity = 0.6 * np.exp(-0.1 * distance)
+    #     fig_3d.add_trace(go.Surface(
+    #         z=Z_t2, x=x_vals, y=y_vals,
+    #         surfacecolor=fade_opacity,
+    #         colorscale='Blues',
+    #         opacity=0.4,
+    #         name="2nd-Order Taylor"
+    #     ))
+
+    if show_taylor and show_2nd and Z_t2 is not None:
         fig_3d.add_trace(go.Surface(
             z=Z_t2, x=x_vals, y=y_vals,
-            surfacecolor=fade_opacity,
-            colorscale='Blues',
+            colorscale='RdBu',
             opacity=0.4,
+            cmin=np.min(Z_t2),
+            cmax=np.max(Z_t2),
             name="2nd-Order Taylor"
         ))
 
