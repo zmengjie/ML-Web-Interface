@@ -824,10 +824,38 @@ elif mode == "🌋 Optimization Playground":
             t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
             Z_t1 = t1_np(X, Y)
 
+            # if show_2nd:
+            #     try:
+            #         Z_t2 = t2_np(X, Y)
+            #         Z_t2 = np.array(Z_t2, dtype=np.float64)  # 🔐 force cast here too
+            #     except Exception as e:
+            #         st.warning(f"⚠️ Failed to evaluate 2nd-order Taylor surface: {e}")
+            #         Z_t2 = None
+
             if show_2nd:
                 try:
                     Z_t2 = t2_np(X, Y)
-                    Z_t2 = np.array(Z_t2, dtype=np.float64)  # 🔐 force cast here too
+
+                    # --- Safety checks ---
+                    if isinstance(Z_t2, (int, float, np.number)):
+                        st.warning(f"❌ Z_t2 is scalar: {Z_t2}. Skipping.")
+                        Z_t2 = None
+                    else:
+                        Z_t2 = np.array(Z_t2, dtype=np.float64)
+
+                        if Z_t2.ndim != 2:
+                            st.warning(f"❌ Z_t2 is not 2D — shape: {Z_t2.shape}")
+                            Z_t2 = None
+                        elif Z_t2.shape != (len(y_vals), len(x_vals)):
+                            if Z_t2.shape == (len(x_vals), len(y_vals)):
+                                Z_t2 = Z_t2.T
+                            else:
+                                st.warning(f"❌ Z_t2 shape mismatch: {Z_t2.shape}")
+                                Z_t2 = None
+                        elif np.isnan(Z_t2).any():
+                            st.warning("❌ Z_t2 contains NaNs.")
+                            Z_t2 = None
+
                 except Exception as e:
                     st.warning(f"⚠️ Failed to evaluate 2nd-order Taylor surface: {e}")
                     Z_t2 = None
