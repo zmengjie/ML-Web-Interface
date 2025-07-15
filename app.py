@@ -313,109 +313,9 @@ elif mode == "🌋 Optimization Playground":
 
                 components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
 
-            # if st.checkbox("🎬 Animate 2nd-order Approximation"):
-            #     st.markdown("### 🎬 Animation: 2nd-Order Taylor Approximation")
-            #     fig_anim, ax_anim = plt.subplots(figsize=(8, 4))
-            #     line_true, = ax_anim.plot(x, f_np(x), label="f(x)", color='blue')
-            #     line_taylor, = ax_anim.plot([], [], '--', label="2nd-order", color='orange')
-            #     point, = ax_anim.plot([], [], 'ko')
-
-            #     ax_anim.set_xlim(xmin, xmax)
-            #     y_vals = f_np(x)
-            #     buffer = 0.4 * (np.max(y_vals) - np.min(y_vals))
-            #     ax_anim.set_ylim(np.min(y_vals) - buffer, np.max(y_vals) + buffer)
-            #     ax_anim.axhline(0, color='gray', lw=0.5)
-            #     ax_anim.grid(True)
-            #     ax_anim.legend()
-
-            #     a_vals = np.linspace(xmin + 0.1, xmax - 0.1, 60)
-            #     def update(frame):
-            #         a_val = a_vals[frame]
-            #         t2_anim = (
-            #             f_np(a_val)
-            #             + derivs[0](a_val) * (x - a_val)
-            #             + 0.5 * derivs[1](a_val) * (x - a_val)**2
-            #         )
-            #         line_taylor.set_data(x, t2_anim)
-            #         point.set_data([a_val], [f_np(a_val)])
-            #         ax_anim.set_title(f"2nd-Order Approx at a = {a_val:.2f}")
-            #         return line_taylor, point
-
-            #     ani = FuncAnimation(fig_anim, update, frames=len(a_vals), interval=100, blit=True)
-
-            #     buf = BytesIO()
-            #     writer = PillowWriter(fps=20)
-            #     with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmpfile:
-            #         ani.save(tmpfile.name, writer=PillowWriter(fps=20))
-            #         tmpfile.seek(0)
-            #         gif_base64 = base64.b64encode(tmpfile.read()).decode("utf-8")
-
-            #     components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
-
-
         except Exception as e:
             st.error(f"Rendering error: {e}")
-        # try:
-        #     func_choice = st.selectbox("Choose a function:", ["cos(x)", "exp(x)", "ln(1+x)", "tanh(x)", "Custom"])
-        #     show_3rd_4th = st.checkbox("➕ Show 3rd & 4th-order", value=False)
-        #     show_linear = st.checkbox("Show 1st-order (Linear)", value=True)
-        #     show_parabola = st.checkbox("Show 2nd-order (Parabola)", value=True)
 
-        #     x_sym = sp.symbols('x')
-        #     def get_function(choice):
-        #         if choice == "cos(x)": return sp.cos(x_sym), (-3, 3)
-        #         if choice == "exp(x)": return sp.exp(x_sym), (-3, 3)
-        #         if choice == "ln(1+x)": return sp.ln(1 + x_sym), (-0.9, 3)
-        #         if choice == "tanh(x)": return sp.tanh(x_sym), (-3, 3)
-        #         if choice == "Custom":
-        #             user_input = st.text_input("Enter function f(x):", "x**2 * sin(x)")
-        #             try:
-        #                 return sp.sympify(user_input), (-3, 3)
-        #             except Exception as e:
-        #                 st.error(f"Invalid input: {e}")
-        #                 st.stop()
-
-        #     f_sym, (xmin, xmax) = get_function(func_choice)
-        #     x_sym, a_sym = sp.symbols('x a')
-        #     h = x_sym - a_sym
-
-        #     # Derivatives and Taylor terms
-        #     f1, f2, f3, f4 = [sp.diff(f_sym, x_sym, i) for i in range(1, 5)]
-        #     T1 = f_sym.subs(x_sym, a_sym) + f1.subs(x_sym, a_sym) * h
-        #     T2 = T1 + (1/2) * f2.subs(x_sym, a_sym) * h**2
-        #     T4 = T2 + (1/6) * f3.subs(x_sym, a_sym) * h**3 + (1/24) * f4.subs(x_sym, a_sym) * h**4
-
-        #     st.markdown("### ✏️ Taylor Expansion at $x = a$")
-        #     st.latex(f"f(x) \\approx {sp.latex(T1)}")
-        #     st.latex(f"f(x) \\approx {sp.latex(T2)}")
-        #     if show_3rd_4th:
-        #         st.latex(f"f(x) \\approx {sp.latex(T4)}")
-
-        #     # Numeric plotting
-        #     f_np = sp.lambdify(x_sym, f_sym, "numpy")
-        #     derivs = [sp.lambdify(x_sym, d, "numpy") for d in [f1, f2, f3, f4]]
-        #     a = st.slider("Expansion point a:", float(xmin), float(xmax), 0.0, 0.1)
-        #     x = np.linspace(xmin, xmax, 500)
-
-        #     f_vals = [d(a) for d in derivs]
-        #     t1 = f_np(a) + f_vals[0] * (x - a)
-        #     t2 = t1 + 0.5 * f_vals[1] * (x - a)**2
-        #     t4 = t2 + (1/6) * f_vals[2] * (x - a)**3 + (1/24) * f_vals[3] * (x - a)**4
-
-        #     fig, ax = plt.subplots(figsize=(8, 5))
-        #     ax.plot(x, f_np(x), label=f"f(x) = {func_choice}", color='blue')
-        #     if show_linear: ax.plot(x, t1, '--', label='1st-order', color='red')
-        #     if show_parabola: ax.plot(x, t2, '--', label='2nd-order', color='orange')
-        #     if show_3rd_4th: ax.plot(x, t4, '--', label='3rd/4th-order', color='green')
-        #     ax.axvline(a, color='gray', linestyle=':')
-        #     ax.axhline(0, color='black', linewidth=0.8)
-        #     ax.scatter(a, f_np(a), color='black')
-        #     ax.set_title(f"Taylor Approximations at x = {a}")
-        #     ax.legend(); ax.grid(True)
-        #     st.pyplot(fig)
-
-        # except Exception as e:
-        #     st.error(f"Rendering error: {e}")
             
 
 # --- SECTION: Multivariable Taylor Expansion (2D Preview) ---
@@ -1120,32 +1020,57 @@ elif mode == "🌋 Optimization Playground":
             Z_t1 = t1_np(X, Y)
             Z_t2 = t2_np(X, Y) if show_2nd else None
 
+        from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
+
         col1, col2 = st.columns(2)
+
         with col1:
-            fig = plt.figure(figsize=(4, 3))
-            ax = fig.add_subplot(111, projection='3d')
-            ax.plot_surface(X, Y, Z, cmap=cm.viridis, alpha=0.7)
-            ax.plot(xs, ys, Z_path, 'r*-')
-            if show_taylor:
-                ax.plot_surface(X, Y, Z_t1, alpha=0.5, cmap="Reds", edgecolor='none')
-                if show_2nd and Z_t2 is not None:
-                    ax.plot_surface(X, Y, Z_t2, alpha=0.4, cmap="Blues", edgecolor='none')
-
-            ax.set_title("3D Descent Path")
-            st.pyplot(fig)
-
+            plot_3d_descent(
+                x_vals=x_vals,
+                y_vals=y_vals,
+                Z=Z,
+                path=path,
+                Z_path=Z_path,
+                Z_t1=Z_t1 if show_taylor else None,
+                Z_t2=Z_t2 if show_taylor and show_2nd else None,
+                show_taylor=show_taylor,
+                show_2nd=show_2nd
+            )
 
         with col2:
-            fig2, ax2 = plt.subplots(figsize=(5, 4))
-            ax2.contour(X, Y, Z, levels=30, cmap='viridis')
-            if constraints:
-                for g_f in g_funcs:
-                    G = g_f(X, Y)
-                    ax2.contour(X, Y, G, levels=[0], colors='red', linewidths=2)
-            ax2.plot(xs, ys, 'r*-', label='Path')
-            ax2.legend()
-            ax2.set_title("2D Contour + Constraints")
-            st.pyplot(fig2)
+            plot_2d_contour(
+                x_vals=x_vals,
+                y_vals=y_vals,
+                Z=Z,
+                path=path,
+                g_funcs=g_funcs if constraints else None,
+                X=X, Y=Y
+            )
+        # with col1:
+        #     fig = plt.figure(figsize=(4, 3))
+        #     ax = fig.add_subplot(111, projection='3d')
+        #     ax.plot_surface(X, Y, Z, cmap=cm.viridis, alpha=0.7)
+        #     ax.plot(xs, ys, Z_path, 'r*-')
+        #     if show_taylor:
+        #         ax.plot_surface(X, Y, Z_t1, alpha=0.5, cmap="Reds", edgecolor='none')
+        #         if show_2nd and Z_t2 is not None:
+        #             ax.plot_surface(X, Y, Z_t2, alpha=0.4, cmap="Blues", edgecolor='none')
+
+        #     ax.set_title("3D Descent Path")
+        #     st.pyplot(fig)
+
+
+        # with col2:
+        #     fig2, ax2 = plt.subplots(figsize=(5, 4))
+        #     ax2.contour(X, Y, Z, levels=30, cmap='viridis')
+        #     if constraints:
+        #         for g_f in g_funcs:
+        #             G = g_f(X, Y)
+        #             ax2.contour(X, Y, G, levels=[0], colors='red', linewidths=2)
+        #     ax2.plot(xs, ys, 'r*-', label='Path')
+        #     ax2.legend()
+        #     ax2.set_title("2D Contour + Constraints")
+        #     st.pyplot(fig2)
 
         # # ✅ Show alpha values if using backtracking
         # if optimizer == "GradientDescent" and options.get("use_backtracking", False) and alpha_log:
