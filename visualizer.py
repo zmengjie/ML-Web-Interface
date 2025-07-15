@@ -106,17 +106,22 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
         name='Descent Path'
     ))
 
-    # Taylor surfaces
+    # Taylor surfaces with fading
     if show_taylor and Z_t1 is not None:
         fig_3d.add_trace(go.Surface(
             z=Z_t1, x=x_vals, y=y_vals,
             colorscale='Reds', opacity=0.5,
             name="1st-Order Taylor"
         ))
-    if show_taylor and show_2nd and Z_t2 is not None:
+    if show_taylor and show_2nd and Z_t2 is not None and expansion_point is not None:
+        a, b = expansion_point
+        distance = np.sqrt((x_vals[:, None] - a)**2 + (y_vals[None, :] - b)**2)
+        fade_opacity = 0.6 * np.exp(-0.1 * distance)
         fig_3d.add_trace(go.Surface(
             z=Z_t2, x=x_vals, y=y_vals,
-            colorscale='Blues', opacity=0.4,
+            surfacecolor=fade_opacity,
+            colorscale='Blues',
+            opacity=0.4,
             name="2nd-Order Taylor"
         ))
 
@@ -130,12 +135,11 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
             mode='markers+text',
             marker=dict(size=7, color='black', symbol='circle'),
             text=["(a, b)"],
-            textposition="top center",
-            textfont=dict(size=11),
+            textposition="bottom right",
+            textfont=dict(size=12),
             name="Expansion Point"
         ))
 
-        # Dashed line to step 1
         if len(path) > 1:
             x1, y1 = path[1]
             z1 = f_func(x1, y1)
@@ -148,17 +152,18 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
 
     fig_3d.update_layout(
         title="3D Descent Path + Taylor Approximation",
-        scene=dict(
-            xaxis_title="x",
-            yaxis_title="y",
-            zaxis_title="f(x, y)"
-        ),
+        scene=dict(xaxis_title="x", yaxis_title="y", zaxis_title="f(x, y)"),
         height=600,
-        margin=dict(l=40, r=20, b=20, t=50)
+        margin=dict(l=60, r=40, b=40, t=50),
+        legend=dict(x=0.7, y=0.9)
     )
 
+    st.markdown("""
+    ### 🧠 Teaching Tip
+    The dashed vector from (a, b) shows how the Taylor approximation predicts the direction of descent.
+    The 2nd-order surface illustrates curvature guidance for Newton's Method.
+    """)
     st.plotly_chart(fig_3d, use_container_width=True)
-
 
 def plot_2d_contour(x_vals, y_vals, Z, path,
                     g_funcs=None, X=None, Y=None,
@@ -167,6 +172,16 @@ def plot_2d_contour(x_vals, y_vals, Z, path,
     xs, ys = zip(*path)
 
     fig_2d = go.Figure()
+
+    # Taylor contour first to draw under others
+    if show_2nd and Z_t2 is not None:
+        fig_2d.add_trace(go.Contour(
+            z=Z_t2, x=x_vals, y=y_vals,
+            showscale=False,
+            colorscale='Blues',
+            opacity=0.4,
+            name="2nd-Order Taylor"
+        ))
 
     # Base contour
     fig_2d.add_trace(go.Contour(
@@ -186,7 +201,7 @@ def plot_2d_contour(x_vals, y_vals, Z, path,
         name="Descent Path"
     ))
 
-    # Constraint contours
+    # Constraints
     if g_funcs and X is not None and Y is not None:
         for g_f in g_funcs:
             G = g_f(X, Y)
@@ -198,7 +213,6 @@ def plot_2d_contour(x_vals, y_vals, Z, path,
                 name="Constraint"
             ))
 
-    # Marker and dashed arrow
     if expansion_point is not None:
         a, b = expansion_point
         fig_2d.add_trace(go.Scatter(
@@ -207,7 +221,7 @@ def plot_2d_contour(x_vals, y_vals, Z, path,
             marker=dict(color='black', size=9, symbol="circle"),
             text=["(a, b)"],
             textposition="bottom center",
-            textfont=dict(size=11),
+            textfont=dict(size=12),
             name='Expansion Point'
         ))
 
@@ -220,37 +234,24 @@ def plot_2d_contour(x_vals, y_vals, Z, path,
                 name="Expansion → 1st Step"
             ))
 
-    # 2nd-order Taylor contour
-    if show_2nd and Z_t2 is not None:
-        fig_2d.add_trace(go.Contour(
-            z=Z_t2, x=x_vals, y=y_vals,
-            showscale=False,
-            colorscale='Blues',
-            opacity=0.4,
-            name="2nd-Order Taylor"
-        ))
-
     fig_2d.update_layout(
         title="2D Contour + Constraints + Taylor Overlay",
-        xaxis_title="x",
-        yaxis_title="y",
+        xaxis_title="x", yaxis_title="y",
         height=500,
-        margin=dict(l=40, r=20, b=20, t=50),
+        margin=dict(l=60, r=40, b=40, t=50),
+        legend=dict(x=1.05),
         dragmode='zoom',
         hovermode='closest',
         updatemenus=[dict(
-            type="buttons",
-            showactive=False,
-            buttons=[dict(
-                label="Reset Zoom",
-                method="relayout",
-                args=[{"xaxis.autorange": True, "yaxis.autorange": True}]
-            )],
-            x=0, y=0.92, xanchor='left', yanchor='top'
-        )]
+            type="buttons", showactive=False,
+            buttons=[dict(label="Reset Zoom", method="relayout",
+                         args=[{"xaxis.autorange": True, "yaxis.autorange": True}])],
+            x=0, y=0.92, xanchor='left', yanchor='top')]
     )
 
-    fig_2d.update_xaxes(scaleanchor=None)
-    fig_2d.update_yaxes(scaleanchor=None)
-
+    st.markdown("""
+    ### 🧠 Teaching Tip
+    The dashed vector from (a, b) shows how the Taylor approximation predicts the direction of descent.
+    The 2nd-order contour shows how curvature affects local optimization.
+    """)
     st.plotly_chart(fig_2d, use_container_width=True)
