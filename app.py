@@ -785,17 +785,27 @@ elif mode == "🌋 Optimization Playground":
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
 
-            if float(start_x) == 0.0 and float(start_y) == 0.0 and func_name != "Quadratic Bowl":
-                default_ax = 0.1
-                default_by = 0.1
-                st.info("🔁 Auto-shifted expansion point from (0,0) → (0.1, 0.1)")
-            else:
-                default_ax = float(start_x)
-                default_by = float(start_y)
+            # --- Initialize session state on first run ---
+            if "a_val" not in st.session_state or "b_val" not in st.session_state:
+                if float(start_x) == 0.0 and float(start_y) == 0.0 and func_name != "Quadratic Bowl":
+                    st.session_state.a_val = 0.1
+                    st.session_state.b_val = 0.1
+                    st.info("🔁 Auto-shifted expansion point from (0,0) → (0.1, 0.1)")
+                else:
+                    st.session_state.a_val = float(start_x)
+                    st.session_state.b_val = float(start_y)
 
-            # Step 2: Apply the defaults to the sliders using **value=...**
-            a_val = st.slider("a (expansion x)", -5.0, 5.0, value=default_ax, step=0.1)
-            b_val = st.slider("b (expansion y)", -5.0, 5.0, value=default_by, step=0.1)
+            # --- Sliders using session state ---
+            a_val = st.slider("a (expansion x)", -5.0, 5.0, value=st.session_state.a_val, step=0.1, key="a_val")
+            b_val = st.slider("b (expansion y)", -5.0, 5.0, value=st.session_state.b_val, step=0.1, key="b_val")
+
+            # --- Prevent user from going back to (0,0) if it's not allowed ---
+            if a_val == 0.0 and b_val == 0.0 and func_name != "Quadratic Bowl":
+                st.warning("🚫 (0,0) is a singular point. Auto-shifting again to (0.1, 0.1)")
+                a_val = 0.1
+                b_val = 0.1
+                st.session_state.a_val = 0.1
+                st.session_state.b_val = 0.1
 
             expansion_point = (a_val, b_val)
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
