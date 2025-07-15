@@ -138,7 +138,13 @@ elif mode == "🌋 Optimization Playground":
     from sidebar_config import get_sidebar_config, get_predefined_funcs
     from taylor_expansion import show_univariate_taylor
 
+
     with st.sidebar:
+        st.markdown("### 🧠 Taylor Series & Optimizer Foundations")
+        st.markdown("### 💬 Ask the LLM about Optimizers or Math")
+        st.markdown("### 🧠 Optimizer Category Info & Usage Tips")
+        st.markdown("### 🔧 Symbolic Tools & KKT Analysis")
+
         # 🪄 Optimizer Category Info Block (Outside main expander)
         with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
             st.markdown("""
@@ -218,7 +224,7 @@ elif mode == "🌋 Optimization Playground":
 
             st.markdown("---")
             show_univariate_taylor()
-            
+
 
     # === Main Area: Title & Playground ===
     st.title("🧪 Optimizer Visual Playground")
