@@ -301,6 +301,66 @@ elif mode == "🌋 Optimization Playground":
 
         except Exception as e:
             st.error(f"Rendering failed: {e}")
+        
+                # --- Divider ---
+        st.markdown("---")
+        st.markdown("### 🔄 Multivariable Taylor Expansion (Preview)")
+
+        multi_func = st.selectbox("Choose multivariable function:", ["Quadratic Bowl", "Rosenbrock"])
+        x, y, a, b = sp.symbols('x y a b')
+        h1, h2 = x - a, y - b
+
+        # Define function
+        if multi_func == "Quadratic Bowl":
+            fxy = x**2 + y**2
+        elif multi_func == "Rosenbrock":
+            fxy = (1 - x)**2 + 100 * (y - x**2)**2
+
+        # Compute derivatives
+        grad = [sp.diff(fxy, var) for var in (x, y)]
+        hess = [[sp.diff(g, var) for var in (x, y)] for g in grad]
+
+        # UI sliders
+        a_val = st.slider("a (center x)", -5.0, 5.0, 0.0)
+        b_val = st.slider("b (center y)", -5.0, 5.0, 0.0)
+
+        # Evaluate terms
+        f_a = fxy.subs({x: a, y: b})
+        grad_eval = [g.subs({x: a, y: b}) for g in grad]
+        T1 = f_a + grad_eval[0]*(x - a) + grad_eval[1]*(y - b)
+
+        hess_eval = [[h.subs({x: a, y: b}) for h in row] for row in hess]
+        T2 = T1 + 0.5 * (
+            hess_eval[0][0]*(x - a)**2 +
+            2*hess_eval[0][1]*(x - a)*(y - b) +
+            hess_eval[1][1]*(y - b)**2
+        )
+
+        # Display
+        st.markdown("**1st-order (Gradient Descent style):**")
+        st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
+        st.markdown("**2nd-order (Newton style):**")
+        st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
+
+        # Optional: 3D plot of both true and Taylor approx
+        f_np = sp.lambdify((x, y), fxy, "numpy")
+        T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
+
+        X, Y = np.meshgrid(np.linspace(-5, 5, 100), np.linspace(-5, 5, 100))
+        Z_true = f_np(X, Y)
+        Z_taylor = T2_np(X, Y, a_val, b_val)
+
+        fig = plt.figure(figsize=(10, 4))
+        ax1 = fig.add_subplot(121, projection='3d')
+        ax1.plot_surface(X, Y, Z_true, cmap='viridis', alpha=0.8)
+        ax1.set_title("True Function")
+
+        ax2 = fig.add_subplot(122, projection='3d')
+        ax2.plot_surface(X, Y, Z_taylor, cmap='coolwarm', alpha=0.8)
+        ax2.set_title("2nd-Order Taylor Approx")
+
+        st.pyplot(fig)
+
 
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
