@@ -231,10 +231,10 @@ elif mode == "🌋 Optimization Playground":
             T4 = T2 + (1/6) * f3.subs(x_sym, a_sym) * h**3 + (1/24) * f4.subs(x_sym, a_sym) * h**4
 
             st.markdown("### ✏️ Taylor Expansion at $x = a$")
-            st.latex(f"f(x) \approx {sp.latex(T1)}")
-            st.latex(f"f(x) \approx {sp.latex(T2)}")
+            st.latex(f"f(x) \\approx {sp.latex(T1)}")
+            st.latex(f"f(x) \\approx {sp.latex(T2)}")
             if show_3rd_4th:
-                st.latex(f"f(x) \approx {sp.latex(T4)}")
+                st.latex(f"f(x) \\approx {sp.latex(T4)}")
 
             # Numeric plotting
             f_np = sp.lambdify(x_sym, f_sym, "numpy")
@@ -397,8 +397,8 @@ elif mode == "🌋 Optimization Playground":
         )
 
         st.markdown("### ✏️ Multivariable Expansion at $(x, y) = (a, b)$")
-        st.latex(f"f(x, y) \approx {sp.latex(T1)}")
-        st.latex(f"f(x, y) \approx {sp.latex(T2)}")
+        st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
+        st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
 
         f_np = sp.lambdify((x, y), fxy, "numpy")
         T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
