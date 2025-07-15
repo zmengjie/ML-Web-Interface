@@ -267,11 +267,14 @@ elif mode == "🌋 Optimization Playground":
             st.pyplot(fig)
 
             # === Optional Animation ===
-            if st.checkbox("🎬 Animate 2nd-order Approximation"):
-                st.markdown("### 🎬 Animation: 2nd-Order Taylor Approximation")
+            # === Optional Animation ===
+            if st.checkbox("🎬 Animate 1st & 2nd-order Approximation"):
+                st.markdown("### 🎬 Animation: 1st & 2nd-Order Taylor Approximation")
                 fig_anim, ax_anim = plt.subplots(figsize=(8, 4))
+
                 line_true, = ax_anim.plot(x, f_np(x), label="f(x)", color='blue')
-                line_taylor, = ax_anim.plot([], [], '--', label="2nd-order", color='orange')
+                line_taylor1, = ax_anim.plot([], [], '--', label="1st-order", color='red')
+                line_taylor2, = ax_anim.plot([], [], '--', label="2nd-order", color='orange')
                 point, = ax_anim.plot([], [], 'ko')
 
                 ax_anim.set_xlim(xmin, xmax)
@@ -283,28 +286,71 @@ elif mode == "🌋 Optimization Playground":
                 ax_anim.legend()
 
                 a_vals = np.linspace(xmin + 0.1, xmax - 0.1, 60)
+
                 def update(frame):
                     a_val = a_vals[frame]
-                    t2_anim = (
-                        f_np(a_val)
-                        + derivs[0](a_val) * (x - a_val)
-                        + 0.5 * derivs[1](a_val) * (x - a_val)**2
-                    )
-                    line_taylor.set_data(x, t2_anim)
-                    point.set_data([a_val], [f_np(a_val)])
-                    ax_anim.set_title(f"2nd-Order Approx at a = {a_val:.2f}")
-                    return line_taylor, point
+                    f_a = f_np(a_val)
+                    f1_a = derivs[0](a_val)
+                    f2_a = derivs[1](a_val)
+
+                    t1_anim = f_a + f1_a * (x - a_val)
+                    t2_anim = t1_anim + 0.5 * f2_a * (x - a_val)**2
+
+                    line_taylor1.set_data(x, t1_anim)
+                    line_taylor2.set_data(x, t2_anim)
+                    point.set_data([a_val], [f_a])
+                    ax_anim.set_title(f"Taylor Approx at a = {a_val:.2f}")
+                    return line_taylor1, line_taylor2, point
 
                 ani = FuncAnimation(fig_anim, update, frames=len(a_vals), interval=100, blit=True)
 
                 buf = BytesIO()
                 writer = PillowWriter(fps=20)
                 with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmpfile:
-                    ani.save(tmpfile.name, writer=PillowWriter(fps=20))
+                    ani.save(tmpfile.name, writer=writer)
                     tmpfile.seek(0)
                     gif_base64 = base64.b64encode(tmpfile.read()).decode("utf-8")
 
                 components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
+
+            # if st.checkbox("🎬 Animate 2nd-order Approximation"):
+            #     st.markdown("### 🎬 Animation: 2nd-Order Taylor Approximation")
+            #     fig_anim, ax_anim = plt.subplots(figsize=(8, 4))
+            #     line_true, = ax_anim.plot(x, f_np(x), label="f(x)", color='blue')
+            #     line_taylor, = ax_anim.plot([], [], '--', label="2nd-order", color='orange')
+            #     point, = ax_anim.plot([], [], 'ko')
+
+            #     ax_anim.set_xlim(xmin, xmax)
+            #     y_vals = f_np(x)
+            #     buffer = 0.4 * (np.max(y_vals) - np.min(y_vals))
+            #     ax_anim.set_ylim(np.min(y_vals) - buffer, np.max(y_vals) + buffer)
+            #     ax_anim.axhline(0, color='gray', lw=0.5)
+            #     ax_anim.grid(True)
+            #     ax_anim.legend()
+
+            #     a_vals = np.linspace(xmin + 0.1, xmax - 0.1, 60)
+            #     def update(frame):
+            #         a_val = a_vals[frame]
+            #         t2_anim = (
+            #             f_np(a_val)
+            #             + derivs[0](a_val) * (x - a_val)
+            #             + 0.5 * derivs[1](a_val) * (x - a_val)**2
+            #         )
+            #         line_taylor.set_data(x, t2_anim)
+            #         point.set_data([a_val], [f_np(a_val)])
+            #         ax_anim.set_title(f"2nd-Order Approx at a = {a_val:.2f}")
+            #         return line_taylor, point
+
+            #     ani = FuncAnimation(fig_anim, update, frames=len(a_vals), interval=100, blit=True)
+
+            #     buf = BytesIO()
+            #     writer = PillowWriter(fps=20)
+            #     with tempfile.NamedTemporaryFile(suffix=".gif", delete=False) as tmpfile:
+            #         ani.save(tmpfile.name, writer=PillowWriter(fps=20))
+            #         tmpfile.seek(0)
+            #         gif_base64 = base64.b64encode(tmpfile.read()).decode("utf-8")
+
+            #     components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
 
 
         except Exception as e:
