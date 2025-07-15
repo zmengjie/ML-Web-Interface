@@ -276,7 +276,7 @@ elif mode == "🌋 Optimization Playground":
 
                 ax_anim.set_xlim(xmin, xmax)
                 y_vals = f_np(x)
-                buffer = 0.2 * (np.max(y_vals) - np.min(y_vals))
+                buffer = 0.4 * (np.max(y_vals) - np.min(y_vals))
                 ax_anim.set_ylim(np.min(y_vals) - buffer, np.max(y_vals) + buffer)
                 ax_anim.axhline(0, color='gray', lw=0.5)
                 ax_anim.grid(True)
