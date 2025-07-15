@@ -294,7 +294,7 @@ elif mode == "🌋 Optimization Playground":
                 ani = FuncAnimation(fig_anim, update, frames=len(a_vals), interval=100, blit=True)
 
                 buf = BytesIO()
-                ani.save(buf, format="gif", writer="pillow", fps=20)
+                ani.save(buf, writer="pillow", fps=20)
                 gif_base64 = base64.b64encode(buf.getvalue()).decode("utf-8")
                 components.html(f'<img src="data:image/gif;base64,{gif_base64}" width="100%">', height=350)
 
@@ -365,7 +365,7 @@ elif mode == "🌋 Optimization Playground":
 
 # --- SECTION: Multivariable Taylor Expansion (2D Preview) ---
         st.markdown("---")
-        
+
         st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
         multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
