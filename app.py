@@ -786,7 +786,7 @@ elif mode == "🌋 Optimization Playground":
             st.markdown("**Taylor Expansion Center (a, b)**")
             a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
             b_val = st.slider("b (expansion y)", -5.0, 5.0, float(start_y), step=0.1)
-            expansion_point = (a_val, b_val) 
+            expansion_point = (a_val, b_val)
             show_2nd = st.checkbox("Include 2nd-order terms", value=True)
 
             # --- Symbolic derivatives ---
@@ -805,34 +805,77 @@ elif mode == "🌋 Optimization Playground":
                 hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
             )
 
+            # Numerical evaluation for plotting
             t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
             t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
             Z_t1 = t1_np(X, Y)
             Z_t2 = t2_np(X, Y) if show_2nd else None
 
-                # ✅ Display symbolic expansion as LaTeX
-            st.markdown("**📐 Symbolic Taylor Expansion (centered at (a, b))**")
+            # ✅ Display symbolic formula as LaTeX
+            st.markdown("### ✏️ Taylor Approximation Formula at \\( (a, b) = ({:.1f}, {:.1f}) \\)".format(a_val, b_val))
 
-            a_fmt = f"{a_val:.2f}"
-            b_fmt = f"{b_val:.2f}"
-            fx = grad_vals[0]
-            fy = grad_vals[1]
-            Hxx = hess_vals[0, 0]
-            Hxy = hess_vals[0, 1]
-            Hyy = hess_vals[1, 1]
+            fx, fy = grad_vals
+            Hxx, Hxy, Hyy = hess_vals[0, 0], hess_vals[0, 1], hess_vals[1, 1]
 
+            T1_latex = f"f(x, y) \\approx {f_ab:.3f} + ({fx}) (x - {a_val}) + ({fy}) (y - {b_val})"
+            T2_latex = (
+                f"{T1_latex} + \\frac{{1}}{{2}}({Hxx}) (x - {a_val})^2 + "
+                f"{Hxy} (x - {a_val})(y - {b_val}) + "
+                f"\\frac{{1}}{{2}}({Hyy}) (y - {b_val})^2"
+            )
+
+            st.latex(T1_latex)
             if show_2nd:
-                st.latex(
-                    fr"""f(x, y) \approx {f_ab:.2f}
-                    + ({fx:.2f})(x - {a_fmt}) + ({fy:.2f})(y - {b_fmt})
-                    + \frac{{1}}{{2}}\left[({Hxx:.2f})(x - {a_fmt})^2 + 2({Hxy:.2f})(x - {a_fmt})(y - {b_fmt}) + ({Hyy:.2f})(y - {b_fmt})^2\right]
-                    """
-                )
-            else:
-                st.latex(
-                    fr"""f(x, y) \approx {f_ab:.2f}
-                    + ({fx:.2f})(x - {a_fmt}) + ({fy:.2f})(y - {b_fmt})"""
-                )
+                st.latex(T2_latex)
+
+        # if show_taylor:
+        #     st.markdown("**Taylor Expansion Center (a, b)**")
+        #     a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
+        #     b_val = st.slider("b (expansion y)", -5.0, 5.0, float(start_y), step=0.1)
+        #     expansion_point = (a_val, b_val) 
+        #     show_2nd = st.checkbox("Include 2nd-order terms", value=True)
+
+        #     # --- Symbolic derivatives ---
+        #     grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
+        #     hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
+        #     subs = {x_sym: a_val, y_sym: b_val}
+        #     dx, dy = x_sym - a_val, y_sym - b_val
+
+        #     f_ab = f_expr.subs(subs)
+        #     grad_vals = [g.subs(subs) for g in grad_fx]
+        #     hess_vals = hess_fx.subs(subs)
+
+        #     # 1st and 2nd-order Taylor expressions
+        #     T1_expr = f_ab + grad_vals[0]*dx + grad_vals[1]*dy
+        #     T2_expr = T1_expr + 0.5 * (
+        #         hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
+        #     )
+
+        #     t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
+        #     t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
+        #     Z_t1 = t1_np(X, Y)
+        #     Z_t2 = t2_np(X, Y) if show_2nd else None
+
+        #         # ✅ Display symbolic expansion as LaTeX
+        #     st.markdown("### ✏️ Expansion at \\( (x, y) = (a, b) \\)")
+            
+        #     # Build symbolic formula with real a, b, gradient, and Hessian
+        #     fx = grad_vals[0]
+        #     fy = grad_vals[1]
+        #     Hxx, Hxy, Hyy = hess_vals[0, 0], hess_vals[0, 1], hess_vals[1, 1]
+            
+        #     # First and second-order expansion (LaTeX)
+        #     T1_latex = f"f(x,y) \\approx {f_ab:.3f} + ({fx}) (x - {a_val}) + ({fy}) (y - {b_val})"
+        #     T2_latex = (
+        #         f"{T1_latex} + "
+        #         f"\\frac{{1}}{{2}}({Hxx}) (x - {a_val})^2 + "
+        #         f"{Hxy} (x - {a_val})(y - {b_val}) + "
+        #         f"\\frac{{1}}{{2}}({Hyy}) (y - {b_val})^2"
+        #     )
+
+        #     st.latex(T1_latex)
+        #     if show_2nd:
+        #         st.latex(T2_latex)
 
         from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
 
