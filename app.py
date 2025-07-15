@@ -135,7 +135,6 @@ elif mode == "🌋 Optimization Playground":
     from PIL import Image
     from matplotlib import cm
     from mpl_toolkits.mplot3d import Axes3D
-    from sidebar_config import get_sidebar_config, get_predefined_funcs
     from taylor_expansion import show_univariate_taylor
 
 
@@ -366,7 +365,7 @@ elif mode == "🌋 Optimization Playground":
             #     st.session_state.start_x = default_x
             #     st.session_state.start_y = default_y
             #     st.session_state.params_set = True
-            
+
             # Force update if auto_tune is just triggered
             if auto_tune:
                 st.session_state.lr = default_lr
