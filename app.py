@@ -224,7 +224,6 @@ elif mode == "🌋 Optimization Playground":
         show_univariate_taylor()
 
 
-
     x, y, w = sp.symbols("x y w")
     x_sym, y_sym, w_sym = sp.symbols("x y w")
 
@@ -361,13 +360,27 @@ elif mode == "🌋 Optimization Playground":
                 default_lr, default_steps = best_lr, best_steps
 
             # Set in session_state
-            if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
+            # if 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
+            #     st.session_state.lr = default_lr
+            #     st.session_state.steps = default_steps
+            #     st.session_state.start_x = default_x
+            #     st.session_state.start_y = default_y
+            #     st.session_state.params_set = True
+            
+            # Force update if auto_tune is just triggered
+            if auto_tune:
                 st.session_state.lr = default_lr
                 st.session_state.steps = default_steps
                 st.session_state.start_x = default_x
                 st.session_state.start_y = default_y
                 st.session_state.params_set = True
-
+            # Manual reset fallback
+            elif 'params_set' not in st.session_state or st.button("🔄 Reset to Auto-Tuned"):
+                st.session_state.lr = default_lr
+                st.session_state.steps = default_steps
+                st.session_state.start_x = default_x
+                st.session_state.start_y = default_y
+                st.session_state.params_set = True
             # Final user inputs
 
             # ✅ Only show lr and steps when not using backtracking or Newton
