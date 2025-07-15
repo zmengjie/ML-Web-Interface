@@ -198,7 +198,7 @@ elif mode == "🌋 Optimization Playground":
         """)
 
         st.markdown("---")
-        st.markdown("## 🔍 Univariate Taylor Expansion (1D Preview)")
+        st.markdown("### 🔍 Univariate Taylor Expansion (1D Preview)")
 
         try:
             func_choice = st.selectbox("Choose a function:", ["cos(x)", "exp(x)", "ln(1+x)", "tanh(x)", "Custom"])
@@ -369,7 +369,7 @@ elif mode == "🌋 Optimization Playground":
         
                 # --- Divider ---
         st.markdown("---")
-        st.markdown("## 🌐 Multivariable Taylor Expansion (2D Preview)")
+        st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
         multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
         x, y, a, b = sp.symbols('x y a b')
