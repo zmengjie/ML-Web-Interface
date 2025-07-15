@@ -793,17 +793,31 @@ elif mode == "🌋 Optimization Playground":
             grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
             hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
             subs = {x_sym: a_val, y_sym: b_val}
+            # dx, dy = x_sym - a_val, y_sym - b_val
+
+            # f_ab = f_expr.subs(subs)
+            # grad_vals = [g.subs(subs) for g in grad_fx]
+            # hess_vals = hess_fx.subs(subs)
+
+            # # 1st and 2nd-order Taylor expressions
+            # T1_expr = f_ab + grad_vals[0]*dx + grad_vals[1]*dy
+            # T2_expr = T1_expr + 0.5 * (
+            #     hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
+            # )
+
+            f_ab = float(f_expr.subs(subs))
+            grad_vals = [float(g.subs(subs)) for g in grad_fx]
+            hess_vals = hess_fx.subs(subs)
+            Hxx = float(hess_vals[0, 0])
+            Hxy = float(hess_vals[0, 1])
+            Hyy = float(hess_vals[1, 1])
+
+            # dx, dy remain symbolic
             dx, dy = x_sym - a_val, y_sym - b_val
 
-            f_ab = f_expr.subs(subs)
-            grad_vals = [g.subs(subs) for g in grad_fx]
-            hess_vals = hess_fx.subs(subs)
-
-            # 1st and 2nd-order Taylor expressions
+            # Fully numeric constants in expression
             T1_expr = f_ab + grad_vals[0]*dx + grad_vals[1]*dy
-            T2_expr = T1_expr + 0.5 * (
-                hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
-            )
+            T2_expr = T1_expr + 0.5 * (Hxx*dx**2 + 2*Hxy*dx*dy + Hyy*dy**2)
 
             # Numerical evaluation for plotting
             t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
