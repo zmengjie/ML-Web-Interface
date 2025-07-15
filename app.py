@@ -369,7 +369,7 @@ elif mode == "🌋 Optimization Playground":
         
                 # --- Divider ---
         st.markdown("---")
-        st.markdown("## 🌐 Multivariable Taylor Expansion (2D Preview)")
+        st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
         multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
         x, y, a, b = sp.symbols('x y a b')
@@ -382,9 +382,15 @@ elif mode == "🌋 Optimization Playground":
         grad = [sp.diff(fxy, v) for v in (x, y)]
         hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
 
+        # Center sliders
         a_val = st.slider("Center a (x)", -5.0, 5.0, 0.0)
         b_val = st.slider("Center b (y)", -5.0, 5.0, 0.0)
 
+        # 🔧 Add zoom toggle
+        zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
+        xlim, ylim = (-1, 1) if zoom_in else (-5, 5)
+
+        # Compute Taylor expansions
         f_a = fxy.subs({x: a, y: b})
         grad_val = [g.subs({x: a, y: b}) for g in grad]
         T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
@@ -400,22 +406,31 @@ elif mode == "🌋 Optimization Playground":
         st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
         st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
 
+        # Evaluate functions
         f_np = sp.lambdify((x, y), fxy, "numpy")
         T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
 
-        X, Y = np.meshgrid(np.linspace(-5, 5, 100), np.linspace(-5, 5, 100))
+        # 🔧 Zoom-adjusted meshgrid
+        X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
         Z_true = f_np(X, Y)
         Z_taylor = T2_np(X, Y, a_val, b_val)
 
+        # Plotting
         fig = plt.figure(figsize=(10, 4))
         ax1 = fig.add_subplot(121, projection='3d')
         ax1.plot_surface(X, Y, Z_true, cmap='viridis', alpha=0.85)
         ax1.set_title("True Function")
+        ax1.set_xlim(xlim)
+        ax1.set_ylim(ylim)
+
         ax2 = fig.add_subplot(122, projection='3d')
         ax2.plot_surface(X, Y, Z_taylor, cmap='coolwarm', alpha=0.85)
         ax2.set_title("2nd-Order Taylor Approx")
+        ax2.set_xlim(xlim)
+        ax2.set_ylim(ylim)
 
         st.pyplot(fig)
+
         # multi_func = st.selectbox("Choose multivariable function:", ["Quadratic Bowl", "Rosenbrock"])
         # x, y, a, b = sp.symbols('x y a b')
         # h1, h2 = x - a, y - b
