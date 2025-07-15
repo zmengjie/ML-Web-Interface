@@ -392,12 +392,16 @@ elif mode == "🌋 Optimization Playground":
 
         # Zoom toggle
         zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
+
+        zoom_center_x, zoom_center_y = 0.0, 0.0  # ✅ Fixed center for meshgrid limits
+
         if zoom_in:
-            xlim = (a_val - 1, a_val + 1)
-            ylim = (b_val - 1, b_val + 1)
+            xlim = (zoom_center_x - 1, zoom_center_x + 1)
+            ylim = (zoom_center_y - 1, zoom_center_y + 1)
         else:
             xlim = (-5, 5)
             ylim = (-5, 5)
+
 
         # Compute Taylor series
         f_a = fxy.subs({x: a, y: b})
