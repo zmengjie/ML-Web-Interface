@@ -9,6 +9,7 @@ import tempfile
 import base64
 import streamlit.components.v1 as components
 from PIL import Image
+import plotly.graph_objects as go
 
 def show_univariate_taylor():
     st.markdown("### 🔍 Univariate Taylor Expansion (1D Preview)")
