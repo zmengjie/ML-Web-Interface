@@ -809,7 +809,16 @@ elif mode == "🌋 Optimization Playground":
             t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
             t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
             Z_t1 = t1_np(X, Y)
-            Z_t2 = t2_np(X, Y) if show_2nd else None
+
+            if show_2nd:
+                try:
+                    Z_t2 = t2_np(X, Y)
+                    Z_t2 = np.array(Z_t2, dtype=np.float64)  # 🔐 force cast here too
+                except Exception as e:
+                    st.warning(f"⚠️ Failed to evaluate 2nd-order Taylor surface: {e}")
+                    Z_t2 = None
+
+            # Z_t2 = t2_np(X, Y) if show_2nd else None
 
             # ✅ Display symbolic formula as LaTeX
             st.markdown("### ✏️ Taylor Approximation Formula at \\( (a, b) = ({:.1f}, {:.1f}) \\)".format(a_val, b_val))
