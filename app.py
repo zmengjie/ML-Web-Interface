@@ -369,7 +369,7 @@ elif mode == "🌋 Optimization Playground":
         
                 # --- Divider ---
         st.markdown("---")
-        st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
+        st.markdown("## 🌐 Multivariable Taylor Expansion (2D Preview)")
 
         multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
         x, y, a, b = sp.symbols('x y a b')
