@@ -2,6 +2,7 @@
 # === Full Modular Streamlit App ===
 
 import streamlit as st
+import plotly.graph_objects as go
 
 st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
 
@@ -368,6 +369,8 @@ elif mode == "🌋 Optimization Playground":
         #     st.error(f"Rendering failed: {e}")
         
                 # --- Divider ---
+
+
         st.markdown("---")
         st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
@@ -395,7 +398,6 @@ elif mode == "🌋 Optimization Playground":
             xlim = (-5, 5)
             ylim = (-5, 5)
 
-
         # Compute Taylor expansions
         f_a = fxy.subs({x: a, y: b})
         grad_val = [g.subs({x: a, y: b}) for g in grad]
@@ -416,26 +418,28 @@ elif mode == "🌋 Optimization Playground":
         f_np = sp.lambdify((x, y), fxy, "numpy")
         T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
 
-        # 🔧 Zoom-adjusted meshgrid
         X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
         Z_true = f_np(X, Y)
         Z_taylor = T2_np(X, Y, a_val, b_val)
 
-        # Plotting
-        fig = plt.figure(figsize=(10, 4))
-        ax1 = fig.add_subplot(121, projection='3d')
-        ax1.plot_surface(X, Y, Z_true, cmap='viridis', alpha=0.85)
-        ax1.set_title("True Function")
-        ax1.set_xlim(xlim)
-        ax1.set_ylim(ylim)
+        # 📈 Plotly Interactive Surfaces
+        fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
+        fig_true.update_layout(title="True Function", scene=dict(
+            xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'
+        ), margin=dict(l=0, r=0, b=0, t=40))
 
-        ax2 = fig.add_subplot(122, projection='3d')
-        ax2.plot_surface(X, Y, Z_taylor, cmap='coolwarm', alpha=0.85)
-        ax2.set_title("2nd-Order Taylor Approx")
-        ax2.set_xlim(xlim)
-        ax2.set_ylim(ylim)
+        fig_taylor = go.Figure(data=[go.Surface(z=Z_taylor, x=X, y=Y, colorscale='RdBu')])
+        fig_taylor.update_layout(title="2nd-Order Taylor Approx", scene=dict(
+            xaxis_title='x', yaxis_title='y', zaxis_title='Approx'
+        ), margin=dict(l=0, r=0, b=0, t=40))
 
-        st.pyplot(fig)
+        # 🖼️ Display side-by-side
+        col1, col2 = st.columns(2)
+        with col1:
+            st.plotly_chart(fig_true, use_container_width=True)
+        with col2:
+            st.plotly_chart(fig_taylor, use_container_width=True)
+
 
         # multi_func = st.selectbox("Choose multivariable function:", ["Quadratic Bowl", "Rosenbrock"])
         # x, y, a, b = sp.symbols('x y a b')
