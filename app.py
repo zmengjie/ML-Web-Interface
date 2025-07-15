@@ -997,7 +997,9 @@ elif mode == "🌋 Optimization Playground":
         show_2nd = False
         Z_t1 = None
         Z_t2 = None
-        
+
+        expansion_point = (a_val, b_val) if show_taylor else None
+
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
             a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
@@ -1031,26 +1033,25 @@ elif mode == "🌋 Optimization Playground":
 
         with col1:
             plot_3d_descent(
-                x_vals=x_vals,
-                y_vals=y_vals,
-                Z=Z,
-                path=path,
-                Z_path=Z_path,
-                Z_t1=Z_t1 if show_taylor else None,
-                Z_t2=Z_t2 if show_taylor and show_2nd else None,
-                show_taylor=show_taylor,
-                show_2nd=show_2nd
-            )
+            x_vals, y_vals, Z,
+            path, Z_path,
+            Z_t1=Z_t1, Z_t2=Z_t2,
+            show_taylor=show_taylor,
+            show_2nd=show_2nd,
+            expansion_point=expansion_point,
+            f_func=f_func
+        )
 
         with col2:
             plot_2d_contour(
-                x_vals=x_vals,
-                y_vals=y_vals,
-                Z=Z,
-                path=path,
-                g_funcs=g_funcs if constraints else None,
-                X=X, Y=Y
-            )
+            x_vals, y_vals, Z,
+            path,
+            g_funcs=g_funcs if constraints else None,
+            X=X, Y=Y,
+            Z_t2=Z_t2,
+            show_2nd=show_2nd,
+            expansion_point=expansion_point
+        )
         # with col1:
         #     fig = plt.figure(figsize=(4, 3))
         #     ax = fig.add_subplot(111, projection='3d')
