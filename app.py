@@ -849,14 +849,49 @@ elif mode == "🌋 Optimization Playground":
         X, Y = np.meshgrid(x_vals, y_vals)
         Z = f_func(X, Y)
 
+        # --- Taylor Expansion Toggle ---
+        show_taylor = st.checkbox("📐 Show Taylor Approximation at (a, b)", value=False)
+        if show_taylor:
+            st.markdown("**Taylor Expansion Center (a, b)**")
+            a_val = st.slider("a (expansion x)", -5.0, 5.0, float(start_x), step=0.1)
+            b_val = st.slider("b (expansion y)", -5.0, 5.0, float(start_y), step=0.1)
+            show_2nd = st.checkbox("Include 2nd-order terms", value=True)
+
+            # --- Symbolic derivatives ---
+            grad_fx = [sp.diff(f_expr, var) for var in (x_sym, y_sym)]
+            hess_fx = sp.hessian(f_expr, (x_sym, y_sym))
+            subs = {x_sym: a_val, y_sym: b_val}
+            dx, dy = x_sym - a_val, y_sym - b_val
+
+            f_ab = f_expr.subs(subs)
+            grad_vals = [g.subs(subs) for g in grad_fx]
+            hess_vals = hess_fx.subs(subs)
+
+            # 1st and 2nd-order Taylor expressions
+            T1_expr = f_ab + grad_vals[0]*dx + grad_vals[1]*dy
+            T2_expr = T1_expr + 0.5 * (
+                hess_vals[0, 0]*dx**2 + 2*hess_vals[0, 1]*dx*dy + hess_vals[1, 1]*dy**2
+            )
+
+            t1_np = sp.lambdify((x_sym, y_sym), T1_expr, "numpy")
+            t2_np = sp.lambdify((x_sym, y_sym), T2_expr, "numpy") if show_2nd else None
+            Z_t1 = t1_np(X, Y)
+            Z_t2 = t2_np(X, Y) if show_2nd else None
+
         col1, col2 = st.columns(2)
         with col1:
             fig = plt.figure(figsize=(4, 3))
             ax = fig.add_subplot(111, projection='3d')
             ax.plot_surface(X, Y, Z, cmap=cm.viridis, alpha=0.7)
             ax.plot(xs, ys, Z_path, 'r*-')
+            if show_taylor:
+                ax.plot_surface(X, Y, Z_t1, alpha=0.5, cmap="Reds", edgecolor='none')
+                if show_2nd and Z_t2 is not None:
+                    ax.plot_surface(X, Y, Z_t2, alpha=0.4, cmap="Blues", edgecolor='none')
+
             ax.set_title("3D Descent Path")
             st.pyplot(fig)
+
 
         with col2:
             fig2, ax2 = plt.subplots(figsize=(5, 4))
@@ -880,6 +915,8 @@ elif mode == "🌋 Optimization Playground":
         #     ax_alpha.set_ylabel("Alpha")
         #     ax_alpha.grid(True)
         #     st.pyplot(fig_alpha)
+        if show_taylor:
+            st.caption("🔺 Red = 1st-order Taylor, 🔷 Blue = 2nd-order Taylor, 🟢 Green = true surface")
 
         if show_animation:
             frames = []
