@@ -2509,7 +2509,7 @@ elif mode == "🧠 Unsupervised Learning":
     # Submodule selection in sidebar
     unsup_option = st.sidebar.radio("Select Unsupervised Module", [
         "Clustering",
-        # "Dimensionality Reduction",
+        "Dimensionality Reduction",
         # "Anomaly Detection",
         # Add more modules as needed
     ])
@@ -2518,6 +2518,10 @@ elif mode == "🧠 Unsupervised Learning":
     if unsup_option == "Clustering":
         from clustering import clustering_ui
         clustering_ui()
+    
+    elif unsup_option == "Dimensionality Reduction":
+        from dim_reduction import dim_reduction_ui
+        dim_reduction_ui()
 
 
 
