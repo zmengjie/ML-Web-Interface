@@ -126,15 +126,22 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
     #     ))
 
 # --- Taylor surfaces with fading ---
+
     if show_taylor and show_2nd:
         if Z_t2 is not None:
             try:
-                # Ensure z is a 2D array before plotting
+                if isinstance(Z_t2, (int, float)):
+                    raise ValueError(f"Z_t2 is a scalar ({Z_t2}); expected 2D array.")
                 Z_t2 = np.array(Z_t2)
                 if Z_t2.ndim != 2:
                     raise ValueError(f"Z_t2 is not 2D (shape: {Z_t2.shape})")
                 if np.isnan(Z_t2).any():
-                    raise ValueError("Z_t2 contains NaNs")
+                    raise ValueError("Z_t2 contains NaNs.")
+                if Z_t2.shape != (len(y_vals), len(x_vals)):
+                    if Z_t2.shape == (len(x_vals), len(y_vals)):
+                        Z_t2 = Z_t2.T
+                    else:
+                        raise ValueError(f"Z_t2 shape mismatch: {Z_t2.shape} vs expected {(len(y_vals), len(x_vals))}")
                 fig_3d.add_trace(go.Surface(
                     z=Z_t2, x=x_vals, y=y_vals,
                     colorscale='RdBu',
@@ -144,8 +151,7 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
                     name="2nd-Order Taylor"
                 ))
             except Exception as e:
-                st.warning(f"⚠️ Skipping 2nd-order Taylor surface: {e}")
-
+                st.warning(f"⚠️ Skipped 2nd-order Taylor surface: {e}")
 
 
 
