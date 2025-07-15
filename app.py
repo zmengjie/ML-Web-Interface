@@ -140,90 +140,14 @@ elif mode == "🌋 Optimization Playground":
 
 
     with st.sidebar:
-        st.markdown("### 🧠 Taylor Series & Optimizer Foundations")
-        st.markdown("### 💬 Ask the LLM about Optimizers or Math")
         st.markdown("### 🧠 Optimizer Category Info & Usage Tips")
+        st.markdown("### 💬 Ask the LLM about Optimizers or Math")
+        st.markdown("### 🧠 Taylor Series & Optimizer Foundations")
+        st.markdown("### 🚀 Optimizer Visual Playground")
+        st.markdown("### 🧰 Optimizer Diagnostic Tools")
         st.markdown("### 🔧 Symbolic Tools & KKT Analysis")
 
-        # 🪄 Optimizer Category Info Block (Outside main expander)
-        with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
-            st.markdown("""
-            ### 🤖 Optimizer Categories
 
-            **Gradient-based Optimizers** use derivatives (gradients) to guide updates:
-
-            - **GradientDescent**: Basic steepest descent using learning rate.
-            - **Adam**: Adaptive learning rates with momentum (recommended for noisy or sparse gradients).
-            - **RMSProp**: Like Adam but simpler; adjusts step size based on recent gradient magnitudes.
-            - **Newton's Method**: Uses second-order derivatives (Hessian) for faster convergence, but may be unstable near saddle points.
-
-            **Heuristic Optimizers** use stochastic or evolutionary strategies:
-
-            - **Simulated Annealing**: Explores search space with temperature-based random steps. Good for escaping local minima.
-            - **Genetic Algorithm**: Population-based method inspired by natural evolution. Effective for complex, non-differentiable functions.
-
-            ---
-            ### 🎮 How to Use the Playground
-
-            - **1. Choose a function** from the dropdown.
-            - **2. Select an optimizer** and tune parameters like learning rate or mutation strength.
-            - **3. Try enabling _Auto-Tune_** to automatically pick good learning rate + steps.
-            - **4. Adjust initial x/y** starting positions to see how descent paths change.
-            - **5. Toggle _"Animate Descent"_** to visualize how the optimizer moves step-by-step.
-            - **6. Compare optimizers** in the **"Diagnostic Tools"** section using convergence plots and summary tables.
-
-            > 🧪 Try Newton's Method on **Quadratic Bowl** for fast convergence, or test **Genetic Algorithm** on **Rastrigin** to explore multimodal search.
-
-            ---
-            ⚠️ *Note:* Gradient-based methods require a smooth function. Use heuristic optimizers for discontinuous or non-differentiable objectives.
-            """)
-
-
-        with st.expander("💬 Ask the LLM about Optimizers or Math", expanded=False):
-            user_question = st.text_input("Ask anything (e.g., What is BFGS? Why is Newton unstable?)")
-            if user_question:
-                with st.spinner("🤖 Thinking..."):
-                    full_prompt = (
-                        "You are an expert on numerical optimization methods such as Gradient Descent, "
-                        "Adam, Newton’s Method, Simulated Annealing, and Genetic Algorithms.\n\n"
-                        f"Question: {user_question}\nAnswer:"
-                    )
-                    response = query_llm(full_prompt)
-                    st.markdown(
-                        f"<div style='background-color:#f4f9ff;padding:10px;border-radius:6px;'>{response}</div>",
-                        unsafe_allow_html=True,
-                    )
-
-        with st.expander("🧠 Taylor Series & Optimizer Foundations", expanded=True):
-            st.markdown("### 📚 How Taylor Series Explains Optimizers")
-
-            st.markdown("Many optimization methods are based on the **Taylor series expansion** of a function. This helps us approximate the function locally using its derivatives:")
-
-            st.latex(r"""
-            f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
-            """)
-            st.markdown("- This is the **1st-order Taylor expansion**, which is the basis of **Gradient Descent**. It only uses the slope (gradient) to decide the direction to move.")
-
-            st.latex(r"""
-            f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
-            """)
-            st.markdown("- This is the **2nd-order Taylor expansion**, used in **Newton's Method**. It adds the **Hessian** (curvature) to adjust the step size and improve convergence.")
-
-            st.markdown("### ✍️ Summary")
-            st.markdown("""
-            You can imagine it like this:
-            - ✅ **1st-order**: Approximates with a **tangent line** (local slope).
-            - ✅ **2nd-order**: Approximates with a **parabola** (slope + curvature).
-
-            This helps students connect abstract equations with **optimizer logic**.
-                            
-            - **Gradient Descent** is a 1st-order method → uses slope only.
-            - **Newton's Method** is a 2nd-order method → uses slope and curvature.
-            - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
-            """)
-
-            st.markdown("---")
-            show_univariate_taylor()
 
 
     # === Main Area: Title & Playground ===
@@ -251,8 +175,86 @@ elif mode == "🌋 Optimization Playground":
 
             
 
+    # 🪄 Optimizer Category Info Block (Outside main expander)
+    with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
+        st.markdown("""
+        ### 🤖 Optimizer Categories
 
-    
+        **Gradient-based Optimizers** use derivatives (gradients) to guide updates:
+
+        - **GradientDescent**: Basic steepest descent using learning rate.
+        - **Adam**: Adaptive learning rates with momentum (recommended for noisy or sparse gradients).
+        - **RMSProp**: Like Adam but simpler; adjusts step size based on recent gradient magnitudes.
+        - **Newton's Method**: Uses second-order derivatives (Hessian) for faster convergence, but may be unstable near saddle points.
+
+        **Heuristic Optimizers** use stochastic or evolutionary strategies:
+
+        - **Simulated Annealing**: Explores search space with temperature-based random steps. Good for escaping local minima.
+        - **Genetic Algorithm**: Population-based method inspired by natural evolution. Effective for complex, non-differentiable functions.
+
+        ---
+        ### 🎮 How to Use the Playground
+
+        - **1. Choose a function** from the dropdown.
+        - **2. Select an optimizer** and tune parameters like learning rate or mutation strength.
+        - **3. Try enabling _Auto-Tune_** to automatically pick good learning rate + steps.
+        - **4. Adjust initial x/y** starting positions to see how descent paths change.
+        - **5. Toggle _"Animate Descent"_** to visualize how the optimizer moves step-by-step.
+        - **6. Compare optimizers** in the **"Diagnostic Tools"** section using convergence plots and summary tables.
+
+        > 🧪 Try Newton's Method on **Quadratic Bowl** for fast convergence, or test **Genetic Algorithm** on **Rastrigin** to explore multimodal search.
+
+        ---
+        ⚠️ *Note:* Gradient-based methods require a smooth function. Use heuristic optimizers for discontinuous or non-differentiable objectives.
+        """)
+
+
+    with st.expander("💬 Ask the LLM about Optimizers or Math", expanded=False):
+        user_question = st.text_input("Ask anything (e.g., What is BFGS? Why is Newton unstable?)")
+        if user_question:
+            with st.spinner("🤖 Thinking..."):
+                full_prompt = (
+                    "You are an expert on numerical optimization methods such as Gradient Descent, "
+                    "Adam, Newton’s Method, Simulated Annealing, and Genetic Algorithms.\n\n"
+                    f"Question: {user_question}\nAnswer:"
+                )
+                response = query_llm(full_prompt)
+                st.markdown(
+                    f"<div style='background-color:#f4f9ff;padding:10px;border-radius:6px;'>{response}</div>",
+                    unsafe_allow_html=True,
+                )
+
+    with st.expander("🧠 Taylor Series & Optimizer Foundations", expanded=True):
+        st.markdown("### 📚 How Taylor Series Explains Optimizers")
+
+        st.markdown("Many optimization methods are based on the **Taylor series expansion** of a function. This helps us approximate the function locally using its derivatives:")
+
+        st.latex(r"""
+        f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x
+        """)
+        st.markdown("- This is the **1st-order Taylor expansion**, which is the basis of **Gradient Descent**. It only uses the slope (gradient) to decide the direction to move.")
+
+        st.latex(r"""
+        f(x + \Delta x) \approx f(x) + \nabla f(x)^T \Delta x + \frac{1}{2} \Delta x^T H(x) \Delta x
+        """)
+        st.markdown("- This is the **2nd-order Taylor expansion**, used in **Newton's Method**. It adds the **Hessian** (curvature) to adjust the step size and improve convergence.")
+
+        st.markdown("### ✍️ Summary")
+        st.markdown("""
+        You can imagine it like this:
+        - ✅ **1st-order**: Approximates with a **tangent line** (local slope).
+        - ✅ **2nd-order**: Approximates with a **parabola** (slope + curvature).
+
+        This helps students connect abstract equations with **optimizer logic**.
+                        
+        - **Gradient Descent** is a 1st-order method → uses slope only.
+        - **Newton's Method** is a 2nd-order method → uses slope and curvature.
+        - Understanding these expansions builds strong intuition about how optimizers move in the loss landscape.
+        """)
+
+        st.markdown("---")
+        show_univariate_taylor()
+
 
 
 
