@@ -441,94 +441,54 @@ elif mode == "🌋 Optimization Playground":
             st.plotly_chart(fig_taylor, use_container_width=True)
 
 
-        # 💡 Add Gradient Vectors on True Function
-        st.markdown("### 📌 Gradient Vector Field")
+        st.markdown("### 🎥 Animated 2nd-Order Taylor Approx as (a,b) Moves")
 
-        # Compute vector field
-        U, V = np.zeros_like(X), np.zeros_like(Y)
-        for i in range(X.shape[0]):
-            for j in range(X.shape[1]):
-                gx = float(grad[0].subs({x: X[i, j], y: Y[i, j]}))
-                gy = float(grad[1].subs({x: X[i, j], y: Y[i, j]}))
-                U[i, j], V[i, j] = gx, gy
+        x, y, a, b = sp.symbols('x y a b')
+        fxy = (1 - x)**2 + 100 * (y - x**2)**2
 
-        # Downsample for cones
-        skip = (slice(None, None, 4), slice(None, None, 4))
-        Xq, Yq, Uq, Vq = X[skip], Y[skip], U[skip], V[skip]
-        Zq = f_np(Xq, Yq)
+        grad = [sp.diff(fxy, v) for v in (x, y)]
+        hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
 
-        # Plot surface with cones (gradients)
-        fig_grad = go.Figure(data=[
-            go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis', opacity=0.8),
-            go.Cone(
-                x=Xq.flatten(), y=Yq.flatten(), z=Zq.flatten(),
-                u=-Uq.flatten(), v=-Vq.flatten(), w=np.zeros_like(Uq).flatten(),
-                colorscale='Blues', sizemode="scaled", sizeref=15, anchor="tail"
-            )
-        ])
-        fig_grad.update_layout(
-            scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'),
-            margin=dict(l=0, r=0, t=40, b=0),
-            title="Function Surface with Gradient Vectors"
+        f_a = fxy.subs({x: a, y: b})
+        grad_val = [g.subs({x: a, y: b}) for g in grad]
+        T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
+        hess_val = [[h.subs({x: a, y: b}) for h in row] for row in hess]
+        T2 = T1 + 0.5 * (
+            hess_val[0][0]*(x - a)**2 +
+            2*hess_val[0][1]*(x - a)*(y - b) +
+            hess_val[1][1]*(y - b)**2
         )
-        st.plotly_chart(fig_grad, use_container_width=True)
+        T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
 
-        # multi_func = st.selectbox("Choose multivariable function:", ["Quadratic Bowl", "Rosenbrock"])
-        # x, y, a, b = sp.symbols('x y a b')
-        # h1, h2 = x - a, y - b
+        x_vals = np.linspace(-2, 2, 50)
+        y_vals = np.linspace(-1, 3, 50)
+        X, Y = np.meshgrid(x_vals, y_vals)
 
-        # # Define function
-        # if multi_func == "Quadratic Bowl":
-        #     fxy = x**2 + y**2
-        # elif multi_func == "Rosenbrock":
-        #     fxy = (1 - x)**2 + 100 * (y - x**2)**2
+        a_range = np.linspace(-1.5, 1.5, 30)
+        b_fixed = 1.5
+        frames = []
+        for a_val in a_range:
+            Z = T2_np(X, Y, a_val, b_fixed)
+            surface = go.Surface(z=Z, x=X, y=Y, colorscale='RdBu', showscale=False)
+            frames.append(go.Frame(data=[surface], name=str(a_val)))
 
-        # # Compute derivatives
-        # grad = [sp.diff(fxy, var) for var in (x, y)]
-        # hess = [[sp.diff(g, var) for var in (x, y)] for g in grad]
+        Z0 = T2_np(X, Y, a_range[0], b_fixed)
+        fig = go.Figure(
+            data=[go.Surface(z=Z0, x=X, y=Y, colorscale='RdBu')],
+            layout=go.Layout(
+                title="2nd-Order Taylor Approx: Evolution as (a,b) Changes",
+                scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'),
+                updatemenus=[dict(type='buttons', showactive=False,
+                    buttons=[dict(label='▶ Play', method='animate',
+                                args=[None, {"frame": {"duration": 100, "redraw": True},
+                                            "fromcurrent": True}])])],
+                margin=dict(l=0, r=0, t=30, b=0)
+            ),
+            frames=frames
+        )
 
-        # # UI sliders
-        # a_val = st.slider("a (center x)", -5.0, 5.0, 0.0)
-        # b_val = st.slider("b (center y)", -5.0, 5.0, 0.0)
-
-        # # Evaluate terms
-        # f_a = fxy.subs({x: a, y: b})
-        # grad_eval = [g.subs({x: a, y: b}) for g in grad]
-        # T1 = f_a + grad_eval[0]*(x - a) + grad_eval[1]*(y - b)
-
-        # hess_eval = [[h.subs({x: a, y: b}) for h in row] for row in hess]
-        # T2 = T1 + 0.5 * (
-        #     hess_eval[0][0]*(x - a)**2 +
-        #     2*hess_eval[0][1]*(x - a)*(y - b) +
-        #     hess_eval[1][1]*(y - b)**2
-        # )
-
-        # # Display
-        # st.markdown("**1st-order (Gradient Descent style):**")
-        # st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
-        # st.markdown("**2nd-order (Newton style):**")
-        # st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
-
-        # # Optional: 3D plot of both true and Taylor approx
-        # f_np = sp.lambdify((x, y), fxy, "numpy")
-        # T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
-
-        # X, Y = np.meshgrid(np.linspace(-5, 5, 100), np.linspace(-5, 5, 100))
-        # Z_true = f_np(X, Y)
-        # Z_taylor = T2_np(X, Y, a_val, b_val)
-
-        # fig = plt.figure(figsize=(10, 4))
-        # ax1 = fig.add_subplot(121, projection='3d')
-        # ax1.plot_surface(X, Y, Z_true, cmap='viridis', alpha=0.8)
-        # ax1.set_title("True Function")
-
-        # ax2 = fig.add_subplot(122, projection='3d')
-        # ax2.plot_surface(X, Y, Z_taylor, cmap='coolwarm', alpha=0.8)
-        # ax2.set_title("2nd-Order Taylor Approx")
-
-        # st.pyplot(fig)
-
-
+        st.plotly_chart(fig, use_container_width=True)
+        
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
     with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
