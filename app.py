@@ -1029,29 +1029,57 @@ elif mode == "🌋 Optimization Playground":
 
         from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
 
-        col1, col2 = st.columns(2)
 
-        with col1:
-            plot_3d_descent(
-            x_vals, y_vals, Z,
-            path, Z_path,
-            Z_t1=Z_t1, Z_t2=Z_t2,
+        st.markdown("### 📈 3D View")
+        plot_3d_descent(
+            x_vals=x_vals,
+            y_vals=y_vals,
+            Z=Z,
+            path=path,
+            Z_path=Z_path,
+            Z_t1=Z_t1,
+            Z_t2=Z_t2,
             show_taylor=show_taylor,
             show_2nd=show_2nd,
             expansion_point=expansion_point,
             f_func=f_func
         )
 
-        with col2:
-            plot_2d_contour(
-            x_vals, y_vals, Z,
-            path,
+        st.markdown("### 🗺️ 2D View")
+        plot_2d_contour(
+            x_vals=x_vals,
+            y_vals=y_vals,
+            Z=Z,
+            path=path,
             g_funcs=g_funcs if constraints else None,
             X=X, Y=Y,
             Z_t2=Z_t2,
             show_2nd=show_2nd,
             expansion_point=expansion_point
         )
+        # col1, col2 = st.columns(2)
+
+        # with col1:
+        #     plot_3d_descent(
+        #     x_vals, y_vals, Z,
+        #     path, Z_path,
+        #     Z_t1=Z_t1, Z_t2=Z_t2,
+        #     show_taylor=show_taylor,
+        #     show_2nd=show_2nd,
+        #     expansion_point=expansion_point,
+        #     f_func=f_func
+        # )
+
+        # with col2:
+        #     plot_2d_contour(
+        #     x_vals, y_vals, Z,
+        #     path,
+        #     g_funcs=g_funcs if constraints else None,
+        #     X=X, Y=Y,
+        #     Z_t2=Z_t2,
+        #     show_2nd=show_2nd,
+        #     expansion_point=expansion_point
+        # )
         # with col1:
         #     fig = plt.figure(figsize=(4, 3))
         #     ax = fig.add_subplot(111, projection='3d')
