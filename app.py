@@ -881,6 +881,23 @@ elif mode == "🌋 Optimization Playground":
 
 
         st.markdown("### 📈 3D View")
+
+        if show_2nd and Z_t2 is not None:
+            try:
+                Z_t2 = np.array(Z_t2, dtype=np.float64)
+                if Z_t2.shape != (len(y_vals), len(x_vals)):
+                    if Z_t2.shape == (len(x_vals), len(y_vals)):
+                        Z_t2 = Z_t2.T
+                    else:
+                        st.warning(f"⚠️ Skipping Taylor surface: Z_t2 shape {Z_t2.shape} mismatches grid ({len(y_vals)}, {len(x_vals)})")
+                        Z_t2 = None
+                elif np.isnan(Z_t2).any():
+                    st.warning("⚠️ Z_t2 contains NaN, skipping surface plot.")
+                    Z_t2 = None
+            except Exception as e:
+                st.warning(f"⚠️ Failed to prepare Z_t2 for plotting: {e}")
+                Z_t2 = None
+                
         plot_3d_descent(
             x_vals=x_vals,
             y_vals=y_vals,
