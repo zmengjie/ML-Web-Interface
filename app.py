@@ -832,6 +832,11 @@ elif mode == "🌋 Optimization Playground":
             #         st.warning(f"⚠️ Failed to evaluate 2nd-order Taylor surface: {e}")
             #         Z_t2 = None
 
+            if show_taylor and a_val == 0 and b_val == 0 and func_name != "Quadratic Bowl":
+                st.info("🔁 Auto-shifted expansion point to avoid singularity at (0,0)")
+                a_val += 0.1
+                b_val += 0.1
+                
             if show_2nd:
                 try:
                     Z_t2 = t2_np(X, Y)
