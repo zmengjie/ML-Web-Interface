@@ -365,6 +365,7 @@ elif mode == "🌋 Optimization Playground":
 
 # --- SECTION: Multivariable Taylor Expansion (2D Preview) ---
         st.markdown("---")
+        
         st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
         multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
