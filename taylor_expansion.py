@@ -132,6 +132,7 @@ def show_univariate_taylor():
     st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
     multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
+
     x, y, a, b = sp.symbols('x y a b')
 
     if multi_func == "Quadratic Bowl":
@@ -143,24 +144,19 @@ def show_univariate_taylor():
     grad = [sp.diff(fxy, v) for v in (x, y)]
     hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
 
-    # Center sliders
-    a_val = st.slider("Center a (x)", -5.0, 5.0, 0.0)
-    b_val = st.slider("Center b (y)", -5.0, 5.0, 0.0)
+    # UI-controlled values (to avoid overwriting symbolic a, b)
+    a_input = st.slider("Center a (x)", -5.0, 5.0, 0.0)
+    b_input = st.slider("Center b (y)", -5.0, 5.0, 0.0)
 
-    # Zoom toggle
     zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
-
-    zoom_center_x, zoom_center_y = 0.0, 0.0  # ✅ Fixed center for meshgrid limits
-
     if zoom_in:
-        xlim = (zoom_center_x - 1, zoom_center_x + 1)
-        ylim = (zoom_center_y - 1, zoom_center_y + 1)
+        xlim = (a_input - 1, a_input + 1)
+        ylim = (b_input - 1, b_input + 1)
     else:
         xlim = (-5, 5)
         ylim = (-5, 5)
 
-
-    # Compute Taylor series
+    # Compute Taylor Series Symbolically
     f_a = fxy.subs({x: a, y: b})
     grad_val = [g.subs({x: a, y: b}) for g in grad]
     T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
@@ -182,9 +178,9 @@ def show_univariate_taylor():
 
     X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
     Z_true = f_np(X, Y)
-    Z_taylor = T2_np(X, Y, a_val, b_val)
+    Z_taylor = T2_np(X, Y, a_input, b_input)
 
-    # Plot both surfaces
+    # Plot
     fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
     fig_true.update_layout(title="True Function", scene=dict(
         xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'
@@ -201,7 +197,7 @@ def show_univariate_taylor():
     with col2:
         st.plotly_chart(fig_taylor, use_container_width=True)
 
-    # --- SECTION: Animate ---
+    # --- Animation ---
     st.markdown("---")
     st.markdown("### 🎬 Animate Taylor Approximation Surface")
 
@@ -211,10 +207,10 @@ def show_univariate_taylor():
 
     for val in param_vals:
         if animate_mode == "a only":
-            Z_frame = T2_np(X, Y, val, b_val)
+            Z_frame = T2_np(X, Y, val, b_input)
             label = f"a = {val:.2f}"
         elif animate_mode == "b only":
-            Z_frame = T2_np(X, Y, a_val, val)
+            Z_frame = T2_np(X, Y, a_input, val)
             label = f"b = {val:.2f}"
         else:  # both a and b
             Z_frame = T2_np(X, Y, val, val)
@@ -226,9 +222,9 @@ def show_univariate_taylor():
 
     # Initial Z
     if animate_mode == "a only":
-        Z0 = T2_np(X, Y, param_vals[0], b_val)
+        Z0 = T2_np(X, Y, param_vals[0], b_input)
     elif animate_mode == "b only":
-        Z0 = T2_np(X, Y, a_val, param_vals[0])
+        Z0 = T2_np(X, Y, a_input, param_vals[0])
     else:
         Z0 = T2_np(X, Y, param_vals[0], param_vals[0])
 
@@ -251,5 +247,124 @@ def show_univariate_taylor():
     )
 
     st.plotly_chart(fig_anim, use_container_width=True)
+
+
+    # if multi_func == "Quadratic Bowl":
+    #     fxy = x**2 + y**2
+    # else:
+    #     fxy = (1 - x)**2 + 100 * (y - x**2)**2
+
+    # # Derivatives
+    # grad = [sp.diff(fxy, v) for v in (x, y)]
+    # hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
+
+    # # Center sliders
+    # a_val = st.slider("Center a (x)", -5.0, 5.0, 0.0)
+    # b_val = st.slider("Center b (y)", -5.0, 5.0, 0.0)
+
+    # # Zoom toggle
+    # zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
+
+    # zoom_center_x, zoom_center_y = 0.0, 0.0  # ✅ Fixed center for meshgrid limits
+
+    # if zoom_in:
+    #     xlim = (zoom_center_x - 1, zoom_center_x + 1)
+    #     ylim = (zoom_center_y - 1, zoom_center_y + 1)
+    # else:
+    #     xlim = (-5, 5)
+    #     ylim = (-5, 5)
+
+
+    # # Compute Taylor series
+    # f_a = fxy.subs({x: a, y: b})
+    # grad_val = [g.subs({x: a, y: b}) for g in grad]
+    # T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
+
+    # hess_val = [[h.subs({x: a, y: b}) for h in row] for row in hess]
+    # T2 = T1 + 0.5 * (
+    #     hess_val[0][0]*(x - a)**2 +
+    #     2*hess_val[0][1]*(x - a)*(y - b) +
+    #     hess_val[1][1]*(y - b)**2
+    # )
+
+    # st.markdown("### ✏️ Expansion at $(x, y) = (a, b)$")
+    # st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
+    # st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
+
+    # # Evaluate
+    # f_np = sp.lambdify((x, y), fxy, "numpy")
+    # T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
+
+    # X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
+    # Z_true = f_np(X, Y)
+    # Z_taylor = T2_np(X, Y, a_val, b_val)
+
+    # # Plot both surfaces
+    # fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
+    # fig_true.update_layout(title="True Function", scene=dict(
+    #     xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'
+    # ), margin=dict(l=0, r=0, b=0, t=40))
+
+    # fig_taylor = go.Figure(data=[go.Surface(z=Z_taylor, x=X, y=Y, colorscale='RdBu')])
+    # fig_taylor.update_layout(title="2nd-Order Taylor Approx", scene=dict(
+    #     xaxis_title='x', yaxis_title='y', zaxis_title='Approx'
+    # ), margin=dict(l=0, r=0, b=0, t=40))
+
+    # col1, col2 = st.columns(2)
+    # with col1:
+    #     st.plotly_chart(fig_true, use_container_width=True)
+    # with col2:
+    #     st.plotly_chart(fig_taylor, use_container_width=True)
+
+    # # --- SECTION: Animate ---
+    # st.markdown("---")
+    # st.markdown("### 🎬 Animate Taylor Approximation Surface")
+
+    # animate_mode = st.radio("Animate path:", ["a only", "b only", "both a & b"], index=0)
+    # param_vals = np.linspace(-1.0, 1.0, 30)
+    # frames = []
+
+    # for val in param_vals:
+    #     if animate_mode == "a only":
+    #         Z_frame = T2_np(X, Y, val, b_val)
+    #         label = f"a = {val:.2f}"
+    #     elif animate_mode == "b only":
+    #         Z_frame = T2_np(X, Y, a_val, val)
+    #         label = f"b = {val:.2f}"
+    #     else:  # both a and b
+    #         Z_frame = T2_np(X, Y, val, val)
+    #         label = f"(a, b) = ({val:.2f}, {val:.2f})"
+
+    #     frames.append(go.Frame(data=[
+    #         go.Surface(z=Z_frame, x=X, y=Y, colorscale='RdBu')
+    #     ], name=label))
+
+    # # Initial Z
+    # if animate_mode == "a only":
+    #     Z0 = T2_np(X, Y, param_vals[0], b_val)
+    # elif animate_mode == "b only":
+    #     Z0 = T2_np(X, Y, a_val, param_vals[0])
+    # else:
+    #     Z0 = T2_np(X, Y, param_vals[0], param_vals[0])
+
+    # fig_anim = go.Figure(
+    #     data=[go.Surface(z=Z0, x=X, y=Y, colorscale='RdBu')],
+    #     layout=go.Layout(
+    #         title="Animated 2nd-Order Taylor Approximation",
+    #         scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='Approx'),
+    #         updatemenus=[dict(
+    #             type="buttons",
+    #             showactive=True,
+    #             buttons=[dict(label="▶ Play", method="animate", args=[None])]
+    #         )],
+    #         sliders=[{
+    #             "steps": [{"args": [[f.name]], "label": f.name, "method": "animate"} for f in frames],
+    #             "currentvalue": {"prefix": "Center: "}
+    #         }]
+    #     ),
+    #     frames=frames
+    # )
+
+    # st.plotly_chart(fig_anim, use_container_width=True)
 
 
