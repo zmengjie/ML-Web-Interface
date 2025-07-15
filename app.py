@@ -785,7 +785,6 @@ elif mode == "🌋 Optimization Playground":
         if show_taylor:
             st.markdown("**Taylor Expansion Center (a, b)**")
 
-            # 🔁 Auto-bump before sliders
             if float(start_x) == 0.0 and float(start_y) == 0.0 and func_name != "Quadratic Bowl":
                 default_ax = 0.1
                 default_by = 0.1
@@ -794,6 +793,7 @@ elif mode == "🌋 Optimization Playground":
                 default_ax = float(start_x)
                 default_by = float(start_y)
 
+            # Step 2: Apply the defaults to the sliders using **value=...**
             a_val = st.slider("a (expansion x)", -5.0, 5.0, value=default_ax, step=0.1)
             b_val = st.slider("b (expansion y)", -5.0, 5.0, value=default_by, step=0.1)
 
