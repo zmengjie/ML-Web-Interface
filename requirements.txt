@@ -62,3 +62,4 @@ ctransformers
 --extra-index-url https://download.pytorch.org/whl/cpu
 
 faiss-cpu==1.7.4 
+plotly>=5.0.0
