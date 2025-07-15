@@ -371,7 +371,7 @@ elif mode == "🌋 Optimization Playground":
                 # --- Divider ---
 
 
-        st.markdown("---")
+        # --- SECTION: Multivariable Taylor Expansion (2D Preview) ---
         st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
         multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
@@ -382,6 +382,7 @@ elif mode == "🌋 Optimization Playground":
         else:
             fxy = (1 - x)**2 + 100 * (y - x**2)**2
 
+        # Derivatives
         grad = [sp.diff(fxy, v) for v in (x, y)]
         hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
 
@@ -389,7 +390,7 @@ elif mode == "🌋 Optimization Playground":
         a_val = st.slider("Center a (x)", -5.0, 5.0, 0.0)
         b_val = st.slider("Center b (y)", -5.0, 5.0, 0.0)
 
-        # 🔧 Add zoom toggle
+        # Zoom toggle
         zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
         if zoom_in:
             xlim = (a_val - 1, a_val + 1)
@@ -398,7 +399,7 @@ elif mode == "🌋 Optimization Playground":
             xlim = (-5, 5)
             ylim = (-5, 5)
 
-        # Compute Taylor expansions
+        # Compute Taylor series
         f_a = fxy.subs({x: a, y: b})
         grad_val = [g.subs({x: a, y: b}) for g in grad]
         T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
@@ -410,11 +411,11 @@ elif mode == "🌋 Optimization Playground":
             hess_val[1][1]*(y - b)**2
         )
 
-        st.markdown("### ✏️ Multivariable Expansion at $(x, y) = (a, b)$")
+        st.markdown("### ✏️ Expansion at $(x, y) = (a, b)$")
         st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
         st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
 
-        # Evaluate functions
+        # Evaluate
         f_np = sp.lambdify((x, y), fxy, "numpy")
         T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
 
@@ -422,7 +423,7 @@ elif mode == "🌋 Optimization Playground":
         Z_true = f_np(X, Y)
         Z_taylor = T2_np(X, Y, a_val, b_val)
 
-        # 📈 Plotly Interactive Surfaces
+        # Plot both surfaces
         fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
         fig_true.update_layout(title="True Function", scene=dict(
             xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'
@@ -433,62 +434,63 @@ elif mode == "🌋 Optimization Playground":
             xaxis_title='x', yaxis_title='y', zaxis_title='Approx'
         ), margin=dict(l=0, r=0, b=0, t=40))
 
-        # 🖼️ Display side-by-side
         col1, col2 = st.columns(2)
         with col1:
             st.plotly_chart(fig_true, use_container_width=True)
         with col2:
             st.plotly_chart(fig_taylor, use_container_width=True)
 
+        # --- SECTION: Animate ---
+        st.markdown("---")
+        st.markdown("### 🎬 Animate Taylor Approximation Surface")
 
-        st.markdown("### 🎥 Animated 2nd-Order Taylor Approx as (a,b) Moves")
-
-        x, y, a, b = sp.symbols('x y a b')
-        fxy = (1 - x)**2 + 100 * (y - x**2)**2
-
-        grad = [sp.diff(fxy, v) for v in (x, y)]
-        hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
-
-        f_a = fxy.subs({x: a, y: b})
-        grad_val = [g.subs({x: a, y: b}) for g in grad]
-        T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
-        hess_val = [[h.subs({x: a, y: b}) for h in row] for row in hess]
-        T2 = T1 + 0.5 * (
-            hess_val[0][0]*(x - a)**2 +
-            2*hess_val[0][1]*(x - a)*(y - b) +
-            hess_val[1][1]*(y - b)**2
-        )
-        T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
-
-        x_vals = np.linspace(-2, 2, 50)
-        y_vals = np.linspace(-1, 3, 50)
-        X, Y = np.meshgrid(x_vals, y_vals)
-
-        a_range = np.linspace(-1.5, 1.5, 30)
-        b_fixed = 1.5
+        animate_mode = st.radio("Animate path:", ["a only", "b only", "both a & b"], index=0)
+        param_vals = np.linspace(-1.0, 1.0, 30)
         frames = []
-        for a_val in a_range:
-            Z = T2_np(X, Y, a_val, b_fixed)
-            surface = go.Surface(z=Z, x=X, y=Y, colorscale='RdBu', showscale=False)
-            frames.append(go.Frame(data=[surface], name=str(a_val)))
 
-        Z0 = T2_np(X, Y, a_range[0], b_fixed)
-        fig = go.Figure(
+        for val in param_vals:
+            if animate_mode == "a only":
+                Z_frame = T2_np(X, Y, val, b_val)
+                label = f"a = {val:.2f}"
+            elif animate_mode == "b only":
+                Z_frame = T2_np(X, Y, a_val, val)
+                label = f"b = {val:.2f}"
+            else:  # both a and b
+                Z_frame = T2_np(X, Y, val, val)
+                label = f"(a, b) = ({val:.2f}, {val:.2f})"
+
+            frames.append(go.Frame(data=[
+                go.Surface(z=Z_frame, x=X, y=Y, colorscale='RdBu')
+            ], name=label))
+
+        # Initial Z
+        if animate_mode == "a only":
+            Z0 = T2_np(X, Y, param_vals[0], b_val)
+        elif animate_mode == "b only":
+            Z0 = T2_np(X, Y, a_val, param_vals[0])
+        else:
+            Z0 = T2_np(X, Y, param_vals[0], param_vals[0])
+
+        fig_anim = go.Figure(
             data=[go.Surface(z=Z0, x=X, y=Y, colorscale='RdBu')],
             layout=go.Layout(
-                title="2nd-Order Taylor Approx: Evolution as (a,b) Changes",
-                scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'),
-                updatemenus=[dict(type='buttons', showactive=False,
-                    buttons=[dict(label='▶ Play', method='animate',
-                                args=[None, {"frame": {"duration": 100, "redraw": True},
-                                            "fromcurrent": True}])])],
-                margin=dict(l=0, r=0, t=30, b=0)
+                title="Animated 2nd-Order Taylor Approximation",
+                scene=dict(xaxis_title='x', yaxis_title='y', zaxis_title='Approx'),
+                updatemenus=[dict(
+                    type="buttons",
+                    showactive=True,
+                    buttons=[dict(label="▶ Play", method="animate", args=[None])]
+                )],
+                sliders=[{
+                    "steps": [{"args": [[f.name]], "label": f.name, "method": "animate"} for f in frames],
+                    "currentvalue": {"prefix": "Center: "}
+                }]
             ),
             frames=frames
         )
 
-        st.plotly_chart(fig, use_container_width=True)
-        
+        st.plotly_chart(fig_anim, use_container_width=True)
+
 
     # 🪄 Optimizer Category Info Block (Outside main expander)
     with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
