@@ -115,7 +115,8 @@ def clustering_ui():
                 vals, vecs = np.linalg.eigh(cov)
                 angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
                 width, height = 2 * np.sqrt(vals)
-                ellipse = Ellipse(centers[i], width, height, angle, edgecolor='gray', facecolor='none', lw=1.5, ls='--')
+                ellipse = Ellipse((centers[i][0], centers[i][1]), width, height, angle,
+                  edgecolor='gray', facecolor='none', lw=1.5, ls='--')
                 ax.add_patch(ellipse)
 
     ax.set_title(f"{method} Clustering Result")
