@@ -51,10 +51,9 @@ def clustering_ui():
         "Spectral": "**Spectral Clustering**: Uses graph Laplacian and eigen decomposition. Effective for non-convex clusters."
     }
     st.markdown(algo_explanations[method])
-
     st.markdown("---")
 
-    labels, centers = None, None
+    labels, centers, covariances = None, None, None
 
     if method == "K-Means":
         k = st.slider("Number of Clusters (K)", 2, 10, 3)
@@ -109,7 +108,7 @@ def clustering_ui():
     if centers is not None:
         ax.scatter(centers[:, 0], centers[:, 1], c='black', s=100, marker='x', label='Centers')
 
-    if method == "GMM":
+    if method == "GMM" and covariances is not None:
         for i in range(len(centers)):
             cov = covariances[i]
             if cov.shape == (2, 2):  # Full covariance
