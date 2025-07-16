@@ -121,8 +121,11 @@ def clustering_ui():
                 angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
                 width, height = 2 * np.sqrt(vals)
                 ellipse = Ellipse((centers[i][0], centers[i][1]), width, height, angle,
-                                  edgecolor='gray', facecolor='none', lw=1.5, ls='--')
+                                edgecolor='gray', facecolor='none', lw=1.5, ls='--')
                 ax.add_patch(ellipse)
+            else:
+                continue  # Skip if covariance is not 2x2
+
 
     ax.set_title(f"{method} Clustering Result")
     ax.legend()
