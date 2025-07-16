@@ -12,6 +12,7 @@ from sklearn.metrics import (
 )
 from matplotlib.patches import Ellipse
 
+
 def clustering_ui():
     st.header("🔹 Clustering Playground")
 
@@ -43,12 +44,12 @@ def clustering_ui():
     ])
 
     algo_explanations = {
-        "K-Means": "**K-Means**: Partitions data into K clusters by minimizing intra-cluster variance. Good for spherical clusters.",
-        "DBSCAN": "**DBSCAN**: Density-based clustering. Detects arbitrary shaped clusters and filters out noise.",
-        "Agglomerative": "**Agglomerative Clustering**: Hierarchical approach that merges closest clusters iteratively.",
-        "Birch": "**Birch**: Builds a compact tree and clusters incrementally. Scalable to large datasets.",
-        "GMM": "**GMM (Gaussian Mixture)**: Probabilistic soft clustering based on Gaussian distributions.",
-        "Spectral": "**Spectral Clustering**: Uses graph Laplacian and eigen decomposition. Effective for non-convex clusters."
+        "K-Means": "**K-Means**: Fast, scalable method that minimizes intra-cluster distance. Best for spherical clusters.",
+        "DBSCAN": "**DBSCAN**: Density-based clustering algorithm that can find arbitrarily shaped clusters and identify noise.",
+        "Agglomerative": "**Agglomerative Clustering**: Hierarchical bottom-up clustering that merges clusters based on a linkage strategy.",
+        "Birch": "**Birch**: Efficient for large datasets. Builds a tree structure and clusters incrementally.",
+        "GMM": "**GMM (Gaussian Mixture Model)**: Soft clustering based on probabilistic assignment using Gaussian distributions.",
+        "Spectral": "**Spectral Clustering**: Converts data into a graph structure and performs dimensionality reduction before clustering."
     }
     st.markdown(algo_explanations[method])
     st.markdown("---")
@@ -84,7 +85,7 @@ def clustering_ui():
         model = GaussianMixture(n_components=k, random_state=0)
         labels = model.fit_predict(X)
         centers = model.means_
-        covariances = model.covariances_
+        covariances = model.covariances_ if hasattr(model, 'covariances_') else None
 
     elif method == "Spectral":
         k = st.slider("Number of Clusters", 2, 10, 3)
@@ -97,13 +98,17 @@ def clustering_ui():
         sil = silhouette_score(X, labels)
         cal = calinski_harabasz_score(X, labels)
         db = davies_bouldin_score(X, labels)
-        st.success(f"Silhouette: {sil:.3f} | Calinski-Harabasz: {cal:.1f} | Davies-Bouldin: {db:.3f}")
+        st.success(f"**Silhouette**: {sil:.3f} | **Calinski-Harabasz**: {cal:.1f} | **Davies-Bouldin**: {db:.3f}")
     else:
         st.warning("Clustering metrics not available (only one cluster or all noise)")
 
     # --- Plotting ---
+    st.markdown("---")
+    st.subheader("📊 Clustering Result")
+    st.caption("Each point is colored based on cluster label. Centers are marked (×) and ellipses represent uncertainty (for GMM).")
+
     fig, ax = plt.subplots()
-    scatter = ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', s=40, label="Data")
+    ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', s=40, label="Data")
 
     if centers is not None:
         ax.scatter(centers[:, 0], centers[:, 1], c='black', s=100, marker='x', label='Centers')
@@ -111,12 +116,12 @@ def clustering_ui():
     if method == "GMM" and covariances is not None:
         for i in range(len(centers)):
             cov = covariances[i]
-            if cov.shape == (2, 2):  # Full covariance
+            if cov.ndim == 2 and cov.shape == (2, 2):
                 vals, vecs = np.linalg.eigh(cov)
                 angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
                 width, height = 2 * np.sqrt(vals)
                 ellipse = Ellipse((centers[i][0], centers[i][1]), width, height, angle,
-                  edgecolor='gray', facecolor='none', lw=1.5, ls='--')
+                                  edgecolor='gray', facecolor='none', lw=1.5, ls='--')
                 ax.add_patch(ellipse)
 
     ax.set_title(f"{method} Clustering Result")
