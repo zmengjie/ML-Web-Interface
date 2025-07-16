@@ -3,20 +3,27 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.datasets import make_blobs, make_moons, load_iris
 from sklearn.cluster import (
-    KMeans,
-    DBSCAN,
-    AgglomerativeClustering,
-    Birch,
-    SpectralClustering
+    KMeans, DBSCAN, AgglomerativeClustering,
+    Birch, SpectralClustering
 )
 from sklearn.mixture import GaussianMixture
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import (
+    silhouette_score, calinski_harabasz_score, davies_bouldin_score
+)
+from matplotlib.patches import Ellipse
 
 def clustering_ui():
     st.header("🔹 Clustering Playground")
 
     # --- Dataset selection ---
     dataset_choice = st.selectbox("Select a dataset", ["Blobs", "Moons", "Iris"])
+
+    dataset_explanations = {
+        "Blobs": "🔵 **Blobs**: Artificial Gaussian clusters, good for testing spherical cluster algorithms.",
+        "Moons": "🌙 **Moons**: Two interleaving half-circles. Ideal for non-convex clustering tests.",
+        "Iris": "🌸 **Iris**: Real-world flower dataset. We use the first two features for 2D clustering."
+    }
+    st.info(dataset_explanations[dataset_choice])
 
     if dataset_choice == "Blobs":
         n_samples = st.slider("Number of Samples", 100, 1000, 300, 50)
@@ -28,58 +35,26 @@ def clustering_ui():
 
     elif dataset_choice == "Iris":
         iris = load_iris()
-        X = iris.data[:, :2]  # use only 2D for plotting
+        X = iris.data[:, :2]
 
     # --- Clustering method ---
     method = st.radio("Choose clustering method", [
         "K-Means", "DBSCAN", "Agglomerative", "Birch", "GMM", "Spectral"
     ])
 
-    # --- Explanations ---
     algo_explanations = {
-        "K-Means": """**K-Means Clustering** partitions data into K clusters by minimizing the distance between points and their assigned cluster center.
-        
-    - ⚡ Fast and scalable.
-    - ❗ Assumes spherical clusters.
-    - 📌 Sensitive to initial seed and outliers.""",
-
-        "DBSCAN": """**DBSCAN (Density-Based Spatial Clustering)** groups together points that are closely packed and labels sparse regions as outliers.
-
-    - 🧱 Can find arbitrarily shaped clusters.
-    - 🚫 Does not require number of clusters.
-    - ❗ Sensitive to `eps` and `min_samples`.""",
-
-        "Agglomerative": """**Agglomerative Clustering** is a hierarchical method that builds clusters bottom-up by merging the closest pairs.
-
-    - 🔍 Good for small datasets.
-    - 📈 Can use dendrograms for analysis.
-    - ❗ Requires number of clusters.""",
-
-        "Birch": """**Birch (Balanced Iterative Reducing and Clustering using Hierarchies)** is designed for large datasets using a compact tree structure.
-
-    - 🌳 Good for large datasets.
-    - 🧩 Combines with other clustering methods.
-    - ❗ May underperform on non-spherical shapes.""",
-
-        "GMM": """**GMM (Gaussian Mixture Model)** uses probabilistic soft-clustering where each point has a probability of belonging to each cluster.
-
-    - 📊 Models elliptical clusters.
-    - 🔄 Allows soft assignments.
-    - ❗ Assumes Gaussian distributions.""",
-
-        "Spectral": """**Spectral Clustering** uses graph theory and eigenvalues of similarity matrix to group data.
-
-    - 🌈 Great for non-convex shapes.
-    - 📌 Works well on small-medium datasets.
-    - ❗ Computationally expensive for large data.""",
+        "K-Means": "**K-Means**: Partitions data into K clusters by minimizing intra-cluster variance. Good for spherical clusters.",
+        "DBSCAN": "**DBSCAN**: Density-based clustering. Detects arbitrary shaped clusters and filters out noise.",
+        "Agglomerative": "**Agglomerative Clustering**: Hierarchical approach that merges closest clusters iteratively.",
+        "Birch": "**Birch**: Builds a compact tree and clusters incrementally. Scalable to large datasets.",
+        "GMM": "**GMM (Gaussian Mixture)**: Probabilistic soft clustering based on Gaussian distributions.",
+        "Spectral": "**Spectral Clustering**: Uses graph Laplacian and eigen decomposition. Effective for non-convex clusters."
     }
-
-    # Display explanation below method selector
-    st.markdown("---")
     st.markdown(algo_explanations[method])
+
     st.markdown("---")
 
-    centers = None  # for plotting
+    labels, centers = None, None
 
     if method == "K-Means":
         k = st.slider("Number of Clusters (K)", 2, 10, 3)
@@ -104,33 +79,45 @@ def clustering_ui():
         k = st.slider("Number of Clusters", 2, 10, 3)
         model = Birch(threshold=threshold, n_clusters=k)
         labels = model.fit_predict(X)
-        # Birch doesn’t expose centers directly
 
     elif method == "GMM":
         k = st.slider("Number of Components", 2, 10, 3)
         model = GaussianMixture(n_components=k, random_state=0)
         labels = model.fit_predict(X)
         centers = model.means_
+        covariances = model.covariances_
 
     elif method == "Spectral":
         k = st.slider("Number of Clusters", 2, 10, 3)
         model = SpectralClustering(n_clusters=k, affinity='nearest_neighbors', assign_labels='kmeans')
         labels = model.fit_predict(X)
 
-    # --- Silhouette Score ---
+    # --- Evaluation Metrics ---
     unique_labels = len(set(labels)) - (1 if -1 in labels else 0)
     if unique_labels > 1:
-        score = silhouette_score(X, labels)
-        st.success(f"Silhouette Score: {score:.3f}")
+        sil = silhouette_score(X, labels)
+        cal = calinski_harabasz_score(X, labels)
+        db = davies_bouldin_score(X, labels)
+        st.success(f"Silhouette: {sil:.3f} | Calinski-Harabasz: {cal:.1f} | Davies-Bouldin: {db:.3f}")
     else:
-        st.warning("Silhouette Score not available (only one cluster or noise)")
+        st.warning("Clustering metrics not available (only one cluster or all noise)")
 
-    # --- Plot ---
+    # --- Plotting ---
     fig, ax = plt.subplots()
     scatter = ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', s=40, label="Data")
 
     if centers is not None:
         ax.scatter(centers[:, 0], centers[:, 1], c='black', s=100, marker='x', label='Centers')
+
+    if method == "GMM":
+        for i in range(len(centers)):
+            cov = covariances[i]
+            if cov.shape == (2, 2):  # Full covariance
+                vals, vecs = np.linalg.eigh(cov)
+                angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
+                width, height = 2 * np.sqrt(vals)
+                ellipse = Ellipse(centers[i], width, height, angle, edgecolor='gray', facecolor='none', lw=1.5, ls='--')
+                ax.add_patch(ellipse)
 
     ax.set_title(f"{method} Clustering Result")
     ax.legend()
