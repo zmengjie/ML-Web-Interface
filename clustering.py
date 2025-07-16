@@ -35,6 +35,50 @@ def clustering_ui():
         "K-Means", "DBSCAN", "Agglomerative", "Birch", "GMM", "Spectral"
     ])
 
+    # --- Explanations ---
+    algo_explanations = {
+        "K-Means": """**K-Means Clustering** partitions data into K clusters by minimizing the distance between points and their assigned cluster center.
+        
+    - ⚡ Fast and scalable.
+    - ❗ Assumes spherical clusters.
+    - 📌 Sensitive to initial seed and outliers.""",
+
+        "DBSCAN": """**DBSCAN (Density-Based Spatial Clustering)** groups together points that are closely packed and labels sparse regions as outliers.
+
+    - 🧱 Can find arbitrarily shaped clusters.
+    - 🚫 Does not require number of clusters.
+    - ❗ Sensitive to `eps` and `min_samples`.""",
+
+        "Agglomerative": """**Agglomerative Clustering** is a hierarchical method that builds clusters bottom-up by merging the closest pairs.
+
+    - 🔍 Good for small datasets.
+    - 📈 Can use dendrograms for analysis.
+    - ❗ Requires number of clusters.""",
+
+        "Birch": """**Birch (Balanced Iterative Reducing and Clustering using Hierarchies)** is designed for large datasets using a compact tree structure.
+
+    - 🌳 Good for large datasets.
+    - 🧩 Combines with other clustering methods.
+    - ❗ May underperform on non-spherical shapes.""",
+
+        "GMM": """**GMM (Gaussian Mixture Model)** uses probabilistic soft-clustering where each point has a probability of belonging to each cluster.
+
+    - 📊 Models elliptical clusters.
+    - 🔄 Allows soft assignments.
+    - ❗ Assumes Gaussian distributions.""",
+
+        "Spectral": """**Spectral Clustering** uses graph theory and eigenvalues of similarity matrix to group data.
+
+    - 🌈 Great for non-convex shapes.
+    - 📌 Works well on small-medium datasets.
+    - ❗ Computationally expensive for large data.""",
+    }
+
+    # Display explanation below method selector
+    st.markdown("---")
+    st.markdown(algo_explanations[method])
+    st.markdown("---")
+
     centers = None  # for plotting
 
     if method == "K-Means":
