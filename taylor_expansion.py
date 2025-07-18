@@ -260,40 +260,40 @@ def show_univariate_taylor():
         hess_val[1][1]*(y - b_input)**2
     )
 
-    # --- Symbolic general templates ---
-    st.markdown("##### 1st-Order (symbolic structure)")
-    st.latex(r"f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b)")
+# --- Combined Display with Columns ---
+    st.markdown("### 📐 Taylor Expansion Summary")
 
-    st.markdown("##### 2nd-Order (symbolic structure)")
-    st.latex(r"f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b) + \frac{1}{2}f_{xx}(a, b)(x - a)^2 + f_{xy}(a, b)(x - a)(y - b) + \frac{1}{2}f_{yy}(a, b)(y - b)^2")
+    col1, col2 = st.columns(2)
 
-    # --- Raw evaluated expressions ---
-    T1_raw_expr = f_a + grad_val[0]*(x - a_input) + grad_val[1]*(y - b_input)
-    T2_raw_expr = T1_raw_expr + 0.5 * (
-        hess_val[0][0]*(x - a_input)**2 +
-        2*hess_val[0][1]*(x - a_input)*(y - b_input) +
-        hess_val[1][1]*(y - b_input)**2
-    )
+    with col1:
+        st.markdown("#### 1st-Order Expansion")
+        st.markdown("**Symbolic Form**")
+        st.latex(r"f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b)")
 
-    T1_raw_latex = sp.latex(T1_raw_expr)
-    T2_raw_latex = sp.latex(T2_raw_expr)
+        st.markdown("**Evaluated at Point**")
+        st.latex(fr"f(x, y) \approx {T1_raw_latex}")
 
-    st.markdown("##### 1st-Order (evaluated at point)")
-    st.latex(fr"f(x, y) \approx {T1_raw_latex}")
-    st.markdown("##### 2nd-Order (evaluated at point)")
-    st.latex(fr"f(x, y) \approx {T2_raw_latex}")
+    with col2:
+        st.markdown("#### 2nd-Order Expansion")
+        st.markdown("**Symbolic Form**")
+        st.latex(r"""
+            \begin{aligned}
+            f(x, y) \approx\ & f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b) \\
+            & + \frac{1}{2}f_{xx}(a, b)(x - a)^2 + f_{xy}(a, b)(x - a)(y - b) + \frac{1}{2}f_{yy}(a, b)(y - b)^2
+            \end{aligned}
+        """)
 
-    # --- Simplified expression from sympy (final form) ---
-    f_latex = sp.latex(sp.simplify(fxy))
-    T1_latex = sp.latex(sp.simplify(T1_expr))
-    T2_latex = sp.latex(sp.simplify(T2_expr))
+        st.markdown("**Evaluated at Point**")
+        st.latex(fr"f(x, y) \approx {T2_raw_latex}")
 
+    # --- Full Details Below ---
     st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
     st.markdown("#### Original Function")
-    st.latex(fr"f(x, y) = {f_latex}")
+    st.latex(fr"f(x, y) = {sp.latex(sp.simplify(fxy))}")
+
     st.markdown("#### Taylor Expansions at Specified Point")
-    st.latex(fr"f(x, y) \approx {T1_latex}")
-    st.latex(fr"f(x, y) \approx {T2_latex}")
+    st.latex(fr"f(x, y) \approx {sp.latex(sp.simplify(T1_expr))}")
+    st.latex(fr"f(x, y) \approx {sp.latex(sp.simplify(T2_expr))}")
 
     # Evaluate
     f_np = sp.lambdify((x, y), fxy, "numpy")
