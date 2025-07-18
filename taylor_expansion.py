@@ -260,6 +260,22 @@ def show_univariate_taylor():
         hess_val[1][1]*(y - b_input)**2
     )
 
+    # Raw expression (not simplified)
+    T1_raw_expr = f_a + grad_val[0]*(x - a_input) + grad_val[1]*(y - b_input)
+    T2_raw_expr = T1_raw_expr + 0.5 * (
+        hess_val[0][0]*(x - a_input)**2 +
+        2*hess_val[0][1]*(x - a_input)*(y - b_input) +
+        hess_val[1][1]*(y - b_input)**2
+    )
+
+    T1_raw_latex = sp.latex(T1_raw_expr)
+    T2_raw_latex = sp.latex(T2_raw_expr)
+
+    st.markdown("##### 1st-Order (explicit raw expansion)")
+    st.latex(fr"f(x, y) \approx {T1_raw_latex}")
+    st.markdown("##### 2nd-Order (explicit raw expansion)")
+    st.latex(fr"f(x, y) \approx {T2_raw_latex}")
+
     # Render LaTeX safely
     f_latex = sp.latex(sp.simplify(fxy))
     T1_latex = sp.latex(sp.simplify(T1_expr))
@@ -302,11 +318,11 @@ def show_univariate_taylor():
 
     st.markdown(
         r"""
-        ℹ️ **Note**: The 2nd-order Taylor expansion approximates the function locally around \((a, b)\).  
+        ℹ️ **Note**: The 2nd-order Taylor expansion approximates the function locally around \( (a, b) \).  
         It uses gradient and Hessian values at that point.  
-        For smooth functions like \( \sin(x)\cos(y) \), the approximation is accurate near \((a, b)\),  
+        For smooth functions like \( \sin(x)\cos(y) \), the approximation is accurate near \( (a, b) \),  
         but may diverge further away.  
-        For quadratic functions like \( x^2 + y^2 \), the 2nd-order Taylor expansion exactly matches the function  
+        For quadratic functions like \( x^2 + y^2 \), the 2nd-order Taylor expansion exactly matches the function,  
         because the function itself is already a polynomial of degree 2.
         """
     )
