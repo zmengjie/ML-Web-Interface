@@ -5,12 +5,11 @@ from io import BytesIO
 from sklearn.datasets import make_blobs, load_iris
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from umap import UMAP
+# from umap import UMAP  # Temporarily disabled due to install issue
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import KernelPCA
 from sklearn.metrics import explained_variance_score
-
 
 def dim_reduction_ui():
     st.header("🔻 Dimensionality Reduction Playground")
@@ -35,10 +34,9 @@ def dim_reduction_ui():
     - **PCA** is good for linear variance and visualization.
     - **t-SNE** is nonlinear and preserves local structure.
     - **LDA** is supervised and focuses on class separability.
-    - **UMAP** preserves both local and global structure, tunable with `n_neighbors` and `min_dist`.
     - **KernelPCA** supports nonlinear mappings using different kernels.
     """)
-    method = st.selectbox("Choose a Reduction Technique", ["PCA", "t-SNE", "LDA", "UMAP", "KernelPCA"])
+    method = st.selectbox("Choose a Reduction Technique", ["PCA", "t-SNE", "LDA", "KernelPCA"])  # UMAP removed
 
     if method == "PCA":
         n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
@@ -60,14 +58,6 @@ def dim_reduction_ui():
         learning_rate = st.slider("Learning Rate", 10, 500, 200)
         X_reduced = TSNE(n_components=2, perplexity=perplexity, learning_rate=learning_rate, random_state=42).fit_transform(X)
         st.success("t-SNE reduced to 2D")
-
-    elif method == "UMAP":
-        n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
-        n_neighbors = st.slider("n_neighbors (locality)", 2, 50, 15)
-        min_dist = st.slider("min_dist (spread)", 0.0, 1.0, 0.1)
-        reducer = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=42)
-        X_reduced = reducer.fit_transform(X)
-        st.success(f"UMAP reduced to shape: {X_reduced.shape}")
 
     elif method == "KernelPCA":
         n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
