@@ -221,6 +221,7 @@ def show_univariate_taylor():
     multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock", "sin(x)cos(y)", "exp(-x² - y²)"])
 
     x, y = sp.symbols('x y')
+    a, b = sp.symbols('a b')
 
     if multi_func == "Quadratic Bowl":
         fxy = x**2 + y**2
@@ -243,6 +244,19 @@ def show_univariate_taylor():
     grad = [sp.diff(fxy, v) for v in (x, y)]
     hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
 
+    # --- Symbolic Taylor Expansion (parameterized by a, b)
+    T2_symbolic = (
+        fxy.subs({x: x, y: y})
+        + grad[0].subs({x: a, y: b}) * (x - a)
+        + grad[1].subs({x: a, y: b}) * (y - b)
+        + 0.5 * hess[0][0].subs({x: a, y: b}) * (x - a)**2
+        + hess[0][1].subs({x: a, y: b}) * (x - a)*(y - b)
+        + 0.5 * hess[1][1].subs({x: a, y: b}) * (y - b)**2
+    )
+    T2_func = sp.lambdify((x, y, a, b), T2_symbolic, "numpy")
+    def T2_np(X, Y, a_val, b_val):
+        return T2_func(X, Y, a_val, b_val)
+
     # Evaluate derivatives at (a, b)
     f_a = float(fxy.subs({x: a_input, y: b_input}))
     grad_val = [float(g.subs({x: a_input, y: b_input})) for g in grad]
@@ -257,7 +271,8 @@ def show_univariate_taylor():
     )
 
     T1_raw_latex = sp.latex(sp.simplify(T1_expr))
-    T2_raw_latex = sp.latex(sp.simplify(T2_expr))
+    T2_raw_expr = T2_symbolic.subs({a: a_input, b: b_input})
+    T2_raw_latex = sp.latex(sp.simplify(T2_raw_expr))
 
     # --- Display Side-by-Side Summary ---
     st.markdown(
@@ -294,11 +309,9 @@ def show_univariate_taylor():
 
     # Evaluate
     f_np = sp.lambdify((x, y), fxy, "numpy")
-    T2_np = sp.lambdify((x, y), T2_expr, "numpy")
-
     X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
     Z_true = f_np(X, Y)
-    Z_taylor = T2_np(X, Y)
+    Z_taylor = T2_np(X, Y, a_input, b_input)
 
     # Plot
     fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
@@ -347,7 +360,7 @@ def show_univariate_taylor():
         elif animate_mode == "b only":
             Z_frame = T2_np(X, Y, a_input, val)
             label = f"b = {val:.2f}"
-        else:  # both a and b
+        else:
             Z_frame = T2_np(X, Y, val, val)
             label = f"(a, b) = ({val:.2f}, {val:.2f})"
 
@@ -355,7 +368,7 @@ def show_univariate_taylor():
             go.Surface(z=Z_frame, x=X, y=Y, colorscale='RdBu')
         ], name=label))
 
-    # Initial Z
+    # Initial frame
     if animate_mode == "a only":
         Z0 = T2_np(X, Y, param_vals[0], b_input)
     elif animate_mode == "b only":
@@ -382,6 +395,7 @@ def show_univariate_taylor():
     )
 
     st.plotly_chart(fig_anim, use_container_width=True)
+
 
 
     # if multi_func == "Quadratic Bowl":
