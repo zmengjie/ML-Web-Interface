@@ -30,15 +30,16 @@ def dim_reduction_ui():
     X = StandardScaler().fit_transform(X)
 
     # --- Technique Selection ---
-st.markdown("""
-**💡 Tip:**
-- **PCA** is good for linear variance and visualization.
-- **t-SNE** is nonlinear and preserves local structure.
-- **LDA** is supervised and focuses on class separability.
-- More methods coming soon (UMAP, KernelPCA...)
-""")
+    st.markdown("""
+    **💡 Tip:**
+    - **PCA** is good for linear variance and visualization.
+    - **t-SNE** is nonlinear and preserves local structure.
+    - **LDA** is supervised and focuses on class separability.
+    - **UMAP** preserves both local and global structure, tunable with `n_neighbors` and `min_dist`.
+    - **KernelPCA** supports nonlinear mappings using different kernels.
+    """)
     method = st.selectbox("Choose a Reduction Technique", ["PCA", "t-SNE", "LDA", "UMAP", "KernelPCA"])
-    
+
     if method == "PCA":
         n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
         model = PCA(n_components=n_components)
@@ -65,10 +66,6 @@ st.markdown("""
         n_neighbors = st.slider("n_neighbors (locality)", 2, 50, 15)
         min_dist = st.slider("min_dist (spread)", 0.0, 1.0, 0.1)
         reducer = UMAP(n_components=n_components, n_neighbors=n_neighbors, min_dist=min_dist, random_state=42)
-        X_reduced = reducer.fit_transform(X)
-        st.success(f"UMAP reduced to shape: {X_reduced.shape}")
-        n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
-        reducer = UMAP(n_components=n_components, random_state=42)
         X_reduced = reducer.fit_transform(X)
         st.success(f"UMAP reduced to shape: {X_reduced.shape}")
 
