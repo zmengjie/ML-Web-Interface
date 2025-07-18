@@ -260,8 +260,8 @@ def show_univariate_taylor():
     T2_raw_latex = sp.latex(sp.simplify(T2_expr))
 
     # --- Display Side-by-Side Summary ---
-    st.markdown("### 📐 Taylor Expansion Summary")
-    st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
+    st.markdown("### 📐 Taylor Expansion Summary: Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\ ")
+    # st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")x
     st.markdown("#### Original Function")
     st.latex(fr"\small f(x, y) = {sp.latex(sp.simplify(fxy))}")
 
