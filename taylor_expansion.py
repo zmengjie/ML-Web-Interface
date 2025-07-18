@@ -127,13 +127,101 @@ def show_univariate_taylor():
         
 
 # --- SECTION: Multivariable Taylor Expansion (2D Preview) ---
+    # st.markdown("---")
+
+    # st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
+
+    # multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock", "sin(x)cos(y)", "exp(-x² - y²)"])
+
+    # x, y, a, b = sp.symbols('x y a b')
+
+    # if multi_func == "Quadratic Bowl":
+    #     fxy = x**2 + y**2
+    # elif multi_func == "Rosenbrock":
+    #     fxy = (1 - x)**2 + 100 * (y - x**2)**2
+    # elif multi_func == "sin(x)cos(y)":
+    #     fxy = sp.sin(x) * sp.cos(y)
+    # elif multi_func == "exp(-x² - y²)":
+    #     fxy = sp.exp(-(x**2 + y**2))
+
+
+    # # Derivatives
+    # grad = [sp.diff(fxy, v) for v in (x, y)]
+    # hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
+
+    # # UI-controlled values (to avoid overwriting symbolic a, b)
+    # a_input = st.slider("Center a (x)", -5.0, 5.0, 0.0)
+    # b_input = st.slider("Center b (y)", -5.0, 5.0, 0.0)
+
+    # zoom_in = st.checkbox("🔍 Zoom into local neighborhood", value=False)
+    # if zoom_in:
+    #     xlim = (a_input - 1, a_input + 1)
+    #     ylim = (b_input - 1, b_input + 1)
+    # else:
+    #     xlim = (-5, 5)
+    #     ylim = (-5, 5)
+
+    # # Compute Taylor Series Symbolically
+    # f_a = fxy.subs({x: a, y: b})
+    # grad_val = [g.subs({x: a, y: b}) for g in grad]
+    # T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
+
+    # hess_val = [[h.subs({x: a, y: b}) for h in row] for row in hess]
+    # T2 = T1 + 0.5 * (
+    #     hess_val[0][0]*(x - a)**2 +
+    #     2*hess_val[0][1]*(x - a)*(y - b) +
+    #     hess_val[1][1]*(y - b)**2
+    # )
+
+    # st.markdown("### ✏️ Expansion at $(x, y) = (a, b)$")
+    # st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
+    # st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
+
+    # # Evaluate
+    # f_np = sp.lambdify((x, y), fxy, "numpy")
+    # T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
+
+    # X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
+    # Z_true = f_np(X, Y)
+    # Z_taylor = T2_np(X, Y, a_input, b_input)
+
+    # # Plot
+    # fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
+    # fig_true.update_layout(title="True Function", scene=dict(
+    #     xaxis_title='x', yaxis_title='y', zaxis_title='f(x,y)'
+    # ), margin=dict(l=0, r=0, b=0, t=40))
+
+    # fig_taylor = go.Figure(data=[go.Surface(z=Z_taylor, x=X, y=Y, colorscale='RdBu')])
+    # fig_taylor.update_layout(title="2nd-Order Taylor Approx", scene=dict(
+    #     xaxis_title='x', yaxis_title='y', zaxis_title='Approx'
+    # ), margin=dict(l=0, r=0, b=0, t=40))
+
+    # col1, col2 = st.columns(2)
+    # with col1:
+    #     st.plotly_chart(fig_true, use_container_width=True)
+    # with col2:
+    #     st.plotly_chart(fig_taylor, use_container_width=True)
+
+    # st.markdown("---")  # separator
+
+    # st.markdown(
+    #     r"""
+    #     ℹ️ **Note**: The 2nd-order Taylor expansion is a local approximation of the function centered at \((a, b)\).  
+    #     For functions like \( \sin(x)\cos(y) \), it closely matches the true function only in the local neighborhood  
+    #     around the chosen point. Globally, the approximation can diverge.  
+    #     For quadratic functions like \( x^2 + y^2 \), the 2nd-order Taylor expansion is exact,  
+    #     since the function is already a polynomial of degree 2.
+    #     """
+    # )
+
+# --- SECTION: Multivariable Taylor Expansion (2D Preview) ---
     st.markdown("---")
 
     st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
     multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock", "sin(x)cos(y)", "exp(-x² - y²)"])
 
-    x, y, a, b = sp.symbols('x y a b')
+    x, y = sp.symbols('x y')
 
     if multi_func == "Quadratic Bowl":
         fxy = x**2 + y**2
@@ -144,12 +232,7 @@ def show_univariate_taylor():
     elif multi_func == "exp(-x² - y²)":
         fxy = sp.exp(-(x**2 + y**2))
 
-
-    # Derivatives
-    grad = [sp.diff(fxy, v) for v in (x, y)]
-    hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
-
-    # UI-controlled values (to avoid overwriting symbolic a, b)
+    # UI-controlled values
     a_input = st.slider("Center a (x)", -5.0, 5.0, 0.0)
     b_input = st.slider("Center b (y)", -5.0, 5.0, 0.0)
 
@@ -161,29 +244,33 @@ def show_univariate_taylor():
         xlim = (-5, 5)
         ylim = (-5, 5)
 
-    # Compute Taylor Series Symbolically
-    f_a = fxy.subs({x: a, y: b})
-    grad_val = [g.subs({x: a, y: b}) for g in grad]
-    T1 = f_a + grad_val[0]*(x - a) + grad_val[1]*(y - b)
+    # Derivatives
+    grad = [sp.diff(fxy, v) for v in (x, y)]
+    hess = [[sp.diff(g, v) for v in (x, y)] for g in grad]
 
-    hess_val = [[h.subs({x: a, y: b}) for h in row] for row in hess]
+    # Compute Taylor Series Numerically
+    f_a = float(fxy.subs({x: a_input, y: b_input}))
+    grad_val = [float(g.subs({x: a_input, y: b_input})) for g in grad]
+    hess_val = [[float(h.subs({x: a_input, y: b_input})) for h in row] for row in hess]
+
+    T1 = f_a + grad_val[0]*(x - a_input) + grad_val[1]*(y - b_input)
     T2 = T1 + 0.5 * (
-        hess_val[0][0]*(x - a)**2 +
-        2*hess_val[0][1]*(x - a)*(y - b) +
-        hess_val[1][1]*(y - b)**2
+        hess_val[0][0]*(x - a_input)**2 +
+        2*hess_val[0][1]*(x - a_input)*(y - b_input) +
+        hess_val[1][1]*(y - b_input)**2
     )
 
-    st.markdown("### ✏️ Expansion at $(x, y) = (a, b)$")
-    st.latex(f"f(x, y) \\approx {sp.latex(T1)}")
-    st.latex(f"f(x, y) \\approx {sp.latex(T2)}")
+    st.markdown(f"### ✏️ Expansion at ${{(x, y)}} = ({a_input}, {b_input})$")
+    st.latex(f"f(x, y) \approx {sp.latex(T1)}")
+    st.latex(f"f(x, y) \approx {sp.latex(T2)}")
 
     # Evaluate
     f_np = sp.lambdify((x, y), fxy, "numpy")
-    T2_np = sp.lambdify((x, y, a, b), T2, "numpy")
+    T2_np = sp.lambdify((x, y), T2, "numpy")
 
     X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
     Z_true = f_np(X, Y)
-    Z_taylor = T2_np(X, Y, a_input, b_input)
+    Z_taylor = T2_np(X, Y)
 
     # Plot
     fig_true = go.Figure(data=[go.Surface(z=Z_true, x=X, y=Y, colorscale='Viridis')])
@@ -213,7 +300,6 @@ def show_univariate_taylor():
         since the function is already a polynomial of degree 2.
         """
     )
-
 
     # --- Animation ---
     st.markdown("---")
