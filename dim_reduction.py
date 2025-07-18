@@ -79,43 +79,57 @@ def dim_reduction_ui():
         st.success(f"LDA reduced to shape: {X_reduced.shape}")
 
     # --- Interactive Projection Plot ---
-# --- Interactive Projection Plot ---
-    st.subheader("🔍 2D or 3D Interactive Projection")
+    st.subheader("🔍 2D and/or 3D Interactive Projection")
+
+    # Plot mode selection
+    plot_mode = st.radio("Choose projection display:", ["Auto (based on n_components)", "2D only", "3D only", "Both 2D & 3D"], horizontal=True)
+
     try:
         df = pd.DataFrame(X_reduced, columns=[f"Component {i+1}" for i in range(X_reduced.shape[1])])
-        df['Label'] = y.astype(str)  # Force categorical coloring
+        df['Label'] = y.astype(str)
+
+        fig2d, fig3d = None, None
+
+        if X_reduced.shape[1] >= 2:
+            fig2d = px.scatter(df, x="Component 1", y="Component 2", color="Label",
+                            title=f"{method} Projection (2D)", opacity=0.7)
+            fig2d.update_traces(marker=dict(size=5, line=dict(width=0.5, color='DarkSlateGrey')))
 
         if X_reduced.shape[1] >= 3:
-            fig = px.scatter_3d(
-                df,
-                x="Component 1",
-                y="Component 2",
-                z="Component 3",
-                color="Label",
-                title=f"{method} Projection (3D)",
-                opacity=0.7
-            )
-        elif X_reduced.shape[1] == 2:
-            fig = px.scatter(
-                df,
-                x="Component 1",
-                y="Component 2",
-                color="Label",
-                title=f"{method} Projection (2D)",
-                opacity=0.7
-            )
-        elif X_reduced.shape[1] == 1:
-            fig = px.strip(
-                df,
-                x="Component 1",
-                color="Label",
-                title=f"{method} Projection (1D)"
-            )
-        else:
-            raise ValueError("Insufficient number of components for plotting.")
+            fig3d = px.scatter_3d(df, x="Component 1", y="Component 2", z="Component 3", color="Label",
+                                title=f"{method} Projection (3D)", opacity=0.7)
+            fig3d.update_traces(marker=dict(size=4))
 
-        fig.update_traces(marker=dict(size=5, line=dict(width=0.5, color='DarkSlateGrey')))
-        st.plotly_chart(fig, use_container_width=True)
+        if plot_mode == "Auto (based on n_components)":
+            if fig3d:
+                st.plotly_chart(fig3d, use_container_width=True)
+            elif fig2d:
+                st.plotly_chart(fig2d, use_container_width=True)
+            else:
+                st.warning("Not enough components to plot.")
+        elif plot_mode == "2D only":
+            if fig2d:
+                st.plotly_chart(fig2d, use_container_width=True)
+            else:
+                st.warning("Need at least 2 components for 2D plot.")
+        elif plot_mode == "3D only":
+            if fig3d:
+                st.plotly_chart(fig3d, use_container_width=True)
+            else:
+                st.warning("Need at least 3 components for 3D plot.")
+        elif plot_mode == "Both 2D & 3D":
+            col1, col2 = st.columns(2)
+            with col1:
+                if fig2d:
+                    st.plotly_chart(fig2d, use_container_width=True)
+                else:
+                    st.warning("Need at least 2 components.")
+            with col2:
+                if fig3d:
+                    st.plotly_chart(fig3d, use_container_width=True)
+                else:
+                    st.warning("Need at least 3 components.")
+
     except Exception as e:
         st.error(f"Plotting error: {str(e)}")
 
