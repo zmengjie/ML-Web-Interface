@@ -261,12 +261,14 @@ def show_univariate_taylor():
     )
 
     # Render LaTeX safely
+    original_latex = sp.latex(sp.simplify(fxy))
     T1_latex = sp.latex(sp.simplify(T1_expr))
     T2_latex = sp.latex(sp.simplify(T2_expr))
 
     st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
-    st.latex(fr"f(x, y) \approx {T1_latex}")
-    st.latex(fr"f(x, y) \approx {T2_latex}")
+    st.latex(fr"\text{{Original Function: }} f(x, y) = {original_latex}")
+    st.latex(fr"\text{{1st-Order Approx: }} f(x, y) \approx {T1_latex}")
+    st.latex(fr"\text{{2nd-Order Approx: }} f(x, y) \approx {T2_latex}")
 
     # Evaluate
     f_np = sp.lambdify((x, y), fxy, "numpy")
@@ -293,6 +295,7 @@ def show_univariate_taylor():
     with col2:
         st.plotly_chart(fig_taylor, use_container_width=True)
 
+
     st.markdown("---")  # separator
 
     st.markdown(
@@ -304,7 +307,7 @@ def show_univariate_taylor():
         since the function is already a polynomial of degree 2.
         """
     )
-    
+
     # --- Animation ---
     st.markdown("---")
     st.markdown("### 🎬 Animate Taylor Approximation Surface")
