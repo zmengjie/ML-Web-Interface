@@ -304,11 +304,13 @@ def show_univariate_taylor():
         r"""
         ℹ️ **Note**: The 2nd-order Taylor expansion approximates the function locally around \((a, b)\).  
         It uses gradient and Hessian values at that point.  
-        For smooth functions like \( \sin(x)\cos(y) \), the approximation is good near \((a, b)\), but diverges globally.  
-        For quadratic functions like \( x^2 + y^2 \), the 2nd-order Taylor expansion exactly matches the function,  
+        For smooth functions like \( \sin(x)\cos(y) \), the approximation is accurate near \((a, b)\),  
+        but may diverge further away.  
+        For quadratic functions like \( x^2 + y^2 \), the 2nd-order Taylor expansion exactly matches the function  
         because the function itself is already a polynomial of degree 2.
         """
     )
+
 
     # --- Animation ---
     st.markdown("---")
