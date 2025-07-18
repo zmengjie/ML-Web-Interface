@@ -2,7 +2,7 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 from io import BytesIO
-from sklearn.datasets import make_blobs, load_iris
+from sklearn.datasets import make_blobs, load_iris, load_wine
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 # from umap import UMAP  # Temporarily disabled due to install issue
@@ -17,13 +17,17 @@ def dim_reduction_ui():
     st.header("🔻 Dimensionality Reduction Playground")
 
     # --- Dataset Selection ---
-    dataset = st.selectbox("Select Dataset", ["Blobs", "Iris"])
+    dataset = st.selectbox("Select Dataset", ["Blobs", "Iris", "Wine"])
     if dataset == "Blobs":
         X, y = make_blobs(n_samples=300, n_features=5, centers=4, random_state=42)
     elif dataset == "Iris":
         data = load_iris()
         X, y = data.data, data.target
         st.caption("Using all 4 numerical features from Iris dataset")
+    elif dataset == "Wine":
+        data = load_wine()
+        X, y = data.data, data.target
+        st.caption("Using all 13 numerical features from Wine dataset")
 
     st.write(f"Original Data Shape: {X.shape}")
 
@@ -78,15 +82,16 @@ def dim_reduction_ui():
     st.subheader("🔍 2D or 3D Interactive Projection")
     try:
         df = pd.DataFrame(X_reduced, columns=[f"Component {i+1}" for i in range(X_reduced.shape[1])])
-        df['Label'] = y
+        df['Label'] = y.astype(str)  # Force categorical coloring
 
         if X_reduced.shape[1] >= 3:
-            fig = px.scatter_3d(df, x="Component 1", y="Component 2", z="Component 3", color=df['Label'].astype(str),
+            fig = px.scatter_3d(df, x="Component 1", y="Component 2", z="Component 3", color="Label",
                                 title=f"{method} Projection (3D)", opacity=0.7)
         else:
-            fig = px.scatter(df, x="Component 1", y="Component 2", color=df['Label'].astype(str),
+            fig = px.scatter(df, x="Component 1", y="Component 2", color="Label",
                              title=f"{method} Projection (2D)", opacity=0.7)
 
+        fig.update_traces(marker=dict(size=5, line=dict(width=0.5, color='DarkSlateGrey')))
         st.plotly_chart(fig, use_container_width=True)
     except Exception as e:
         st.error(f"Plotting error: {str(e)}")
