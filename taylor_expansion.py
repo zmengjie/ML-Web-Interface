@@ -260,7 +260,14 @@ def show_univariate_taylor():
         hess_val[1][1]*(y - b_input)**2
     )
 
-    # Raw expression (not simplified)
+    # --- Symbolic general templates ---
+    st.markdown("##### 1st-Order (symbolic structure)")
+    st.latex(r"f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b)")
+
+    st.markdown("##### 2nd-Order (symbolic structure)")
+    st.latex(r"f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b) + \frac{1}{2}f_{xx}(a, b)(x - a)^2 + f_{xy}(a, b)(x - a)(y - b) + \frac{1}{2}f_{yy}(a, b)(y - b)^2")
+
+    # --- Raw evaluated expressions ---
     T1_raw_expr = f_a + grad_val[0]*(x - a_input) + grad_val[1]*(y - b_input)
     T2_raw_expr = T1_raw_expr + 0.5 * (
         hess_val[0][0]*(x - a_input)**2 +
@@ -271,12 +278,12 @@ def show_univariate_taylor():
     T1_raw_latex = sp.latex(T1_raw_expr)
     T2_raw_latex = sp.latex(T2_raw_expr)
 
-    st.markdown("##### 1st-Order (explicit raw expansion)")
+    st.markdown("##### 1st-Order (evaluated at point)")
     st.latex(fr"f(x, y) \approx {T1_raw_latex}")
-    st.markdown("##### 2nd-Order (explicit raw expansion)")
+    st.markdown("##### 2nd-Order (evaluated at point)")
     st.latex(fr"f(x, y) \approx {T2_raw_latex}")
 
-    # Render LaTeX safely
+    # --- Simplified expression from sympy (final form) ---
     f_latex = sp.latex(sp.simplify(fxy))
     T1_latex = sp.latex(sp.simplify(T1_expr))
     T2_latex = sp.latex(sp.simplify(T2_expr))
