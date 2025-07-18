@@ -263,28 +263,30 @@ def show_univariate_taylor():
     st.markdown("### 📐 Taylor Expansion Summary")
     st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
     st.markdown("#### Original Function")
-    st.latex(fr"f(x, y) = {sp.latex(sp.simplify(fxy))}")
+    st.latex(fr"\small f(x, y) = {sp.latex(sp.simplify(fxy))}")
 
     col1, col2 = st.columns(2)
 
     with col1:
         st.markdown("#### 1st-Order Expansion")
         st.markdown("**Symbolic Template**")
-        st.latex(r"f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b)")
+        st.latex(r"\small f(x, y) \approx f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b)")
         st.markdown("**Evaluated at (a, b)**")
-        st.latex(fr"f(x, y) \approx {T1_raw_latex}")
+        st.latex(fr"\small f(x, y) \approx {T1_raw_latex}")
 
     with col2:
         st.markdown("#### 2nd-Order Expansion")
         st.markdown("**Symbolic Template**")
         st.latex(r"""
-            \begin{aligned}
-            f(x, y) \approx\ & f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b) \\
-            & + \frac{1}{2}f_{xx}(a, b)(x - a)^2 + f_{xy}(a, b)(x - a)(y - b) + \frac{1}{2}f_{yy}(a, b)(y - b)^2
-            \end{aligned}
+        \small
+        \begin{aligned}
+        f(x, y) \approx\ & f(a, b) + f_x(a, b)(x - a) + f_y(a, b)(y - b) \\
+        & + \frac{1}{2}f_{xx}(a, b)(x - a)^2 + f_{xy}(a, b)(x - a)(y - b) + \frac{1}{2}f_{yy}(a, b)(y - b)^2
+        \end{aligned}
         """)
         st.markdown("**Evaluated at (a, b)**")
-        st.latex(fr"f(x, y) \approx {T2_raw_latex}")
+        st.latex(fr"\small f(x, y) \approx {T2_raw_latex}")
+
 
 
     # Evaluate
