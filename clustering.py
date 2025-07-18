@@ -85,7 +85,20 @@ def clustering_ui():
         model = GaussianMixture(n_components=k, random_state=0)
         labels = model.fit_predict(X)
         centers = model.means_
-        covariances = model.covariances_ if hasattr(model, 'covariances_') else None
+        # covariances = model.covariances_ if hasattr(model, 'covariances_') else None
+
+        if hasattr(model, 'covariances_'):
+            if model.covariance_type == 'full':
+                covariances = model.covariances_  # shape: (n_components, n_features, n_features)
+            elif model.covariance_type == 'tied':
+                covariances = [model.covariances_] * model.n_components
+            elif model.covariance_type == 'diag':
+                covariances = [np.diag(cov) for cov in model.covariances_]
+            elif model.covariance_type == 'spherical':
+                covariances = [np.eye(X.shape[1]) * cov for cov in model.covariances_]
+        else:
+            covariances = None
+
 
     elif method == "Spectral":
         k = st.slider("Number of Clusters", 2, 10, 3)
@@ -113,18 +126,28 @@ def clustering_ui():
     if centers is not None:
         ax.scatter(centers[:, 0], centers[:, 1], c='black', s=100, marker='x', label='Centers')
 
-    if method == "GMM" and covariances is not None:
+    if method == "GMM" and covariances is not None and X.shape[1] == 2:
         for i in range(len(centers)):
-            cov = covariances[i]
-            if cov.ndim == 2 and cov.shape == (2, 2):
+            try:
+                # Ensure we have a proper 2x2 covariance matrix
+                cov = covariances[i]
+                if cov.ndim == 1 and cov.shape[0] == 2:
+                    cov = np.diag(cov)
+                elif cov.ndim == 0 or cov.shape == ():  # spherical scalar
+                    cov = np.eye(2) * cov
+                elif cov.ndim != 2 or cov.shape != (2, 2):
+                    continue  # Skip invalid shape
+
+                # Compute ellipse parameters
                 vals, vecs = np.linalg.eigh(cov)
                 angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
                 width, height = 2 * np.sqrt(vals)
-                ellipse = Ellipse((centers[i][0], centers[i][1]), width, height, angle,
+                ellipse = Ellipse(xy=centers[i], width=width, height=height, angle=angle,
                                 edgecolor='gray', facecolor='none', lw=1.5, ls='--')
                 ax.add_patch(ellipse)
-            else:
-                continue  # Skip if covariance is not 2x2
+            except Exception as e:
+                print(f"Skipping ellipse for component {i} due to error: {e}")
+
 
 
     ax.set_title(f"{method} Clustering Result")
