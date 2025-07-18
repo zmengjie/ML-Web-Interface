@@ -202,6 +202,15 @@ def show_univariate_taylor():
     with col2:
         st.plotly_chart(fig_taylor, use_container_width=True)
 
+    st.markdown(
+        """
+        ℹ️ **Note**: The 2nd-order Taylor expansion is a local approximation of the function centered at \\((a, b)\\).
+        For functions like \\( \\sin(x)\\cos(y) \\), it closely matches the true function only in the local neighborhood
+        around the chosen point. Globally, the approximation can diverge. For quadratic functions like \\(x^2 + y^2\\),
+        the 2nd-order Taylor expansion is exact, since the function is already a polynomial of degree 2.
+        """
+    )
+
     # --- Animation ---
     st.markdown("---")
     st.markdown("### 🎬 Animate Taylor Approximation Surface")
