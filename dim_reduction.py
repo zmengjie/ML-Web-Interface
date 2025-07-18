@@ -10,6 +10,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis as LDA
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import KernelPCA
 from sklearn.metrics import explained_variance_score
+import plotly.express as px
+import pandas as pd
 
 def dim_reduction_ui():
     st.header("🔻 Dimensionality Reduction Playground")
@@ -72,27 +74,22 @@ def dim_reduction_ui():
         X_reduced = model.fit_transform(X, y)
         st.success(f"LDA reduced to shape: {X_reduced.shape}")
 
-    # --- Projection Plot ---
-    st.subheader("🔍 2D or 3D Projection")
-    fig = plt.figure(figsize=(8, 5))
+    # --- Interactive Projection Plot ---
+    st.subheader("🔍 2D or 3D Interactive Projection")
     try:
+        df = pd.DataFrame(X_reduced, columns=[f"Component {i+1}" for i in range(X_reduced.shape[1])])
+        df['Label'] = y
+
         if X_reduced.shape[1] >= 3:
-            from mpl_toolkits.mplot3d import Axes3D
-            ax = fig.add_subplot(111, projection='3d')
-            sc = ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=y, cmap='tab10', alpha=0.8)
-            ax.set_xlabel("Component 1")
-            ax.set_ylabel("Component 2")
-            ax.set_zlabel("Component 3")
-            ax.set_title(f"{method} Projection (3D)")
+            fig = px.scatter_3d(df, x="Component 1", y="Component 2", z="Component 3", color=df['Label'].astype(str),
+                                title=f"{method} Projection (3D)", opacity=0.7)
         else:
-            ax = fig.add_subplot()
-            sc = ax.scatter(X_reduced[:, 0], X_reduced[:, 1], c=y, cmap='tab10', s=40, alpha=0.8)
-            ax.set_xlabel("Component 1")
-            ax.set_ylabel("Component 2")
-            ax.set_title(f"{method} Projection (2D)")
-        st.pyplot(fig)
-    except IndexError as e:
-        st.error(f"Index error in projection: {str(e)}")
+            fig = px.scatter(df, x="Component 1", y="Component 2", color=df['Label'].astype(str),
+                             title=f"{method} Projection (2D)", opacity=0.7)
+
+        st.plotly_chart(fig, use_container_width=True)
+    except Exception as e:
+        st.error(f"Plotting error: {str(e)}")
 
     # --- Download ---
     st.subheader("📥 Download")
@@ -103,10 +100,3 @@ def dim_reduction_ui():
         st.download_button("Download Reduced Data CSV", data=csv_bytes.getvalue(), file_name="reduced_data.csv", mime="text/csv")
     except Exception as e:
         st.error(f"Failed to generate CSV: {e}")
-
-    try:
-        img_buf = BytesIO()
-        fig.savefig(img_buf, format="png")
-        st.download_button("Download Projection Image", data=img_buf.getvalue(), file_name="projection.png", mime="image/png")
-    except Exception as e:
-        st.error(f"Failed to generate image: {e}")
