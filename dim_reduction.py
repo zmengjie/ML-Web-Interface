@@ -79,20 +79,38 @@ def dim_reduction_ui():
         st.success(f"LDA reduced to shape: {X_reduced.shape}")
 
     # --- Interactive Projection Plot ---
+# --- Interactive Projection Plot ---
     st.subheader("🔍 2D or 3D Interactive Projection")
     try:
         df = pd.DataFrame(X_reduced, columns=[f"Component {i+1}" for i in range(X_reduced.shape[1])])
         df['Label'] = y.astype(str)  # Force categorical coloring
 
         if X_reduced.shape[1] >= 3:
-            fig = px.scatter_3d(df, x="Component 1", y="Component 2", z="Component 3", color="Label",
-                                title=f"{method} Projection (3D)", opacity=0.7)
+            fig = px.scatter_3d(
+                df,
+                x="Component 1",
+                y="Component 2",
+                z="Component 3",
+                color="Label",
+                title=f"{method} Projection (3D)",
+                opacity=0.7
+            )
         elif X_reduced.shape[1] == 2:
-            fig = px.scatter(df, x="Component 1", y="Component 2", color="Label",
-                             title=f"{method} Projection (2D)", opacity=0.7)
+            fig = px.scatter(
+                df,
+                x="Component 1",
+                y="Component 2",
+                color="Label",
+                title=f"{method} Projection (2D)",
+                opacity=0.7
+            )
         elif X_reduced.shape[1] == 1:
-            fig = px.strip(df, x="Component 1", color="Label",
-                           title=f"{method} Projection (1D)")
+            fig = px.strip(
+                df,
+                x="Component 1",
+                color="Label",
+                title=f"{method} Projection (1D)"
+            )
         else:
             raise ValueError("Insufficient number of components for plotting.")
 
@@ -100,6 +118,7 @@ def dim_reduction_ui():
         st.plotly_chart(fig, use_container_width=True)
     except Exception as e:
         st.error(f"Plotting error: {str(e)}")
+
 
     # --- Download ---
     st.subheader("📥 Download")
