@@ -261,14 +261,16 @@ def show_univariate_taylor():
     )
 
     # Render LaTeX safely
-    original_latex = sp.latex(sp.simplify(fxy))
+    f_latex = sp.latex(sp.simplify(fxy))
     T1_latex = sp.latex(sp.simplify(T1_expr))
     T2_latex = sp.latex(sp.simplify(T2_expr))
 
     st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
-    st.latex(fr"\text{{Original Function: }} f(x, y) = {original_latex}")
-    st.latex(fr"\text{{1st-Order Approx: }} f(x, y) \approx {T1_latex}")
-    st.latex(fr"\text{{2nd-Order Approx: }} f(x, y) \approx {T2_latex}")
+    st.markdown("#### Original Function")
+    st.latex(fr"f(x, y) = {f_latex}")
+    st.markdown("#### Taylor Expansions at Specified Point")
+    st.latex(fr"f(x, y) \approx {T1_latex}")
+    st.latex(fr"f(x, y) \approx {T2_latex}")
 
     # Evaluate
     f_np = sp.lambdify((x, y), fxy, "numpy")
