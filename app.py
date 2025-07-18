@@ -1349,8 +1349,10 @@ elif mode == "🧠 Unsupervised Learning":
     unsup_option = st.sidebar.radio("Select Unsupervised Module", [
         "Clustering",
         "Dimensionality Reduction",
-        # "Anomaly Detection",
-        # Add more modules as needed
+        "Anomaly Detection",
+        # "Topic Modeling",
+        # "Association Rule Mining",
+        # "Autoencoders",
     ])
 
     # Render selected module
@@ -1361,6 +1363,10 @@ elif mode == "🧠 Unsupervised Learning":
     elif unsup_option == "Dimensionality Reduction":
         from dim_reduction import dim_reduction_ui
         dim_reduction_ui()
+
+    elif unsup_option == "Anomaly Detection":
+        from anomaly_detection import anomaly_detection_ui
+        anomaly_detection_ui()
 
 
 
