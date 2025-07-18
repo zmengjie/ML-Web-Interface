@@ -253,20 +253,24 @@ def show_univariate_taylor():
     grad_val = [float(g.subs({x: a_input, y: b_input})) for g in grad]
     hess_val = [[float(h.subs({x: a_input, y: b_input})) for h in row] for row in hess]
 
-    T1 = f_a + grad_val[0]*(x - a_input) + grad_val[1]*(y - b_input)
-    T2 = T1 + 0.5 * (
+    T1_expr = f_a + grad_val[0]*(x - a_input) + grad_val[1]*(y - b_input)
+    T2_expr = T1_expr + 0.5 * (
         hess_val[0][0]*(x - a_input)**2 +
         2*hess_val[0][1]*(x - a_input)*(y - b_input) +
         hess_val[1][1]*(y - b_input)**2
     )
 
-    st.markdown(f"### ✏️ Expansion at ${{(x, y)}} = ({a_input}, {b_input})$")
-    st.latex(f"f(x, y) \approx {sp.latex(T1)}")
-    st.latex(f"f(x, y) \approx {sp.latex(T2)}")
+    # Render LaTeX safely
+    T1_latex = sp.latex(sp.simplify(T1_expr))
+    T2_latex = sp.latex(sp.simplify(T2_expr))
+
+    st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
+    st.latex(fr"f(x, y) \approx {T1_latex}")
+    st.latex(fr"f(x, y) \approx {T2_latex}")
 
     # Evaluate
     f_np = sp.lambdify((x, y), fxy, "numpy")
-    T2_np = sp.lambdify((x, y), T2, "numpy")
+    T2_np = sp.lambdify((x, y), T2_expr, "numpy")
 
     X, Y = np.meshgrid(np.linspace(xlim[0], xlim[1], 100), np.linspace(ylim[0], ylim[1], 100))
     Z_true = f_np(X, Y)
@@ -300,7 +304,7 @@ def show_univariate_taylor():
         since the function is already a polynomial of degree 2.
         """
     )
-
+    
     # --- Animation ---
     st.markdown("---")
     st.markdown("### 🎬 Animate Taylor Approximation Surface")
