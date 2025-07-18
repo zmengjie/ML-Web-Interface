@@ -61,6 +61,15 @@ def clustering_ui():
         centers = model.cluster_centers_
 
         st.subheader("📈 Elbow & Silhouette Plot")
+        with st.expander("❓ How to read this plot?"):
+            st.markdown("""
+            - The **blue line** shows **WCSS (Within-Cluster Sum of Squares)**: lower values mean more compact clusters.
+            - Look for the **'elbow point'**: where the curve flattens. It's a good candidate for the optimal number of clusters.
+            - The **orange line** shows **Silhouette Score** (range −1 to 1): higher values indicate better-separated clusters.
+            - Look for the **peak**: it suggests the best separation.
+            
+            Use both together: pick a k where WCSS flattens and Silhouette Score is high.
+            """)
         wcss, sils = [], []
         for i in range(2, 11):
             km = KMeans(n_clusters=i, random_state=0).fit(X)
