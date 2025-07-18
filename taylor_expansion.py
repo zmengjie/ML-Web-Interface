@@ -246,13 +246,14 @@ def show_univariate_taylor():
 
     # --- Symbolic Taylor Expansion (parameterized by a, b)
     T2_symbolic = (
-        fxy.subs({x: x, y: y})
+        fxy.subs({x: a, y: b})
         + grad[0].subs({x: a, y: b}) * (x - a)
         + grad[1].subs({x: a, y: b}) * (y - b)
         + 0.5 * hess[0][0].subs({x: a, y: b}) * (x - a)**2
         + hess[0][1].subs({x: a, y: b}) * (x - a)*(y - b)
         + 0.5 * hess[1][1].subs({x: a, y: b}) * (y - b)**2
     )
+
     T2_func = sp.lambdify((x, y, a, b), T2_symbolic, "numpy")
     def T2_np(X, Y, a_val, b_val):
         return T2_func(X, Y, a_val, b_val)
