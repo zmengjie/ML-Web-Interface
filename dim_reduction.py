@@ -74,7 +74,7 @@ def dim_reduction_ui():
 
     # --- Projection Plot ---
     st.subheader("🔍 2D or 3D Projection")
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     try:
         if X_reduced.shape[1] >= 3:
             from mpl_toolkits.mplot3d import Axes3D
