@@ -11,14 +11,14 @@ from sklearn.metrics import (
     silhouette_score, calinski_harabasz_score, davies_bouldin_score
 )
 from matplotlib.patches import Ellipse
-
+import pandas as pd
+from io import BytesIO
 
 def clustering_ui():
     st.header("🔹 Clustering Playground")
 
     # --- Dataset selection ---
     dataset_choice = st.selectbox("Select a dataset", ["Blobs", "Moons", "Iris"])
-
     dataset_explanations = {
         "Blobs": "🔵 **Blobs**: Artificial Gaussian clusters, good for testing spherical cluster algorithms.",
         "Moons": "🌙 **Moons**: Two interleaving half-circles. Ideal for non-convex clustering tests.",
@@ -29,11 +29,9 @@ def clustering_ui():
     if dataset_choice == "Blobs":
         n_samples = st.slider("Number of Samples", 100, 1000, 300, 50)
         X, _ = make_blobs(n_samples=n_samples, centers=4, random_state=42)
-
     elif dataset_choice == "Moons":
         n_samples = st.slider("Number of Samples", 100, 1000, 300, 50)
         X, _ = make_moons(n_samples=n_samples, noise=0.1, random_state=42)
-
     elif dataset_choice == "Iris":
         iris = load_iris()
         X = iris.data[:, :2]
@@ -62,10 +60,24 @@ def clustering_ui():
         labels = model.fit_predict(X)
         centers = model.cluster_centers_
 
+        st.subheader("📈 Elbow & Silhouette Plot")
+        wcss, sils = [], []
+        for i in range(2, 11):
+            km = KMeans(n_clusters=i, random_state=0).fit(X)
+            wcss.append(km.inertia_)
+            sils.append(silhouette_score(X, km.labels_))
+        fig_k, ax_k = plt.subplots()
+        ax_k.plot(range(2, 11), wcss, label="WCSS")
+        ax_k.plot(range(2, 11), sils, label="Silhouette")
+        ax_k.set_title("K Selection Metrics")
+        ax_k.legend()
+        st.pyplot(fig_k)
+
     elif method == "DBSCAN":
         eps = st.slider("Epsilon (eps)", 0.1, 2.0, 0.5, 0.1)
         min_samples = st.slider("min_samples", 2, 20, 5)
-        model = DBSCAN(eps=eps, min_samples=min_samples)
+        metric = st.selectbox("Distance Metric", ["euclidean", "manhattan", "cosine"], key="db_metric")
+        model = DBSCAN(eps=eps, min_samples=min_samples, metric=metric)
         labels = model.fit_predict(X)
 
     elif method == "Agglomerative":
@@ -85,27 +97,23 @@ def clustering_ui():
         model = GaussianMixture(n_components=k, random_state=0)
         labels = model.fit_predict(X)
         centers = model.means_
-        # covariances = model.covariances_ if hasattr(model, 'covariances_') else None
 
         if hasattr(model, 'covariances_'):
             if model.covariance_type == 'full':
-                covariances = model.covariances_  # shape: (n_components, n_features, n_features)
+                covariances = model.covariances_
             elif model.covariance_type == 'tied':
                 covariances = [model.covariances_] * model.n_components
             elif model.covariance_type == 'diag':
                 covariances = [np.diag(cov) for cov in model.covariances_]
             elif model.covariance_type == 'spherical':
                 covariances = [np.eye(X.shape[1]) * cov for cov in model.covariances_]
-        else:
-            covariances = None
-
 
     elif method == "Spectral":
         k = st.slider("Number of Clusters", 2, 10, 3)
         model = SpectralClustering(n_clusters=k, affinity='nearest_neighbors', assign_labels='kmeans')
         labels = model.fit_predict(X)
 
-    # --- Evaluation Metrics ---
+    # --- Evaluation ---
     unique_labels = len(set(labels)) - (1 if -1 in labels else 0)
     if unique_labels > 1:
         sil = silhouette_score(X, labels)
@@ -115,41 +123,46 @@ def clustering_ui():
     else:
         st.warning("Clustering metrics not available (only one cluster or all noise)")
 
-    # --- Plotting ---
+    # --- Cluster Summary ---
+    st.subheader("📋 Cluster Summary")
+    for label in np.unique(labels):
+        count = np.sum(labels == label)
+        centroid = np.mean(X[labels == label], axis=0)
+        st.write(f"Cluster {label}: {count} points, centroid at {np.round(centroid, 2)}")
+
+    # --- Plot ---
     st.markdown("---")
     st.subheader("📊 Clustering Result")
-    st.caption("Each point is colored based on cluster label. Centers are marked (×) and ellipses represent uncertainty (for GMM).")
-
     fig, ax = plt.subplots()
     ax.scatter(X[:, 0], X[:, 1], c=labels, cmap='tab10', s=40, label="Data")
-
     if centers is not None:
         ax.scatter(centers[:, 0], centers[:, 1], c='black', s=100, marker='x', label='Centers')
-
     if method == "GMM" and covariances is not None and X.shape[1] == 2:
         for i in range(len(centers)):
             try:
-                # Ensure we have a proper 2x2 covariance matrix
                 cov = covariances[i]
                 if cov.ndim == 1 and cov.shape[0] == 2:
                     cov = np.diag(cov)
-                elif cov.ndim == 0 or cov.shape == ():  # spherical scalar
-                    cov = np.eye(2) * cov
-                elif cov.ndim != 2 or cov.shape != (2, 2):
-                    continue  # Skip invalid shape
-
-                # Compute ellipse parameters
+                elif cov.ndim == 0 or cov.shape == (): cov = np.eye(2) * cov
+                elif cov.ndim != 2 or cov.shape != (2, 2): continue
                 vals, vecs = np.linalg.eigh(cov)
                 angle = np.degrees(np.arctan2(*vecs[:, 0][::-1]))
                 width, height = 2 * np.sqrt(vals)
                 ellipse = Ellipse(xy=centers[i], width=width, height=height, angle=angle,
-                                edgecolor='gray', facecolor='none', lw=1.5, ls='--')
+                                  edgecolor='gray', facecolor='none', lw=1.5, ls='--')
                 ax.add_patch(ellipse)
             except Exception as e:
-                print(f"Skipping ellipse for component {i} due to error: {e}")
-
-
-
+                print(f"Skipping ellipse for component {i}: {e}")
     ax.set_title(f"{method} Clustering Result")
     ax.legend()
     st.pyplot(fig)
+
+    # --- Downloadable Outputs ---
+    st.subheader("📅 Download Results")
+    df_out = pd.DataFrame(X, columns=["Feature 1", "Feature 2"])
+    df_out["Cluster"] = labels
+    csv = df_out.to_csv(index=False).encode('utf-8')
+    st.download_button("Download Clustered Data", csv, "clustered_data.csv", "text/csv")
+    buf = BytesIO()
+    fig.savefig(buf, format="png")
+    st.download_button("Download Plot", buf.getvalue(), "cluster_plot.png", "image/png")
