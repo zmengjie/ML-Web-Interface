@@ -261,6 +261,10 @@ def show_univariate_taylor():
 
     # --- Display Side-by-Side Summary ---
     st.markdown("### 📐 Taylor Expansion Summary")
+    st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
+    st.markdown("#### Original Function")
+    st.latex(fr"f(x, y) = {sp.latex(sp.simplify(fxy))}")
+
     col1, col2 = st.columns(2)
 
     with col1:
@@ -281,15 +285,6 @@ def show_univariate_taylor():
         """)
         st.markdown("**Evaluated at (a, b)**")
         st.latex(fr"f(x, y) \approx {T2_raw_latex}")
-
-    # --- Additional Context Section ---
-    st.markdown(fr"""### ✏️ Expansion at \((x, y) = ({a_input:.2f}, {b_input:.2f})\)""")
-    st.markdown("#### Original Function")
-    st.latex(fr"f(x, y) = {sp.latex(sp.simplify(fxy))}")
-
-    st.markdown("#### Evaluated Expansions")
-    st.latex(fr"f(x, y) \approx {sp.latex(sp.simplify(T1_expr))}")
-    st.latex(fr"f(x, y) \approx {sp.latex(sp.simplify(T2_expr))}")
 
 
     # Evaluate
