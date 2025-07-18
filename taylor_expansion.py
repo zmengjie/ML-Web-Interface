@@ -131,14 +131,19 @@ def show_univariate_taylor():
 
     st.markdown("### 🌐 Multivariable Taylor Expansion (2D Preview)")
 
-    multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock"])
+    multi_func = st.selectbox("Choose function:", ["Quadratic Bowl", "Rosenbrock", "sin(x)cos(y)", "exp(-x² - y²)"])
 
     x, y, a, b = sp.symbols('x y a b')
 
     if multi_func == "Quadratic Bowl":
         fxy = x**2 + y**2
-    else:
+    elif multi_func == "Rosenbrock":
         fxy = (1 - x)**2 + 100 * (y - x**2)**2
+    elif multi_func == "sin(x)cos(y)":
+        fxy = sp.sin(x) * sp.cos(y)
+    elif multi_func == "exp(-x² - y²)":
+        fxy = sp.exp(-(x**2 + y**2))
+
 
     # Derivatives
     grad = [sp.diff(fxy, v) for v in (x, y)]
