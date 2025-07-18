@@ -158,7 +158,7 @@ def clustering_ui():
     st.pyplot(fig)
 
     # --- Downloadable Outputs ---
-    st.subheader("📅 Download Results")
+    st.subheader("📥 Download Results")
     df_out = pd.DataFrame(X, columns=["Feature 1", "Feature 2"])
     df_out["Cluster"] = labels
     csv = df_out.to_csv(index=False).encode('utf-8')
