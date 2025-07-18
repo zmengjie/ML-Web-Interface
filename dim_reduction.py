@@ -45,7 +45,7 @@ def dim_reduction_ui():
     method = st.selectbox("Choose a Reduction Technique", ["PCA", "t-SNE", "LDA", "KernelPCA"])  # UMAP removed
 
     if method == "PCA":
-        n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
+        n_components = st.slider("Number of Components", 2, X.shape[1], min(2, X.shape[1]))
         model = PCA(n_components=n_components)
         X_reduced = model.fit_transform(X)
         st.success(f"PCA reduced to shape: {X_reduced.shape}")
@@ -66,7 +66,7 @@ def dim_reduction_ui():
         st.success("t-SNE reduced to 2D")
 
     elif method == "KernelPCA":
-        n_components = st.slider("Number of Components", 2, min(5, X.shape[1]), 2)
+        n_components = st.slider("Number of Components", 2, X.shape[1], min(2, X.shape[1]))
         kernel = st.selectbox("Kernel Function", ["linear", "poly", "rbf", "sigmoid", "cosine"])
         kpca = KernelPCA(n_components=n_components, kernel=kernel, fit_inverse_transform=True)
         X_reduced = kpca.fit_transform(X)
@@ -87,9 +87,14 @@ def dim_reduction_ui():
         if X_reduced.shape[1] >= 3:
             fig = px.scatter_3d(df, x="Component 1", y="Component 2", z="Component 3", color="Label",
                                 title=f"{method} Projection (3D)", opacity=0.7)
-        else:
+        elif X_reduced.shape[1] == 2:
             fig = px.scatter(df, x="Component 1", y="Component 2", color="Label",
                              title=f"{method} Projection (2D)", opacity=0.7)
+        elif X_reduced.shape[1] == 1:
+            fig = px.strip(df, x="Component 1", color="Label",
+                           title=f"{method} Projection (1D)")
+        else:
+            raise ValueError("Insufficient number of components for plotting.")
 
         fig.update_traces(marker=dict(size=5, line=dict(width=0.5, color='DarkSlateGrey')))
         st.plotly_chart(fig, use_container_width=True)
