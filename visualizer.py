@@ -103,7 +103,9 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
         mode='lines+markers',
         line=dict(color='red', width=4),
         marker=dict(size=4),
-        name='Descent Path'
+        name='Descent Path',
+        hoverinfo='x+y+z+text',
+        text=['Step {}'.format(i) for i in range(len(path))]
     ))
 
     # Taylor surfaces with fading
