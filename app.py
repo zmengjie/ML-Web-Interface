@@ -145,7 +145,7 @@ elif mode == "🌋 Optimization Playground":
     # 🪄 Optimizer Category Info Block (Outside main expander)
     with st.expander("🧠 Optimizer Category Info & Usage Tips", expanded=False):
         st.markdown("""
-        ### 🤖 Optimizer Categories
+        ### 🤖 Optimizer Categories:
 
         **Gradient-based Optimizers** use derivatives (gradients) to guide updates:
 
