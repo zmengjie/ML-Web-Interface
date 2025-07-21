@@ -917,31 +917,54 @@ elif mode == "🌋 Optimization Playground":
                 Z_t2 = None
 
                 
+        # plot_3d_descent(
+        #     x_vals=x_vals,
+        #     y_vals=y_vals,
+        #     Z=Z,
+        #     path=path,
+        #     Z_path=Z_path,
+        #     Z_t1=Z_t1,
+        #     Z_t2=Z_t2,
+        #     show_taylor=show_taylor,
+        #     show_2nd=show_2nd,
+        #     expansion_point=expansion_point,
+        #     f_func=f_func
+        # )
+
+
         plot_3d_descent(
-            x_vals=x_vals,
-            y_vals=y_vals,
-            Z=Z,
-            path=path,
-            Z_path=Z_path,
-            Z_t1=Z_t1,
-            Z_t2=Z_t2,
+            x_vals, y_vals, Z, path, Z_path,
+            Z_t1=Z_t1 if show_taylor else None,
+            Z_t2=Z_t2 if show_taylor and show_2nd else None,
             show_taylor=show_taylor,
             show_2nd=show_2nd,
             expansion_point=expansion_point,
-            f_func=f_func
+            f_func=f_func,
+            grad_func=grad_f,
+            hess_func=hessian_f
         )
 
         st.markdown("### 🗺️ 2D View")
+        # plot_2d_contour(
+        #     x_vals=x_vals,
+        #     y_vals=y_vals,
+        #     Z=Z,
+        #     path=path,
+        #     g_funcs=g_funcs if constraints else None,
+        #     X=X, Y=Y,
+        #     Z_t2=Z_t2,
+        #     show_2nd=show_2nd,
+        #     expansion_point=expansion_point
+        # )
+
         plot_2d_contour(
-            x_vals=x_vals,
-            y_vals=y_vals,
-            Z=Z,
-            path=path,
-            g_funcs=g_funcs if constraints else None,
-            X=X, Y=Y,
-            Z_t2=Z_t2,
+            x_vals, y_vals, Z, path,
+            Z_t2=Z_t2 if show_taylor and show_2nd else None,
             show_2nd=show_2nd,
-            expansion_point=expansion_point
+            expansion_point=expansion_point,
+            f_func=f_func,
+            grad_func=grad_f,
+            hess_func=hessian_f
         )
 
         if show_taylor:
