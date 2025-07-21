@@ -931,18 +931,60 @@ elif mode == "🌋 Optimization Playground":
         #     f_func=f_func
         # )
 
+        st.subheader("🛠️ Pre-call debug for plot_3d_descent")
 
-        plot_3d_descent(
-            x_vals, y_vals, Z, path, Z_path,
-            Z_t1=Z_t1 if show_taylor else None,
-            Z_t2=Z_t2 if show_taylor and show_2nd else None,
-            show_taylor=show_taylor,
-            show_2nd=show_2nd,
-            expansion_point=expansion_point,
-            f_func=f_func,
-            grad_func=grad_f,
-            hess_func=hessian_f
-        )
+        try:
+            st.write("x_vals shape:", np.shape(x_vals))
+            st.write("y_vals shape:", np.shape(y_vals))
+            st.write("Z shape:", np.shape(Z))
+            st.write("path length:", len(path))
+            st.write("Z_path length:", len(Z_path))
+            st.write("expansion_point:", expansion_point)
+            st.write("f_func callable:", callable(f_func))
+            st.write("grad_func callable:", callable(grad_f))
+            st.write("hess_func callable:", callable(hessian_f))
+            st.write("Z_t1 type/shape:", type(Z_t1), np.shape(Z_t1) if Z_t1 is not None else None)
+            st.write("Z_t2 type/shape:", type(Z_t2), np.shape(Z_t2) if Z_t2 is not None else None)
+        except Exception as e:
+            st.error(f"💥 Error while inspecting values: {e}")
+
+
+        try:
+            plot_3d_descent(
+                x_vals=x_vals,
+                y_vals=y_vals,
+                Z=Z,
+                path=path,
+                Z_path=Z_path,
+                Z_t1=Z_t1,
+                Z_t2=Z_t2,
+                show_taylor=show_taylor,
+                show_2nd=show_2nd,
+                expansion_point=expansion_point,
+                f_func=f_func,
+                grad_func=grad_f,
+                hess_func=hessian_f
+            )
+        except Exception as e:
+            st.error(f"🔥 plot_3d_descent failed: {e}")
+
+
+        # plot_3d_descent(
+        #     x_vals=x_vals,
+        #     y_vals=y_vals,
+        #     Z=Z,
+        #     path=path,
+        #     Z_path=Z_path,
+        #     Z_t1=Z_t1,
+        #     Z_t2=Z_t2,
+        #     show_taylor=show_taylor,
+        #     show_2nd=show_2nd,
+        #     expansion_point=expansion_point,
+        #     f_func=f_func,
+        #     grad_func=grad_f,
+        #     hess_func=hessian_f
+        # )
+
 
         st.markdown("### 🗺️ 2D View")
         # plot_2d_contour(
