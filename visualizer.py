@@ -94,8 +94,8 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
     # Base surface
     fig_3d.add_trace(go.Surface(
         z=Z, x=x_vals, y=y_vals,
-        colorscale='Viridis', opacity=0.7,
-        name="Function Surface"
+        colorscale='Greens', opacity=0.7,
+        name="🟢 True Surface", showscale=False
     ))
 
     # Descent path
@@ -113,8 +113,8 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
     if show_taylor and Z_t1 is not None:
         fig_3d.add_trace(go.Surface(
             z=Z_t1, x=x_vals, y=y_vals,
-            colorscale='Reds', opacity=0.6,
-            line=dict(width=2, color='black'),
+            colorscale='Reds', opacity=0.5,
+            # line=dict(width=2, color='black'),
             name="1st-Order Taylor"
         ))
     # if show_taylor and show_2nd and Z_t2 is not None and expansion_point is not None:
@@ -148,12 +148,12 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
                         raise ValueError(f"Z_t2 shape mismatch: {Z_t2.shape} vs expected {(len(y_vals), len(x_vals))}")
                 fig_3d.add_trace(go.Surface(
                     z=Z_t2, x=x_vals, y=y_vals,
-                    colorscale='RdBu',
+                    colorscale='Blues',
                     opacity=0.4,
-                    cmin=np.min(Z_t2),
-                    cmax=np.max(Z_t2),
-                    line=dict(width=2, color='black'),
-                    name="2nd-Order Taylor"
+                    # cmin=np.min(Z_t2),
+                    # cmax=np.max(Z_t2),
+                    # line=dict(width=2, color='black'),
+                    name="2nd-Order Taylor", showscale=False
                 ))
             except Exception as e:
                 st.warning(f"⚠️ Skipped 2nd-order Taylor surface: {e}")
