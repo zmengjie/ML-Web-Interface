@@ -112,7 +112,8 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
     if show_taylor and Z_t1 is not None:
         fig_3d.add_trace(go.Surface(
             z=Z_t1, x=x_vals, y=y_vals,
-            colorscale='Reds', opacity=0.5,
+            colorscale='Reds', opacity=0.6,
+            line=dict(width=2, color='black'),
             name="1st-Order Taylor"
         ))
     # if show_taylor and show_2nd and Z_t2 is not None and expansion_point is not None:
@@ -150,6 +151,7 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
                     opacity=0.4,
                     cmin=np.min(Z_t2),
                     cmax=np.max(Z_t2),
+                    line=dict(width=2, color='black'),
                     name="2nd-Order Taylor"
                 ))
             except Exception as e:
@@ -170,7 +172,8 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
             text=["(a, b)"],
             textposition="bottom right",
             textfont=dict(size=12),
-            name="Expansion Point"
+            name="Expansion Point".
+            hoverinfo='text+x+y+z'
         ))
 
         if len(path) > 1:
@@ -188,7 +191,8 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
         scene=dict(xaxis_title="x", yaxis_title="y", zaxis_title="f(x, y)"),
         height=600,
         margin=dict(l=60, r=40, b=40, t=50),
-        legend=dict(x=0.7, y=0.9)
+        legend=dict(x=0.7, y=0.9),
+        hovermode='closest'
     )
 
     st.markdown("""
