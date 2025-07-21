@@ -153,7 +153,7 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
                     # cmin=np.min(Z_t2),
                     # cmax=np.max(Z_t2),
                     # line=dict(width=2, color='black'),
-                    name="2nd-Order Taylor", showscale=False
+                    name="2nd-Order Taylor"
                 ))
             except Exception as e:
                 st.warning(f"⚠️ Skipped 2nd-order Taylor surface: {e}")
@@ -193,8 +193,17 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
         height=600,
         margin=dict(l=60, r=40, b=40, t=50),
         legend=dict(x=0.7, y=0.9),
-        hovermode='closest'
+        hovermode='closest',
+        
+        # 👉 Customize hoverlabel style
+        hoverlabel=dict(
+            bgcolor="black",   # background color
+            font_size=12,
+            font_color="white",  # text color
+            bordercolor="white"  # border
+        )
     )
+
 
     st.markdown("""
     ### 🧠 Teaching Tip
