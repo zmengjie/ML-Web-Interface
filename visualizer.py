@@ -199,7 +199,7 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
         hoverlabel=dict(
             bgcolor="black",   # background color
             font_size=12,
-            font_color="white",  # text color
+            font_color="black",  # text color
             bordercolor="white"  # border
         )
     )
