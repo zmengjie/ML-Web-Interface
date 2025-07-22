@@ -1415,8 +1415,8 @@ elif mode == "🧠 Unsupervised Learning":
         "Clustering",
         "Dimensionality Reduction",
         "Anomaly Detection",
-        # "Topic Modeling",
-        # "Association Rule Mining",
+        "Topic Modeling",
+        "Association Rule Mining",
         # "Autoencoders",
     ])
 
@@ -1432,6 +1432,14 @@ elif mode == "🧠 Unsupervised Learning":
     elif unsup_option == "Anomaly Detection":
         from anomaly_detection import anomaly_detection_ui
         anomaly_detection_ui()
+
+    elif unsup_option == "Topic Modeling":
+        from topic_modeling import topic_modeling_ui
+        topic_modeling_ui()
+
+    elif unsup_option == "Association Rule Mining":
+        from association_rules import association_rules_ui
+        association_rules_ui()
 
 
 
