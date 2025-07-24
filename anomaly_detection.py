@@ -64,7 +64,6 @@
 #     st.write(data['Anomaly'].value_counts())
 
 
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -239,6 +238,7 @@ def anomaly_detection_ui():
             st.error("Duration anomaly detection is only applicable for time series data.")
             return
 
+    st.write(f"Shape of predictions: {preds.shape}")
     data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
 
     st.subheader("📊 Visualization")
