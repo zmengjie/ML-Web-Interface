@@ -77,12 +77,7 @@ from sklearn.metrics import pairwise_distances
 from scipy.stats import zscore
 from sklearn.decomposition import PCA
 
-def anomaly_detection_ui():
-    st.header("🔍 Anomaly Detection")
-
-    # Sample datasets
-    dataset_name = st.selectbox("Select Dataset", ["Synthetic", "Wine", "Iris", "Time Series", "MNIST", "KDDCup", "UCI Adult", "Titanic", "Fashion MNIST", "Air Quality"])
-
+def load_datasets(dataset_name):
     if dataset_name == "Synthetic":
         from sklearn.datasets import make_blobs
         X, _ = make_blobs(n_samples=300, centers=1, cluster_std=0.6, random_state=42)
@@ -126,7 +121,6 @@ def anomaly_detection_ui():
         data['Label'] = np.random.choice([0, 1], size=1000, p=[0.95, 0.05])
         dataset_type = "Tabular"
     elif dataset_name == "UCI Adult":
-        # Fetch UCI Adult dataset
         data = fetch_openml(name="adult", version=2)
         df = data.frame
         df['Label'] = df['class']
@@ -144,19 +138,30 @@ def anomaly_detection_ui():
         data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))  # Flatten images
         dataset_type = "Image"
     elif dataset_name == "Air Quality":
-        # Fetching Air Quality data (time series)
         url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/Air%20Quality.zip"
         df = pd.read_csv(url, header=0, sep=";", decimal=",")
         df = df.dropna(axis=0, how="any")  # Remove rows with NaN
         dataset_type = "Time Series"
+    
+    return data, dataset_type
+
+
+def anomaly_detection_ui():
+    st.header("🔍 Anomaly Detection")
+
+    # Dataset selection
+    dataset_name = st.selectbox("Select Dataset", ["Synthetic", "Wine", "Iris", "Time Series", "MNIST", "KDDCup", "UCI Adult", "Titanic", "Fashion MNIST", "Air Quality"])
+
+    data, dataset_type = load_datasets(dataset_name)
 
     st.write(f"Original Data Shape: {data.shape}")
     st.write(f"Dataset Type: {dataset_type}")
     features = st.multiselect("Select features for detection", data.columns[:-1], default=list(data.columns[:2]))
-
+    
     X = data[features].values
     X = StandardScaler().fit_transform(X)
 
+    # Method selection for anomaly detection
     method = st.selectbox("Choose Detection Method", ["Isolation Forest", "One-Class SVM", "Local Outlier Factor", "Point Anomaly", "Contextual Anomaly", "Duration Anomaly"])
 
     # Method explanations
@@ -217,7 +222,8 @@ def anomaly_detection_ui():
         anomalies = np.where(np.abs(z_scores) > threshold, "Anomaly", "Normal")
         preds = anomalies
 
-    data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
+    # Add anomaly detection results to the data
+    data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")  # Ensuring compatibility for other methods
 
     st.subheader("📊 Visualization")
     fig = px.scatter(data, x=features[0], y=features[1], color='Anomaly', symbol='Anomaly',
