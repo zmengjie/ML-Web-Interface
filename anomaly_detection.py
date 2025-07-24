@@ -73,14 +73,12 @@ from sklearn.svm import OneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.preprocessing import StandardScaler
 import plotly.express as px
-from sklearn.datasets import make_classification, load_digits, fetch_openml
-from sklearn.metrics import pairwise_distances
 from scipy.stats import zscore
-from sklearn.decomposition import PCA
-
+from sklearn.datasets import load_iris, load_wine, fetch_openml
+from sklearn.datasets import make_blobs
 
 def load_datasets(dataset_name):
-    # Loading datasets
+    """Loading datasets dynamically based on the selection"""
     if dataset_name == "Synthetic":
         from sklearn.datasets import make_blobs
         X, _ = make_blobs(n_samples=300, centers=1, cluster_std=0.6, random_state=42)
@@ -106,13 +104,11 @@ def load_datasets(dataset_name):
         dataset_type = "Tabular"
         
     elif dataset_name == "Time Series":
-        # Generate synthetic time series data
         time = np.arange(0, 100)
         signal = np.sin(time) + 0.1 * np.random.randn(100)
         data = pd.DataFrame({"Time": time, "Signal": signal})
-        # Introduce some anomalies
-        data.iloc[20:25, 1] = 3  # Anomaly in the signal
-        data.iloc[60:65, 1] = -3  # Another anomaly
+        data.iloc[20:25, 1] = 3  
+        data.iloc[60:65, 1] = -3  
         dataset_type = "Time Series"
         
     elif dataset_name == "MNIST":
@@ -145,17 +141,16 @@ def load_datasets(dataset_name):
     elif dataset_name == "Fashion MNIST":
         from tensorflow.keras.datasets import fashion_mnist
         (X_train, _), (_, _) = fashion_mnist.load_data()
-        data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))  # Flatten images
+        data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))  
         dataset_type = "Image"
         
     elif dataset_name == "Air Quality":
         url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/Air%20Quality.zip"
         df = pd.read_csv(url, header=0, sep=";", decimal=",")
-        df = df.dropna(axis=0, how="any")  # Remove rows with NaN
+        df = df.dropna(axis=0, how="any")  
         dataset_type = "Time Series"
     
     return data, dataset_type
-
 
 def anomaly_detection_ui():
     st.header("🔍 Anomaly Detection")
@@ -231,7 +226,6 @@ def anomaly_detection_ui():
             return
     elif method == "Duration Anomaly":
         if dataset_type == "Time Series":
-            # Duration anomaly detection (for time-series only)
             if 'Signal' in data.columns:
                 signal = data['Signal'].values
                 threshold = 2.0  # Example threshold for anomaly
@@ -254,5 +248,6 @@ def anomaly_detection_ui():
 
     st.subheader("📋 Anomaly Counts")
     st.write(data['Anomaly'].value_counts())
+
 
 
