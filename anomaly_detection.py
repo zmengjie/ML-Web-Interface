@@ -63,6 +63,7 @@
 #     st.subheader("📋 Anomaly Counts")
 #     st.write(data['Anomaly'].value_counts())
 
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -225,4 +226,5 @@ def anomaly_detection_ui():
 
     st.subheader("📋 Anomaly Counts")
     st.write(data['Anomaly'].value_counts())
+
 
