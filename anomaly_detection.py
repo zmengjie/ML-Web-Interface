@@ -86,6 +86,11 @@ def load_datasets(dataset_name):
     
     return data, dataset_type
 
+def apply_pca_for_plotting(data, features):
+    st.warning("High-dimensional data detected. Reducing to 2D using PCA for visualization.")
+    X_proj = PCA(n_components=2).fit_transform(data[features])
+    return X_proj[:, 0], X_proj[:, 1]
+
 def anomaly_detection_ui():
     st.header("🔍 Anomaly Detection")
 
@@ -243,12 +248,16 @@ def anomaly_detection_ui():
     if dataset_type == "Time Series" and "Time" in data.columns and len(features) == 1:
         fig = px.line(data, x="Time", y=features[0], color='Anomaly', title=f"Anomaly Detection using {method}")
     else:
-        fig = px.scatter(data, x=features[0], y=features[1], color='Anomaly', symbol='Anomaly',
-                         title=f"Anomaly Detection using {method}")
+        if len(features) > 2:
+            x_vals, y_vals = apply_pca_for_plotting(data, features)
+        else:
+            x_vals, y_vals = data[features[0]], data[features[1]]
+
+        fig = px.scatter(x=x_vals, y=y_vals, color=data['Anomaly'], symbol=data['Anomaly'],
+                         title=f"Anomaly Detection using {method}",
+                         labels={"x": "PCA 1", "y": "PCA 2"} if len(features) > 2 else None)
+
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📋 Anomaly Counts")
     st.write(data['Anomaly'].value_counts())
-
-
-
