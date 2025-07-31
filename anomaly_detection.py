@@ -1,69 +1,3 @@
-# import streamlit as st
-# import pandas as pd
-# import numpy as np
-# from sklearn.ensemble import IsolationForest
-# from sklearn.svm import OneClassSVM
-# from sklearn.neighbors import LocalOutlierFactor
-# from sklearn.preprocessing import StandardScaler
-# import plotly.express as px
-
-
-# def anomaly_detection_ui():
-#     st.header("🔍 Anomaly Detection")
-
-#     # Sample datasets
-#     dataset_name = st.selectbox("Select Dataset", ["Synthetic", "Wine", "Iris"])
-
-#     if dataset_name == "Synthetic":
-#         from sklearn.datasets import make_blobs
-#         X, _ = make_blobs(n_samples=300, centers=1, cluster_std=0.6, random_state=42)
-#         outliers = np.random.uniform(low=-6, high=6, size=(20, 2))
-#         X = np.vstack([X, outliers])
-#         y_true = np.array([1]*300 + [-1]*20)
-#         data = pd.DataFrame(X, columns=["Feature 1", "Feature 2"])
-#         data['Label'] = y_true
-
-#     elif dataset_name == "Wine":
-#         from sklearn.datasets import load_wine
-#         raw = load_wine()
-#         data = pd.DataFrame(raw.data, columns=raw.feature_names)
-#         data['Label'] = raw.target
-
-#     elif dataset_name == "Iris":
-#         from sklearn.datasets import load_iris
-#         raw = load_iris()
-#         data = pd.DataFrame(raw.data, columns=raw.feature_names)
-#         data['Label'] = raw.target
-
-#     st.write(f"Original Data Shape: {data.shape}")
-#     features = st.multiselect("Select features for detection", data.columns[:-1], default=list(data.columns[:2]))
-
-#     X = data[features].values
-#     X = StandardScaler().fit_transform(X)
-
-#     method = st.selectbox("Choose Detection Method", ["Isolation Forest", "One-Class SVM", "Local Outlier Factor"])
-
-#     if method == "Isolation Forest":
-#         model = IsolationForest(contamination=0.1, random_state=42)
-#         preds = model.fit_predict(X)
-#     elif method == "One-Class SVM":
-#         model = OneClassSVM(nu=0.1, kernel="rbf", gamma='scale')
-#         preds = model.fit_predict(X)
-#     elif method == "Local Outlier Factor":
-#         model = LocalOutlierFactor(n_neighbors=20, contamination=0.1)
-#         preds = model.fit_predict(X)
-
-#     data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
-
-#     st.subheader("📊 Visualization")
-#     fig = px.scatter(data, x=features[0], y=features[1], color='Anomaly', symbol='Anomaly',
-#                      title=f"Anomaly Detection using {method}")
-#     st.plotly_chart(fig, use_container_width=True)
-
-#     st.subheader("📋 Anomaly Counts")
-#     st.write(data['Anomaly'].value_counts())
-
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -155,13 +89,32 @@ def anomaly_detection_ui():
     st.header("🔍 Anomaly Detection")
 
     # Dataset selection
-    dataset_name = st.selectbox("Select Dataset", ["Synthetic", "Wine", "Iris", "Time Series", "MNIST", "KDDCup", "UCI Adult", "Titanic", "Fashion MNIST", "Air Quality"])
+    dataset_groups = {
+        "📊 Tabular / Image Datasets": ["Synthetic", "Wine", "Iris", "MNIST", "KDDCup", "UCI Adult", "Titanic", "Fashion MNIST"],
+        "📈 Time Series Datasets": ["Time Series", "Air Quality"]
+    }
 
+    category = st.selectbox("Choose Dataset Type", list(dataset_groups.keys()))
+    dataset_name = st.selectbox("Select Dataset", dataset_groups[category])
     data, dataset_type = load_datasets(dataset_name)
 
     st.write(f"Original Data Shape: {data.shape}")
     st.write(f"Dataset Type: {dataset_type}")
-    features = st.multiselect("Select features for detection", data.columns[:-1], default=list(data.columns[:2]))
+
+    if dataset_type == "Time Series":
+        available_features = data.columns
+        default_features = ["Signal"] if "Signal" in data.columns else list(available_features[:1])
+    else:
+        available_features = data.columns[:-1]
+        default_features = list(available_features[:2]) if len(available_features) >= 2 else list(available_features)
+
+
+    features = st.multiselect("Select features for detection", available_features, default=default_features)
+
+
+    if dataset_type == "Time Series" and "Time" in data.columns and len(features) == 1:
+        st.subheader("📈 Raw Time Series Preview")
+        st.line_chart(data.set_index("Time")[features[0]])
 
     X = data[features].values
     X = StandardScaler().fit_transform(X)
@@ -247,37 +200,50 @@ def anomaly_detection_ui():
             return
 
     st.write(f"Shape of predictions: {preds.shape}")
+    st.write(f"Shape of predictions: {preds.shape}")
+    if len(preds) == len(data):
+        try:
+            data['Anomaly'] = pd.Series(preds, index=data.index)
+        except ValueError as e:
+            st.error(f"❌ Failed to assign 'Anomaly' column: {e}")
+            return
+    else:
+        st.error(f"❌ Shape mismatch: preds shape {np.shape(preds)}, expected {data.shape[0]}")
+        return
     # Safe assignment based on method
-    if method in ["Isolation Forest", "One-Class SVM", "Local Outlier Factor"]:
-        if len(preds) == len(data):
-            data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
-        else:
-            st.error("Prediction length does not match number of data rows.")
-            return
-    elif method in ["Point Anomaly", "Contextual Anomaly", "Duration Anomaly"]:
-        if len(preds) == len(data):
-            st.write("🔍 Debug Info:")
-            st.write(f"type(preds): {type(preds)}")
-            st.write(f"preds.shape: {getattr(preds, 'shape', 'N/A')}")
-            st.write(f"len(preds): {len(preds)}")
-            st.write(f"data.shape: {data.shape}")
-            st.code(f"First 5 preds: {preds[:5]}")
+    # if method in ["Isolation Forest", "One-Class SVM", "Local Outlier Factor"]:
+    #     if len(preds) == len(data):
+    #         data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
+    #     else:
+    #         st.error("Prediction length does not match number of data rows.")
+    #         return
+    # elif method in ["Point Anomaly", "Contextual Anomaly", "Duration Anomaly"]:
+    #     if len(preds) == len(data):
+    #         st.write("🔍 Debug Info:")
+    #         st.write(f"type(preds): {type(preds)}")
+    #         st.write(f"preds.shape: {getattr(preds, 'shape', 'N/A')}")
+    #         st.write(f"len(preds): {len(preds)}")
+    #         st.write(f"data.shape: {data.shape}")
+    #         st.code(f"First 5 preds: {preds[:5]}")
 
-            try:
-                # Safely assign preds to Anomaly column using aligned Series
-                data['Anomaly'] = pd.Series(preds, index=data.index)
-            except ValueError as e:
-                st.error(f"❌ Failed to assign 'Anomaly' column: {e}")
-                return
-        else:
-            st.error(f"❌ Shape mismatch: preds shape {np.shape(preds)}, expected {data.shape[0]}")
-            return
+    #         try:
+    #             # Safely assign preds to Anomaly column using aligned Series
+    #             data['Anomaly'] = pd.Series(preds, index=data.index)
+    #         except ValueError as e:
+    #             st.error(f"❌ Failed to assign 'Anomaly' column: {e}")
+    #             return
+    #     else:
+    #         st.error(f"❌ Shape mismatch: preds shape {np.shape(preds)}, expected {data.shape[0]}")
+    #         return
 
 
 
-    st.subheader("📊 Visualization")
-    fig = px.scatter(data, x=features[0], y=features[1], color='Anomaly', symbol='Anomaly',
-                     title=f"Anomaly Detection using {method}")
+    st.subheader("📈 Visualization")
+    if dataset_type == "Time Series" and "Time" in data.columns and len(features) == 1:
+        fig = px.line(data, x="Time", y=features[0], color='Anomaly', title=f"Anomaly Detection using {method}")
+    else:
+        fig = px.scatter(data, x=features[0], y=features[1], color='Anomaly', symbol='Anomaly',
+                         title=f"Anomaly Detection using {method}")
     st.plotly_chart(fig, use_container_width=True)
 
     st.subheader("📋 Anomaly Counts")
