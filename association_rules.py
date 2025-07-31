@@ -107,6 +107,6 @@ def association_rules_ui():
         st.markdown("### Step 1: Dataset Structure\nEach row is a transaction. Each column is an item (True if purchased).")
         st.markdown("### Step 2: Support & Confidence\n- Support: Proportion of transactions containing itemset.\n- Confidence: P(consequent | antecedent).")
         st.markdown("### Step 3: Lift\n- Lift > 1 implies positive association between items.")
-        st.markdown("### Step 4: Network Graph\nNodes are items. Arrows indicate strong rules with lift above your threshold. You can download this graph.")
+        st.markdown("### Step 4: Network Graph\nNodes are items. Arrows indicate strong rules with lift above your threshold.")
 
 
