@@ -1,13 +1,11 @@
 # association_rules.py
 
-# association_rules.py
-
 import streamlit as st
 import pandas as pd
 from mlxtend.frequent_patterns import apriori, association_rules
 import networkx as nx
 import matplotlib.pyplot as plt
-from io import StringIO
+from io import BytesIO
 
 def basket_to_onehot(df):
     basket = df.stack().reset_index(level=1, drop=True).to_frame('item')
@@ -23,26 +21,46 @@ def plot_network_graph(rules_df):
                 G.add_edge(antecedent, consequent, weight=row['lift'])
 
     pos = nx.spring_layout(G, seed=42)
+    node_colors = ['#1f78b4' if G.out_degree(n) > 0 else '#33a02c' for n in G.nodes()]
+    edge_colors = ['#555' for _ in G.edges()]
+
     plt.figure(figsize=(8, 6))
-    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray',
-            node_size=2000, font_size=10, width=2, arrowsize=20)
+    nx.draw(G, pos, with_labels=True, node_color=node_colors, edge_color=edge_colors,
+            node_size=2500, font_size=10, width=2, arrowsize=20, font_weight='bold')
     edge_labels = nx.get_edge_attributes(G, 'weight')
     nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v:.2f}" for k, v in edge_labels.items()})
     st.pyplot(plt.gcf())
+
+    buf = BytesIO()
+    plt.savefig(buf, format="png")
+    st.download_button("🖼️ Download Graph as PNG", buf.getvalue(), file_name="association_graph.png", mime="image/png")
+    buf.close()
     plt.clf()
 
 def association_rules_ui():
     st.header("🔗 Association Rule Mining")
     st.markdown("Upload a transaction dataset (one-hot encoded or basket format).")
-    
+
     with st.expander("🧭 What is this module doing?", expanded=False):
         st.markdown("""
         - **Apriori Algorithm** finds frequent itemsets and builds association rules.
         - **Support**: How often a rule appears in the dataset.
         - **Confidence**: How often the rule is correct.
         - **Lift**: How much more likely the consequent is, given the antecedent.
+        - A **lift > 1** means a strong association.
+        """)
 
-        A high lift (> 1) means a strong association.
+    with st.expander("🧺 Example Basket Format"):
+        st.markdown("""
+        If your data is in this format:
+        ```
+        transaction_id,item
+        1,milk
+        1,bread
+        2,diapers
+        ...
+        ```
+        It will be automatically converted to one-hot format.
         """)
 
     uploaded_file = st.file_uploader("📤 Upload CSV (optional)", type="csv")
@@ -80,24 +98,15 @@ def association_rules_ui():
         st.warning("No rules found with current thresholds.")
     else:
         st.dataframe(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']])
-
-        csv = rules.to_csv(index=False)
-        st.download_button("⬇️ Download Rules as CSV", csv, file_name="association_rules.csv")
+        st.download_button("⬇️ Download Rules as CSV", rules.to_csv(index=False), file_name="association_rules.csv")
 
         st.subheader("🌐 Rule Network Graph")
         plot_network_graph(rules)
 
     with st.expander("📚 Guided Tour (Optional Teaching Aid)"):
-        st.markdown("### Step 1: Dataset Structure")
-        st.markdown("Each row is a transaction. Each column is an item (True if purchased).")
-
-        st.markdown("### Step 2: Support & Confidence")
-        st.markdown("- **Support**: Proportion of transactions containing itemset.\n- **Confidence**: P(consequent | antecedent).")
-
-        st.markdown("### Step 3: Lift")
-        st.markdown("- Lift > 1 implies positive association between items.")
-
-        st.markdown("### Step 4: Network Graph")
-        st.markdown("Nodes are items. Arrows indicate strong rules with lift above your threshold.")
+        st.markdown("### Step 1: Dataset Structure\nEach row is a transaction. Each column is an item (True if purchased).")
+        st.markdown("### Step 2: Support & Confidence\n- Support: Proportion of transactions containing itemset.\n- Confidence: P(consequent | antecedent).")
+        st.markdown("### Step 3: Lift\n- Lift > 1 implies positive association between items.")
+        st.markdown("### Step 4: Network Graph\nNodes are items. Arrows indicate strong rules with lift above your threshold.")
 
 
