@@ -211,15 +211,17 @@ def anomaly_detection_ui():
     elif method == "Local Outlier Factor":
         model = LocalOutlierFactor(n_neighbors=20, contamination=0.1)
         preds = model.fit_predict(X)
+
     elif method == "Point Anomaly":
-        # Compute Z-scores across all features
+        # Compute Z-scores across features
         z_scores = np.abs(zscore(X))  # shape: (n_samples, n_features)
 
-        # Aggregate anomaly score per sample (max Z-score across features)
-        max_z = np.max(z_scores, axis=1)
+        # Reduce to single value per row (e.g., max z-score)
+        max_z = np.max(z_scores, axis=1)  # shape: (n_samples,)
 
-        # Mark points as "Outlier" if any feature is beyond threshold (e.g., Z > 3)
+        # Label as outlier if any feature's z > 3
         preds = np.where(max_z > 3, "Outlier", "Inlier")
+
 
         preds = np.where(z_scores > 3, "Anomaly", "Normal")
     elif method == "Contextual Anomaly":
