@@ -107,15 +107,28 @@ def anomaly_detection_ui():
     st.write(f"Original Data Shape: {data.shape}")
     st.write(f"Dataset Type: {dataset_type}")
 
+    # if dataset_type == "Time Series":
+    #     available_features = data.columns
+    #     default_features = ["Signal"] if "Signal" in data.columns else list(available_features[:1])
+    # else:
+    #     available_features = data.columns[:-1]
+    #     default_features = list(available_features[:2]) if len(available_features) >= 2 else list(available_features)
     if dataset_type == "Time Series":
         available_features = data.columns
         default_features = ["Signal"] if "Signal" in data.columns else list(available_features[:1])
     else:
         available_features = data.columns[:-1]
-        default_features = list(available_features[:2]) if len(available_features) >= 2 else list(available_features)
+        if len(available_features) > 50:
+            default_features = list(available_features)
+        else:
+            default_features = list(available_features[:2]) if len(available_features) >= 2 else list(available_features)
 
 
     features = st.multiselect("Select features for detection", available_features, default=default_features)
+    
+    use_pca = False
+    if len(features) > 2:
+        use_pca = st.checkbox("Apply PCA for visualization", value=True)
 
 
     if dataset_type == "Time Series" and "Time" in data.columns and len(features) == 1:
