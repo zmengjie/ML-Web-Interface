@@ -77,8 +77,11 @@ def load_datasets(dataset_name):
         df = df.dropna()
         df["Label"] = df["survived"]
         df.drop(columns=["survived"], inplace=True)
-        df_numeric = df.select_dtypes(include=["int64", "float64"])
-        data = df_numeric.reset_index(drop=True)
+    
+        # Keep only numeric columns
+        numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
+        data = df[numeric_cols + ["Label"]].reset_index(drop=True)
+    
         dataset_type = "Tabular"
 
     elif dataset_name == "Fashion MNIST":
