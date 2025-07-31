@@ -75,32 +75,35 @@ def load_datasets(dataset_name):
     elif dataset_name == "Titanic":
         raw = fetch_openml(name="titanic", version=1, as_frame=True)
         df = raw.frame.copy()
-        df = df.dropna()
+
+        # 选择我们关心的数值列
+        keep_cols = ["pclass", "age", "fare", "sibsp", "parch", "survived"]
+        df = df[keep_cols]
+
+        # 只对 age/fare 等数值列填补缺失值
+        df["age"] = df["age"].fillna(df["age"].median())
+        df["fare"] = df["fare"].fillna(df["fare"].median())
+
         df["Label"] = df["survived"]
         df.drop(columns=["survived"], inplace=True)
-    
-        # Keep only numeric columns
+
         numeric_cols = df.select_dtypes(include=["number"]).columns.tolist()
         data = df[numeric_cols + ["Label"]].reset_index(drop=True)
-    
         dataset_type = "Tabular"
+
 
     elif dataset_name == "Fashion MNIST":
         from tensorflow.keras.datasets import fashion_mnist
-        (X_train, _), (_, _) = fashion_mnist.load_data()
-        data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))
+        (X_train, y_train), (_, _) = fashion_mnist.load_data()
+
+        # Flatten the 28x28 images to 784-dim vectors
+        X_flat = X_train.reshape((X_train.shape[0], -1)) / 255.0
+        data = pd.DataFrame(X_flat)
+        data["Label"] = y_train
         dataset_type = "Image"
 
-    elif dataset_name == "ECG5000":
-        import zipfile, io, requests
-    
-        url = "https://www.cs.ucr.edu/~eamonn/time_series_data_2018/ECG5000.zip"
-        r = requests.get(url)
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        df = pd.read_csv(z.open("ECG5000/ECG5000_TRAIN.txt"), delim_whitespace=True, header=None)
-        df.columns = [f"T{i}" for i in range(df.shape[1]-1)] + ["Label"]
-        df["Time"] = np.arange(len(df))
-        dataset_type = "Time Series"
+        # Optional: set features to all pixel columns
+        features = data.columns[:-1].tolist()
 
 
     else:
@@ -109,10 +112,28 @@ def load_datasets(dataset_name):
     return data, dataset_type
 
 
-def apply_pca_for_plotting(data, features):
-    st.warning("High-dimensional data detected. Reducing to 2D using PCA for visualization.")
-    X_proj = PCA(n_components=2).fit_transform(data.loc[:, features])
+# def apply_pca_for_plotting(data, features):
+#     st.warning("High-dimensional data detected. Reducing to 2D using PCA for visualization.")
+#     X_proj = PCA(n_components=2).fit_transform(data.loc[:, features])
+#     return X_proj[:, 0], X_proj[:, 1]
+
+
+
+def apply_pca_for_plotting(data, features=None):
+    from sklearn.decomposition import PCA
+
+    if isinstance(data, np.ndarray):
+        X = data
+    elif isinstance(data, pd.DataFrame):
+        if features is None or len(features) == 0:
+            features = data.columns.tolist()
+        X = data[features].values
+    else:
+        raise ValueError("Unsupported data type for PCA input")
+
+    X_proj = PCA(n_components=2).fit_transform(X)
     return X_proj[:, 0], X_proj[:, 1]
+
 
 def anomaly_detection_ui():
     st.header("🔍 Anomaly Detection")
@@ -120,7 +141,7 @@ def anomaly_detection_ui():
     # Dataset selection
     dataset_groups = {
         "📊 Tabular / Image Datasets": ["Synthetic", "Wine", "Iris", "MNIST", "KDDCup", "UCI Adult", "Titanic", "Fashion MNIST"],
-        "📈 Time Series Datasets": ["Time Series", "ECG5000"]
+        "📈 Time Series Datasets": ["Time Series"]
     }
 
     category = st.selectbox("Choose Dataset Type", list(dataset_groups.keys()))
@@ -281,17 +302,33 @@ def anomaly_detection_ui():
 
 
     st.subheader("📈 Visualization")
+
     if dataset_type == "Time Series" and "Time" in data.columns and len(features) == 1:
         fig = px.line(data, x="Time", y=features[0], color='Anomaly', title=f"Anomaly Detection using {method}")
     else:
+        # 🛡️ 防御：如果未选择 features，就自动选择数值列（排除标签列）
+        if features is None or len(features) == 0:
+            st.warning("No features selected. Using all numeric columns.")
+            features = data.select_dtypes(include=["number"]).columns.drop("Label", errors="ignore").tolist()
+
         if len(features) > 2:
             x_vals, y_vals = apply_pca_for_plotting(data, features)
-        else:
+            x_label, y_label = "PCA 1", "PCA 2"
+        elif len(features) == 2:
             x_vals, y_vals = data[features[0]], data[features[1]]
+            x_label, y_label = features[0], features[1]
+        else:
+            st.error("Need at least 1 or 2 features for visualization.")
+            st.stop()
 
-        fig = px.scatter(x=x_vals, y=y_vals, color=data['Anomaly'], symbol=data['Anomaly'],
-                         title=f"Anomaly Detection using {method}",
-                         labels={"x": "PCA 1", "y": "PCA 2"} if len(features) > 2 else None)
+        fig = px.scatter(
+            x=x_vals,
+            y=y_vals,
+            color=data['Anomaly'],
+            symbol=data['Anomaly'],
+            title=f"Anomaly Detection using {method}",
+            labels={"x": x_label, "y": y_label}
+        )
 
     st.plotly_chart(fig, use_container_width=True)
 
