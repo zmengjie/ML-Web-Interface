@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 import pyLDAvis
-import pyLDAvis.sklearn
+import pyLDAvis.sklearn_model as sklearn_lda_vis
 import streamlit.components.v1 as components
 
 def topic_modeling_ui():
@@ -37,6 +37,6 @@ def topic_modeling_ui():
 
     # pyLDAvis
     with st.spinner("Generating interactive visualization..."):
-        vis_html = pyLDAvis.sklearn.prepare(lda, X, vectorizer)
+        vis_html = sklearn_lda_vis.prepare(lda, X, vectorizer)
         html = pyLDAvis.prepared_data_to_html(vis_html)
         components.html(html, height=800, scrolling=True)
