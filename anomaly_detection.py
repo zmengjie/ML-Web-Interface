@@ -78,9 +78,10 @@ def load_datasets(dataset_name):
         dataset_type = "Image"
         
     elif dataset_name == "Air Quality":
-        url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/Air%20Quality.zip"
-        df = pd.read_csv(url, header=0, sep=";", decimal=",")
-        df = df.dropna(axis=0, how="any")  
+        url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.csv"
+        df = pd.read_csv(url, sep=';', decimal=',')
+        df = df.dropna(axis=0, how="any")
+        data = df
         dataset_type = "Time Series"
     
     return data, dataset_type
@@ -200,7 +201,7 @@ def anomaly_detection_ui():
             return
 
     st.write(f"Shape of predictions: {preds.shape}")
-    st.write(f"Shape of predictions: {preds.shape}")
+
     if len(preds) == len(data):
         try:
             data['Anomaly'] = pd.Series(preds, index=data.index)
