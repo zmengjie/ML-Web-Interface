@@ -220,19 +220,17 @@ def anomaly_detection_ui():
         max_z = np.max(z_scores, axis=1)  # shape: (n_samples,)
 
         # Label as outlier if any feature's z > 3
-        preds = np.where(max_z > 3, "Outlier", "Inlier")
+        preds = np.where(max_z > 3, "Outlier", "Inlier")  # ✅ this is correct and final
 
-
-        preds = np.where(z_scores > 3, "Anomaly", "Normal")
     elif method == "Contextual Anomaly":
         if dataset_type == "Time Series":
-            # Contextual anomaly detection for time series data (using sliding window approach)
-            window_size = 10
-            z_scores = np.abs(zscore(X))  # Z-score to detect deviations
-            preds = np.where(z_scores > 2, "Anomaly", "Normal")
+            z_scores = np.abs(zscore(X))  # shape = (n_samples, n_features)
+            max_z = np.max(z_scores, axis=1)  # shape = (n_samples,)
+            preds = np.where(max_z > 2, "Outlier", "Inlier")
         else:
             st.error("Contextual anomaly detection is only applicable for time series data.")
             return
+
     elif method == "Duration Anomaly":
         if dataset_type == "Time Series":
             if 'Signal' in data.columns:
