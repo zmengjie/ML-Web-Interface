@@ -12,7 +12,10 @@ from sklearn.datasets import make_blobs
 from sklearn.decomposition import PCA
 
 def load_datasets(dataset_name):
-    """Loading datasets dynamically based on the selection"""
+    from sklearn.datasets import fetch_openml, make_classification
+    import pandas as pd
+    import numpy as np
+
     if dataset_name == "Synthetic":
         from sklearn.datasets import make_blobs
         X, _ = make_blobs(n_samples=300, centers=1, cluster_std=0.6, random_state=42)
@@ -20,72 +23,156 @@ def load_datasets(dataset_name):
         X = np.vstack([X, outliers])
         y_true = np.array([1]*300 + [-1]*20)
         data = pd.DataFrame(X, columns=["Feature 1", "Feature 2"])
-        data['Label'] = y_true
+        data["Label"] = y_true
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "Wine":
         from sklearn.datasets import load_wine
         raw = load_wine()
         data = pd.DataFrame(raw.data, columns=raw.feature_names)
-        data['Label'] = raw.target
+        data["Label"] = raw.target
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "Iris":
         from sklearn.datasets import load_iris
         raw = load_iris()
         data = pd.DataFrame(raw.data, columns=raw.feature_names)
-        data['Label'] = raw.target
+        data["Label"] = raw.target
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "Time Series":
         time = np.arange(0, 100)
         signal = np.sin(time) + 0.1 * np.random.randn(100)
+        signal[20:25] = 3
+        signal[60:65] = -3
         data = pd.DataFrame({"Time": time, "Signal": signal})
-        data.iloc[20:25, 1] = 3  
-        data.iloc[60:65, 1] = -3  
         dataset_type = "Time Series"
-        
+
     elif dataset_name == "MNIST":
         from sklearn.datasets import load_digits
         raw = load_digits()
         data = pd.DataFrame(raw.data)
-        data['Label'] = raw.target
+        data["Label"] = raw.target
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "KDDCup":
-        data = make_classification(n_samples=1000, n_features=20, n_informative=10, random_state=42)
-        data = pd.DataFrame(data[0], columns=[f"Feature {i}" for i in range(1, 21)])
-        data['Label'] = np.random.choice([0, 1], size=1000, p=[0.95, 0.05])
+        X, _ = make_classification(n_samples=1000, n_features=20, n_informative=10, random_state=42)
+        data = pd.DataFrame(X, columns=[f"Feature {i}" for i in range(1, 21)])
+        data["Label"] = np.random.choice([0, 1], size=1000, p=[0.95, 0.05])
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "UCI Adult":
-        data = fetch_openml(name="adult", version=2)
-        df = data.frame
-        df['Label'] = df['class']
+        raw = fetch_openml(name="adult", version=2, as_frame=True)
+        df = raw.frame.copy()
+        df = df.dropna()
+        df["Label"] = df["class"]
         df.drop(columns=["class"], inplace=True)
+        data = df.reset_index(drop=True)
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "Titanic":
-        data = fetch_openml(name="titanic", version=1)
-        df = data.frame
-        df['Label'] = df['survived']
+        raw = fetch_openml(name="titanic", version=1, as_frame=True)
+        df = raw.frame.copy()
+        df = df.dropna()
+        df["Label"] = df["survived"]
         df.drop(columns=["survived"], inplace=True)
+        data = df.reset_index(drop=True)
         dataset_type = "Tabular"
-        
+
     elif dataset_name == "Fashion MNIST":
         from tensorflow.keras.datasets import fashion_mnist
         (X_train, _), (_, _) = fashion_mnist.load_data()
-        data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))  
+        data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))
         dataset_type = "Image"
-        
+
     elif dataset_name == "Air Quality":
         url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.csv"
-        df = pd.read_csv(url, sep=';', decimal=',')
+        df = pd.read_csv(url, sep=";", decimal=",", engine="python")
         df = df.dropna(axis=0, how="any")
-        data = df
+        df = df.iloc[:, :-2]  # remove last two non-numeric columns
+        data = df.reset_index(drop=True)
         dataset_type = "Time Series"
-    
+
+    else:
+        raise ValueError(f"Unknown dataset: {dataset_name}")
+
     return data, dataset_type
+
+# def load_datasets(dataset_name):
+#     """Loading datasets dynamically based on the selection"""
+#     if dataset_name == "Synthetic":
+#         from sklearn.datasets import make_blobs
+#         X, _ = make_blobs(n_samples=300, centers=1, cluster_std=0.6, random_state=42)
+#         outliers = np.random.uniform(low=-6, high=6, size=(20, 2))
+#         X = np.vstack([X, outliers])
+#         y_true = np.array([1]*300 + [-1]*20)
+#         data = pd.DataFrame(X, columns=["Feature 1", "Feature 2"])
+#         data['Label'] = y_true
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "Wine":
+#         from sklearn.datasets import load_wine
+#         raw = load_wine()
+#         data = pd.DataFrame(raw.data, columns=raw.feature_names)
+#         data['Label'] = raw.target
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "Iris":
+#         from sklearn.datasets import load_iris
+#         raw = load_iris()
+#         data = pd.DataFrame(raw.data, columns=raw.feature_names)
+#         data['Label'] = raw.target
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "Time Series":
+#         time = np.arange(0, 100)
+#         signal = np.sin(time) + 0.1 * np.random.randn(100)
+#         data = pd.DataFrame({"Time": time, "Signal": signal})
+#         data.iloc[20:25, 1] = 3  
+#         data.iloc[60:65, 1] = -3  
+#         dataset_type = "Time Series"
+        
+#     elif dataset_name == "MNIST":
+#         from sklearn.datasets import load_digits
+#         raw = load_digits()
+#         data = pd.DataFrame(raw.data)
+#         data['Label'] = raw.target
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "KDDCup":
+#         data = make_classification(n_samples=1000, n_features=20, n_informative=10, random_state=42)
+#         data = pd.DataFrame(data[0], columns=[f"Feature {i}" for i in range(1, 21)])
+#         data['Label'] = np.random.choice([0, 1], size=1000, p=[0.95, 0.05])
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "UCI Adult":
+#         data = fetch_openml(name="adult", version=2)
+#         df = data.frame
+#         df['Label'] = df['class']
+#         df.drop(columns=["class"], inplace=True)
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "Titanic":
+#         data = fetch_openml(name="titanic", version=1)
+#         df = data.frame
+#         df['Label'] = df['survived']
+#         df.drop(columns=["survived"], inplace=True)
+#         dataset_type = "Tabular"
+        
+#     elif dataset_name == "Fashion MNIST":
+#         from tensorflow.keras.datasets import fashion_mnist
+#         (X_train, _), (_, _) = fashion_mnist.load_data()
+#         data = pd.DataFrame(X_train.reshape(X_train.shape[0], -1))  
+#         dataset_type = "Image"
+        
+#     elif dataset_name == "Air Quality":
+#         url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.csv"
+#         df = pd.read_csv(url, sep=';', decimal=',')
+#         df = df.dropna(axis=0, how="any")
+#         data = df
+#         dataset_type = "Time Series"
+    
+#     return data, dataset_type
 
 def apply_pca_for_plotting(data, features):
     st.warning("High-dimensional data detected. Reducing to 2D using PCA for visualization.")
