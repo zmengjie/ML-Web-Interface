@@ -255,11 +255,24 @@ def anomaly_detection_ui():
             st.error("Prediction length does not match number of data rows.")
             return
     elif method in ["Point Anomaly", "Contextual Anomaly", "Duration Anomaly"]:
-        if preds.shape[0] == data.shape[0]:
-            data['Anomaly'] = preds
+        if len(preds) == len(data):
+            st.write("🔍 Debug Info:")
+            st.write(f"type(preds): {type(preds)}")
+            st.write(f"preds.shape: {getattr(preds, 'shape', 'N/A')}")
+            st.write(f"len(preds): {len(preds)}")
+            st.write(f"data.shape: {data.shape}")
+            st.code(f"First 5 preds: {preds[:5]}")
+
+            try:
+                # Safely assign preds to Anomaly column using aligned Series
+                data['Anomaly'] = pd.Series(preds, index=data.index)
+            except ValueError as e:
+                st.error(f"❌ Failed to assign 'Anomaly' column: {e}")
+                return
         else:
-            st.error(f"Shape mismatch: preds shape {preds.shape}, expected {data.shape[0]}")
+            st.error(f"❌ Shape mismatch: preds shape {np.shape(preds)}, expected {data.shape[0]}")
             return
+
 
 
     st.subheader("📊 Visualization")
