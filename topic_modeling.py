@@ -5,7 +5,7 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
 import pyLDAvis
-import pyLDAvis.sklearn_pyldavis
+import pyLDAvis.sklearn
 import streamlit.components.v1 as components
 
 def topic_modeling_ui():
