@@ -94,6 +94,7 @@ def association_rules_ui():
     rules = rules[rules['lift'] >= min_lift]
 
     st.subheader("📋 Generated Rules")
+    st.caption(f"📊 Showing rules with support ≥ {min_support}, confidence ≥ {min_conf}, lift ≥ {min_lift}")
     if rules.empty:
         st.warning("No rules found with current thresholds.")
     else:
