@@ -212,7 +212,15 @@ def anomaly_detection_ui():
         model = LocalOutlierFactor(n_neighbors=20, contamination=0.1)
         preds = model.fit_predict(X)
     elif method == "Point Anomaly":
-        z_scores = np.abs(zscore(X))  # Simple point anomaly detection via Z-score
+        # Compute Z-scores across all features
+        z_scores = np.abs(zscore(X))  # shape: (n_samples, n_features)
+
+        # Aggregate anomaly score per sample (max Z-score across features)
+        max_z = np.max(z_scores, axis=1)
+
+        # Mark points as "Outlier" if any feature is beyond threshold (e.g., Z > 3)
+        preds = np.where(max_z > 3, "Outlier", "Inlier")
+
         preds = np.where(z_scores > 3, "Anomaly", "Normal")
     elif method == "Contextual Anomaly":
         if dataset_type == "Time Series":
@@ -239,7 +247,20 @@ def anomaly_detection_ui():
             return
 
     st.write(f"Shape of predictions: {preds.shape}")
-    data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
+    # Safe assignment based on method
+    if method in ["Isolation Forest", "One-Class SVM", "Local Outlier Factor"]:
+        if len(preds) == len(data):
+            data['Anomaly'] = np.where(preds == -1, "Outlier", "Inlier")
+        else:
+            st.error("Prediction length does not match number of data rows.")
+            return
+    elif method in ["Point Anomaly", "Contextual Anomaly", "Duration Anomaly"]:
+        if preds.shape[0] == data.shape[0]:
+            data['Anomaly'] = preds
+        else:
+            st.error(f"Shape mismatch: preds shape {preds.shape}, expected {data.shape[0]}")
+            return
+
 
     st.subheader("📊 Visualization")
     fig = px.scatter(data, x=features[0], y=features[1], color='Anomaly', symbol='Anomaly',
