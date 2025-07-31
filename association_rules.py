@@ -1,92 +1,103 @@
 # association_rules.py
 
+# association_rules.py
+
 import streamlit as st
 import pandas as pd
 from mlxtend.frequent_patterns import apriori, association_rules
-import altair as alt
+import networkx as nx
+import matplotlib.pyplot as plt
+from io import StringIO
+
+def basket_to_onehot(df):
+    basket = df.stack().reset_index(level=1, drop=True).to_frame('item')
+    basket['value'] = True
+    onehot = basket.pivot_table(index=basket.index, columns='item', values='value', fill_value=False)
+    return onehot.astype(bool)
+
+def plot_network_graph(rules_df):
+    G = nx.DiGraph()
+    for _, row in rules_df.iterrows():
+        for antecedent in row['antecedents']:
+            for consequent in row['consequents']:
+                G.add_edge(antecedent, consequent, weight=row['lift'])
+
+    pos = nx.spring_layout(G, seed=42)
+    plt.figure(figsize=(8, 6))
+    nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray',
+            node_size=2000, font_size=10, width=2, arrowsize=20)
+    edge_labels = nx.get_edge_attributes(G, 'weight')
+    nx.draw_networkx_edge_labels(G, pos, edge_labels={k: f"{v:.2f}" for k, v in edge_labels.items()})
+    st.pyplot(plt.gcf())
+    plt.clf()
 
 def association_rules_ui():
     st.header("🔗 Association Rule Mining")
-
-    # 🔹 Explanatory panel
-    with st.expander("ℹ️ How Association Rule Mining Works"):
+    st.markdown("Upload a transaction dataset (one-hot encoded or basket format).")
+    
+    with st.expander("🧭 What is this module doing?", expanded=False):
         st.markdown("""
-**Association Rule Mining** helps find interesting relationships between items in transaction data.
+        - **Apriori Algorithm** finds frequent itemsets and builds association rules.
+        - **Support**: How often a rule appears in the dataset.
+        - **Confidence**: How often the rule is correct.
+        - **Lift**: How much more likely the consequent is, given the antecedent.
 
-#### 📚 Key Concepts:
-- **Support**: How often items appear together  
-  E.g., Support(Bread → Milk) = 60% means 60% of transactions contain both.
-- **Confidence**: Likelihood of buying consequent given antecedent  
-  E.g., Confidence(Bread → Milk) = 80% means 80% of bread buyers also buy milk.
-- **Lift**: Strength of correlation (Lift > 1 = positive association)
+        A high lift (> 1) means a strong association.
+        """)
 
-#### 🛒 Example:
-If many customers buy **diapers** and **beer** together, the rule:  
-`{diapers} → {beer}` could be discovered, helping marketing decisions.
-""")
-
-    # 🔹 File uploader or fallback sample
-    uploaded_file = st.file_uploader("Upload a transaction dataset (one-hot encoded or basket format)", type="csv")
+    uploaded_file = st.file_uploader("📤 Upload CSV (optional)", type="csv")
 
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
-        st.success(f"✅ Uploaded dataset loaded with shape {df.shape}")
+        st.info(f"✅ Uploaded dataset shape: {df.shape}")
     else:
-        st.info("📄 No file uploaded. Using built-in sample dataset.")
-        df = pd.DataFrame({
-            'milk':     [1, 0, 1, 1, 0],
-            'bread':    [1, 1, 0, 1, 0],
-            'eggs':     [0, 1, 1, 1, 1],
-            'diapers':  [0, 1, 0, 1, 1],
-            'beer':     [0, 1, 0, 0, 1]
-        }).astype(bool)
+        sample_data = {
+            'milk': [1, 1, 1, 0, 1],
+            'bread': [1, 1, 0, 1, 0],
+            'eggs': [0, 1, 1, 1, 0],
+            'diapers': [0, 0, 1, 1, 1],
+            'beer': [0, 0, 0, 1, 1],
+        }
+        df = pd.DataFrame(sample_data).astype(bool)
+        st.info("🧪 No file uploaded. Using built-in sample dataset.")
         st.success(f"✅ Sample dataset loaded with shape {df.shape}")
 
     if df.dtypes.eq('bool').sum() == 0:
-        st.warning("⚠️ No boolean (True/False) columns detected. Please upload one-hot encoded data.")
-        return
+        st.warning("No boolean (True/False) columns detected. Converting basket format to one-hot.")
+        df = basket_to_onehot(df)
+        st.success(f"Converted to one-hot with shape: {df.shape}")
 
-    # 🔹 Sliders for thresholds
-    min_support = st.slider("📉 Minimum Support", 0.01, 0.5, 0.1)
-    min_conf = st.slider("📈 Minimum Confidence", 0.1, 1.0, 0.5)
+    min_support = st.slider("📊 Minimum Support", 0.01, 0.5, 0.1)
+    min_conf = st.slider("✅ Minimum Confidence", 0.1, 1.0, 0.5)
+    min_lift = st.slider("📈 Minimum Lift", 0.5, 5.0, 1.0)
 
-    # 🔹 Apriori and rule generation
     frequent_itemsets = apriori(df, min_support=min_support, use_colnames=True)
     rules = association_rules(frequent_itemsets, metric="confidence", min_threshold=min_conf)
+    rules = rules[rules['lift'] >= min_lift]
 
-    # 🔍 Optional item filter
-    selected_item = st.text_input("🔍 Filter rules containing item (optional):")
-    if selected_item:
-        rules = rules[rules['antecedents'].astype(str).str.contains(selected_item) |
-                      rules['consequents'].astype(str).str.contains(selected_item)]
-
-    # 📊 Visualization: Support vs Confidence
-    if not rules.empty:
-        st.subheader("📊 Rule Strength Visualization")
-        chart = alt.Chart(rules).mark_circle(size=100).encode(
-            x='support:Q',
-            y='confidence:Q',
-            color='lift:Q',
-            tooltip=['antecedents', 'consequents', 'support', 'confidence', 'lift']
-        ).interactive()
-        st.altair_chart(chart, use_container_width=True)
-
-    # 📈 Item frequency bar chart
-    st.subheader("📦 Item Frequencies")
-    item_freq = df.sum().sort_values(ascending=False)
-    st.bar_chart(item_freq)
-
-    # 📋 Show rules
     st.subheader("📋 Generated Rules")
     if rules.empty:
-        st.warning("No rules found with the current thresholds.")
+        st.warning("No rules found with current thresholds.")
     else:
         st.dataframe(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']])
 
-        # 💾 Download buttons
-        st.download_button("📥 Download Rules as CSV", rules.to_csv(index=False), file_name="association_rules.csv")
+        csv = rules.to_csv(index=False)
+        st.download_button("⬇️ Download Rules as CSV", csv, file_name="association_rules.csv")
 
-    # 💾 Sample dataset download
-    if not uploaded_file:
-        st.download_button("📥 Download Sample Dataset", df.astype(int).to_csv(index=False), file_name="sample_transactions.csv")
+        st.subheader("🌐 Rule Network Graph")
+        plot_network_graph(rules)
+
+    with st.expander("📚 Guided Tour (Optional Teaching Aid)"):
+        st.markdown("### Step 1: Dataset Structure")
+        st.markdown("Each row is a transaction. Each column is an item (True if purchased).")
+
+        st.markdown("### Step 2: Support & Confidence")
+        st.markdown("- **Support**: Proportion of transactions containing itemset.\n- **Confidence**: P(consequent | antecedent).")
+
+        st.markdown("### Step 3: Lift")
+        st.markdown("- Lift > 1 implies positive association between items.")
+
+        st.markdown("### Step 4: Network Graph")
+        st.markdown("Nodes are items. Arrows indicate strong rules with lift above your threshold.")
+
 
