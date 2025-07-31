@@ -67,7 +67,8 @@ def load_datasets(dataset_name):
         df = df.dropna()
         df["Label"] = df["class"]
         df.drop(columns=["class"], inplace=True)
-        data = df.reset_index(drop=True)
+        df_numeric = df.select_dtypes(include=["int64", "float64"])
+        data = df_numeric.reset_index(drop=True)
         dataset_type = "Tabular"
 
     elif dataset_name == "Titanic":
@@ -76,7 +77,8 @@ def load_datasets(dataset_name):
         df = df.dropna()
         df["Label"] = df["survived"]
         df.drop(columns=["survived"], inplace=True)
-        data = df.reset_index(drop=True)
+        df_numeric = df.select_dtypes(include=["int64", "float64"])
+        data = df_numeric.reset_index(drop=True)
         dataset_type = "Tabular"
 
     elif dataset_name == "Fashion MNIST":
@@ -89,14 +91,16 @@ def load_datasets(dataset_name):
         url = "https://archive.ics.uci.edu/ml/machine-learning-databases/00360/AirQualityUCI.csv"
         df = pd.read_csv(url, sep=";", decimal=",", engine="python")
         df = df.dropna(axis=0, how="any")
-        df = df.iloc[:, :-2]  # remove last two non-numeric columns
-        data = df.reset_index(drop=True)
+        df = df.iloc[:, :-2]  # drop Date and Time
+        df_numeric = df.select_dtypes(include=["int64", "float64"])
+        data = df_numeric.reset_index(drop=True)
         dataset_type = "Time Series"
 
     else:
         raise ValueError(f"Unknown dataset: {dataset_name}")
 
     return data, dataset_type
+
 
 # def load_datasets(dataset_name):
 #     """Loading datasets dynamically based on the selection"""
