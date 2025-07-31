@@ -1,12 +1,11 @@
 # topic_modeling.py
 
+
 import streamlit as st
 import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import LatentDirichletAllocation
-import pyLDAvis
-import pyLDAvis.sklearn_model as sklearn_lda_vis
-import streamlit.components.v1 as components
+import plotly.graph_objects as go
 
 def topic_modeling_ui():
     st.header("🧠 Topic Modeling")
@@ -30,13 +29,25 @@ def topic_modeling_ui():
     lda = LatentDirichletAllocation(n_components=num_topics, random_state=42)
     lda.fit(X)
 
-    st.subheader("Top Words per Topic")
     words = vectorizer.get_feature_names_out()
-    for i, topic in enumerate(lda.components_):
-        st.markdown(f"**Topic {i+1}:** " + ", ".join([words[i] for i in topic.argsort()[-10:][::-1]]))
 
-    # pyLDAvis
-    with st.spinner("Generating interactive visualization..."):
-        vis_html = sklearn_lda_vis.prepare(lda, X, vectorizer)
-        html = pyLDAvis.prepared_data_to_html(vis_html)
-        components.html(html, height=800, scrolling=True)
+    st.subheader("📊 Top Words per Topic")
+    for i, topic in enumerate(lda.components_):
+        top_indices = topic.argsort()[-10:][::-1]
+        top_words = [words[j] for j in top_indices]
+        top_weights = topic[top_indices]
+
+        fig = go.Figure(go.Bar(
+            x=top_weights,
+            y=top_words,
+            orientation='h',
+            marker_color='indianred'
+        ))
+        fig.update_layout(
+            title=f"Topic {i+1}",
+            xaxis_title="Word Importance",
+            yaxis_title="Word",
+            yaxis=dict(autorange="reversed")
+        )
+        st.plotly_chart(fig, use_container_width=True)
+
