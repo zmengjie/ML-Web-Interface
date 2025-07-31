@@ -42,7 +42,9 @@ pytesseract
 langchain-community
 langchain-experimental
 tensorflow>=2.0.0
+
 pyLDAvis
+mlxtend
 
 
 # streamlit
