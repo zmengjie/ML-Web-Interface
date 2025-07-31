@@ -88,7 +88,7 @@ def load_datasets(dataset_name):
 
 def apply_pca_for_plotting(data, features):
     st.warning("High-dimensional data detected. Reducing to 2D using PCA for visualization.")
-    X_proj = PCA(n_components=2).fit_transform(data[features])
+    X_proj = PCA(n_components=2).fit_transform(data.loc[:, features])
     return X_proj[:, 0], X_proj[:, 1]
 
 def anomaly_detection_ui():
