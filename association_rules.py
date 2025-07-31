@@ -21,7 +21,7 @@ def plot_network_graph(rules_df):
                 G.add_edge(antecedent, consequent, weight=row['lift'])
 
     pos = nx.spring_layout(G, seed=42)
-    node_colors = ['#1f78b4' if G.out_degree(n) > 0 else '#33a02c' for n in G.nodes()]
+    node_colors = ['dodgerblue' if G.out_degree(n) > 0 else 'mediumseagreen' for n in G.nodes()]
     edge_colors = ['#555' for _ in G.edges()]
 
     plt.figure(figsize=(8, 6))
@@ -107,6 +107,6 @@ def association_rules_ui():
         st.markdown("### Step 1: Dataset Structure\nEach row is a transaction. Each column is an item (True if purchased).")
         st.markdown("### Step 2: Support & Confidence\n- Support: Proportion of transactions containing itemset.\n- Confidence: P(consequent | antecedent).")
         st.markdown("### Step 3: Lift\n- Lift > 1 implies positive association between items.")
-        st.markdown("### Step 4: Network Graph\nNodes are items. Arrows indicate strong rules with lift above your threshold.")
+        st.markdown("### Step 4: Network Graph\nNodes are items. Arrows indicate strong rules with lift above your threshold. You can download this graph.")
 
 
