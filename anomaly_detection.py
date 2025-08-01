@@ -183,7 +183,15 @@ def anomaly_detection_ui():
     X = StandardScaler().fit_transform(X)
 
     # Method selection for anomaly detection
-    method = st.selectbox("Choose Detection Method", ["Isolation Forest", "One-Class SVM", "Local Outlier Factor", "Point Anomaly", "Contextual Anomaly", "Duration Anomaly"])
+    # method = st.selectbox("Choose Detection Method", ["Isolation Forest", "One-Class SVM", "Local Outlier Factor", "Point Anomaly", "Contextual Anomaly", "Duration Anomaly"])
+    method = st.selectbox("Choose Detection Method", [
+    "🔍 Isolation Forest", 
+    "🔍 One-Class SVM", 
+    "🔍 Local Outlier Factor", 
+    "📏 Point Anomaly (Z-Score)",
+    "🕒 Contextual Anomaly (Time-Series)", 
+    "⏱️ Duration Anomaly (Time-Series)"
+])
 
     # Method explanations
     if method == "Isolation Forest":
@@ -229,14 +237,19 @@ def anomaly_detection_ui():
         preds = model.fit_predict(X)
 
     elif method == "Point Anomaly":
-        # Compute Z-scores across features
-        z_scores = np.abs(zscore(X))  # shape: (n_samples, n_features)
+        threshold = st.slider("Z-score Threshold", min_value=2.0, max_value=5.0, step=0.1, value=3.0)
+        z_scores = np.abs(zscore(X))
+        max_z = np.max(z_scores, axis=1)
+        preds = np.where(max_z > threshold, "Outlier", "Inlier")
 
-        # Reduce to single value per row (e.g., max z-score)
-        max_z = np.max(z_scores, axis=1)  # shape: (n_samples,)
+        # # Compute Z-scores across features
+        # z_scores = np.abs(zscore(X))  # shape: (n_samples, n_features)
 
-        # Label as outlier if any feature's z > 3
-        preds = np.where(max_z > 3, "Outlier", "Inlier")  # ✅ this is correct and final
+        # # Reduce to single value per row (e.g., max z-score)
+        # max_z = np.max(z_scores, axis=1)  # shape: (n_samples,)
+
+        # # Label as outlier if any feature's z > 3
+        # preds = np.where(max_z > 3, "Outlier", "Inlier")  # ✅ this is correct and final
 
     elif method == "Contextual Anomaly":
         if dataset_type == "Time Series":
