@@ -183,15 +183,15 @@ def anomaly_detection_ui():
     X = StandardScaler().fit_transform(X)
 
     # Method selection for anomaly detection
-    # method = st.selectbox("Choose Detection Method", ["Isolation Forest", "One-Class SVM", "Local Outlier Factor", "Point Anomaly", "Contextual Anomaly", "Duration Anomaly"])
-    method = st.selectbox("Choose Detection Method", [
-    "🔍 Isolation Forest", 
-    "🔍 One-Class SVM", 
-    "🔍 Local Outlier Factor", 
-    "📏 Point Anomaly (Z-Score)",
-    "🕒 Contextual Anomaly (Time-Series)", 
-    "⏱️ Duration Anomaly (Time-Series)"
-])
+    method = st.selectbox("Choose Detection Method", ["Isolation Forest", "One-Class SVM", "Local Outlier Factor", "Point Anomaly", "Contextual Anomaly", "Duration Anomaly"])
+#     method = st.selectbox("Choose Detection Method", [
+#     "🔍 Isolation Forest", 
+#     "🔍 One-Class SVM", 
+#     "🔍 Local Outlier Factor", 
+#     "📏 Point Anomaly (Z-Score)",
+#     "🕒 Contextual Anomaly (Time-Series)", 
+#     "⏱️ Duration Anomaly (Time-Series)"
+# ])
 
     # Method explanations
     if method == "Isolation Forest":
