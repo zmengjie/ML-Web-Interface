@@ -173,7 +173,7 @@ def plot_3d_descent(x_vals, y_vals, Z, path, Z_path,
             text=["(a, b)"],
             textposition="bottom right",
             textfont=dict(size=12),
-            name="Expansion Point".
+            name="Expansion Point",
             hoverinfo='text+x+y+z'
         ))
 
