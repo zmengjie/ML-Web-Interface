@@ -59,6 +59,7 @@ import openai
 import streamlit as st
 from langchain_community.chat_models import ChatOpenAI
 
+from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
 # from local_llm import query_local_llm
 import requests
 
@@ -885,7 +886,6 @@ elif mode == "🌋 Optimization Playground":
             if show_2nd:
                 st.latex(T2_latex)
 
-        from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
 
 
         st.markdown("### 📈 3D View")
