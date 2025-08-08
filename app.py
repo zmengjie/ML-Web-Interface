@@ -6,6 +6,7 @@ import plotly.graph_objects as go
 import streamlit.components.v1 as components
 import base64
 import tempfile
+from visualizer import plot_3d_descent, plot_2d_contour
 
 st.set_page_config(page_title="ML + Optimizer Visualizer", layout="wide")
 
@@ -59,7 +60,6 @@ import openai
 import streamlit as st
 from langchain_community.chat_models import ChatOpenAI
 
-from visualizer import plot_3d_descent, plot_2d_contour  # Or use inline if not modularized
 # from local_llm import query_local_llm
 import requests
 
