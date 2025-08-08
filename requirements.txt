@@ -39,7 +39,7 @@ tqdm
 requests
 python-dotenv
 pytesseract
-langchain-community
+# langchain-community
 langchain-experimental
 tensorflow>=2.0.0
 
